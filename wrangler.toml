@@ -1,0 +1,21 @@
+# Cloudflare Workers config for the SvelteKit app. Two projects deploy this same config from
+# their own branches (Workers Builds): momentumtennis-dev ← deploy/dev, momentumtennis ← deploy/live.
+# Secrets are set per project (wrangler secret put / dashboard), never here. See README.md.
+name = "momentumtennis"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+binding = "ASSETS"
+directory = ".svelte-kit/cloudflare"
+
+[observability]
+enabled = true
+
+# `wrangler deploy --env dev` / `--env live` when deploying by hand.
+[env.dev]
+name = "momentumtennis-dev"
+
+[env.live]
+name = "momentumtennis"

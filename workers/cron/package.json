@@ -1,0 +1,17 @@
+{
+	"name": "momentumtennis-cron",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "wrangler dev --test-scheduled",
+		"deploy:dev": "wrangler deploy --env dev",
+		"deploy:live": "wrangler deploy --env live",
+		"check": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20260901.1",
+		"typescript": "^6.0.3",
+		"wrangler": "^4.128.0"
+	}
+}
