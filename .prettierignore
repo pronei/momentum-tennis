@@ -1,0 +1,20 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Build / tooling output
+build/
+.svelte-kit/
+.wrangler/
+dist/
+
+# Not ours to format
+design-system/
+supabase/migrations/
+supabase/seed.sql
+src/lib/server/db/database.types.ts
+docs/
+*.md

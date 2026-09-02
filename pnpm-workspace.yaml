@@ -1,0 +1,7 @@
+packages:
+  - '.'
+  - 'workers/*'
+allowBuilds:
+  esbuild: true
+  workerd: true
+  '@electric-sql/pglite': true

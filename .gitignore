@@ -44,3 +44,9 @@ design-system/ui_kits/combined/photos/
 blender/
 momentum-racquet-spec-v3.md
 design-b-worksheet.md
+
+# ── sveltekit / vite ─────────────────────────────────────────
+.output
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+Thumbs.db
