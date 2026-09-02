@@ -1,0 +1,24 @@
+/* Momentum Tennis — spacing, shape, motion tokens. */
+:root{
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:24px; --space-6:32px; --space-7:48px; --space-8:64px;
+  --space-9:96px; --space-10:128px;
+  /* SHAPE LAW: one radius for actions (the pill — a circle swept through time); everything else square. */
+  --radius-action:999px;
+  --radius-none:0;
+  --size-action:48px;         /* action height; min hit target 44px */
+  --size-action-sm:36px;      /* compact contexts only (nav) */
+  /* Layout */
+  --container:1200px;
+  --measure:62ch;
+  --hairline:1px solid var(--border-hairline);
+  --hairline-on-field:1px solid var(--border-on-field);
+  /* Elevation: the system is flat. Photos + fields do the depth. */
+  --shadow-none:none;
+  /* Motion: decisive, short. Frames advance; nothing floats. */
+  --ease-out:cubic-bezier(0.2,0,0,1); /* @kind other */
+  --ease-snap:cubic-bezier(0.6,0,0.2,1); /* @kind other */
+  --dur-fast:120ms; /* @kind other */
+  --dur-base:200ms; /* @kind other */
+  --dur-slow:320ms; /* @kind other */
+}

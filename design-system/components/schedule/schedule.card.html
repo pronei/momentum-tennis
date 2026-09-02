@@ -1,0 +1,30 @@
+<!-- @dsCard group="Components" viewport="700x640" name="Scheduling" subtitle="ResourceDayView: type-colored blocks, cancelled + conflict states, amber now line" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;background:var(--surface-card);padding:20px 24px}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+function mount(){
+  const NS=window.MomentumTennisDesignSystem_0ea6ac;
+  if(!(NS&&NS.ResourceDayView)){setTimeout(mount,200);return;}
+  const {ResourceDayView}=NS;
+  const COURTS=[{id:'c1',label:'COURT 1',location:'DE ANZA'},{id:'c2',label:'COURT 2',location:'DE ANZA'},{id:'c3',label:'COURT 3',location:'DE ANZA'},{id:'m1',label:'COURT 1',location:'MURDOCK'},{id:'m2',label:'COURT 2',location:'MURDOCK'}];
+  const SESSIONS=[
+    {id:1,court:'c1',location:'DE ANZA',start:'15:00',end:'16:00',type:'private',title:'Private — A. Westergren',coach:'ARTUR'},
+    {id:2,court:'c1',location:'DE ANZA',start:'16:00',end:'17:30',type:'class',title:'Green ball',coach:'VISHAL'},
+    {id:3,court:'c2',location:'DE ANZA',start:'16:00',end:'17:30',type:'team',title:'JTT practice',coach:'ELSIO'},
+    {id:4,court:'c3',location:'DE ANZA',start:'15:30',end:'17:00',type:'class',title:'Orange ball',coach:'VISHAL',cancelled:true},
+    {id:5,court:'c3',location:'DE ANZA',start:'17:30',end:'19:00',type:'camp',title:'Camp overflow',coach:'ARTUR'},
+  ];
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <ResourceDayView date="2026-09-12 · SATURDAY · SAMPLE DATA" startHour={15} endHour={20} rowH={72} nowTime="16:20"
+      courts={COURTS} sessions={SESSIONS}
+      draft={{court:'c2',start:'17:30',end:'19:00',conflict:undefined}} />
+  );
+}
+mount();
+</script></body></html>

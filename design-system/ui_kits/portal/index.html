@@ -1,0 +1,20 @@
+<!-- @dsCard group="Portal" viewport="1440x860" name="Player portal" subtitle="Stats + credits, calendar, bookings, store checkout, waiver center, profile — multi-player account with the re-consent gate" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Momentum Tennis — Player portal</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0}</style>
+</head><body><div id="root"><p style="font:12px/1.5 monospace;padding:24px;color:#46525E">LOADING PORTAL — IF THIS PERSISTS, THE DESIGN-SYSTEM BUNDLE IS STILL COMPILING; RELOAD IN A MOMENT.</p></div>
+<script type="text/babel" src="portal-flows.jsx"></script>
+<script type="text/babel" src="portal.jsx"></script>
+<script type="text/babel">
+function mount(){
+  const NS=window.MomentumTennisDesignSystem_0ea6ac;
+  if(NS&&NS.SiteNav&&NS.CourtMeter&&NS.TextField&&NS.Tabs&&NS.StatusChip&&NS.Banner&&NS.Select&&NS.Checkbox&&window.MTPortal&&window.MTPortalFlows){ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(window.MTPortal.Portal));}
+  else{setTimeout(mount,200);}
+}
+mount();
+</script></body></html>

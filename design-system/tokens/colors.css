@@ -1,0 +1,63 @@
+/* Momentum Tennis — color tokens.
+   Anchor blue tuned against court pixels sampled from the founder's archive:
+   shadowed acrylic #224263–#314E66, sunlit acrylic #7FA3C4–#83A1B7.
+   Deep/pale steps aligned to the master logo (assets/logo.svg): navy #1C3655, slate #A9BDC9.
+   Legacy #87CEFA (lightskyblue) is banned. */
+:root{
+  /* Court blues — the ground the students stand on */
+  --court-900:#12253B;
+  --court-800:#1C3655;  /* deep field: heros, footers, timeline night — the logo navy */
+  --court-700:#24466B;
+  --court-500:#2B5680;  /* ANCHOR — acrylic hard-court blue */
+  --court-400:#3E6C99;
+  --court-300:#7FA3C4;  /* ghost tint = sunlit court pixel average */
+  --court-200:#A9BDC9;  /* the logo slate */
+  --court-100:#DCE6EE;
+  --court-050:#EEF3F7;
+  /* Logo-fidelity colors — for reproducing the mark only, never UI accents */
+  --logo-navy:#1C3655;
+  --logo-slate:#A9BDC9;
+  --logo-tan:#C69C6D;
+  /* Neutrals */
+  --ink:#1B1B1B;
+  --ink-secondary:#46525E; /* cool slate for secondary text on light */
+  --line-white:#F7F7F7;    /* court-line white — page background */
+  --white:#FFFFFF;
+  /* The one warm: the present frame */
+  --amber-500:#E8A33D;  /* present-frame hit + primary CTA. Never body text on light. */
+  --amber-600:#C77F14;  /* hover/pressed CTA */
+  --amber-300:#F2C377;  /* warm tint (dark fields only) */
+  /* Semantic aliases */
+  --surface-page:var(--line-white);
+  --surface-card:var(--white);
+  --surface-tint:var(--court-050);
+  --surface-field:var(--court-800);   /* large brand field */
+  --surface-field-deep:var(--court-900);
+  --text-body:var(--ink);
+  --text-secondary:var(--ink-secondary);
+  --text-on-field:var(--line-white);
+  --text-on-field-dim:var(--court-200);
+  --accent-present:var(--amber-500);
+  --accent-present-hover:var(--amber-600);
+  --link:var(--court-500);
+  --link-hover:var(--court-700);
+  --link-on-field:var(--court-200);
+  --link-on-field-hover:var(--line-white);
+  /* Strobe ghost ramp: past = cool, now = warm */
+  --ghost-1:var(--court-100);
+  --ghost-2:var(--court-200);
+  --ghost-3:var(--court-300);
+  --ghost-4:var(--court-400);
+  --now:var(--amber-500);
+  /* Lines + focus */
+  --border-hairline:rgba(27,27,27,0.16);
+  --border-on-field:rgba(247,247,247,0.24);
+  --focus-on-light:var(--court-500);
+  --focus-on-dark:var(--amber-500);
+  /* State: the ONE error color. Muted brick — sits with the court ramp, never competes with amber.
+     Text/borders only, ALWAYS dual-channel (color + a mono message prefixed ERROR:). Never a lone red border.
+     Measured: 6.0:1 on --white, 5.6:1 on --line-white, 5.4:1 on --court-050.
+     There is NO success color: success = ink + mono confirmation line (CONFIRMED · SEP 12 · 16:00),
+     FrameTicks settle, amber only when the element is genuinely "the now". */
+  --state-error:#A8432D;
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo motion — swing variants</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;background:var(--surface-page);font-family:var(--font-sans);color:var(--ink);padding:48px 40px 64px}
+h1{font-family:var(--font-display);font-weight:900;font-size:var(--size-h2);letter-spacing:0.01em;text-transform:uppercase;margin:0 0 8px}
+.sub{font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);letter-spacing:0.05em;margin:0 0 40px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1200px}
+.panel{background:var(--surface-card);border:var(--hairline);padding:28px 24px 20px;display:flex;flex-direction:column;gap:18px}
+.stage{height:260px;display:grid;place-items:center;position:relative;overflow:hidden}
+.mark{width:200px;height:200px;position:relative}
+.mark svg{width:100%;height:100%;display:block}
+.cap{border-top:var(--hairline);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.cap b{font-size:var(--size-label);font-weight:700;letter-spacing:var(--track-label);text-transform:uppercase}
+.cap span{font-family:var(--font-mono);font-size:11.5px;line-height:1.6;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em}
+.ghost{position:absolute;inset:0}
+/* A — coil & extend: the serve rhythm, one body */
+.vA .anim{animation:coil 3.2s cubic-bezier(0.4,0,0.2,1) infinite;transform-origin:50% 96%}
+@keyframes coil{0%,22%{transform:none}40%{transform:translateY(2.2%) rotate(-3.2deg) scale(1,0.965)}54%{transform:translateY(-1.4%) rotate(2.2deg) scale(0.992,1.025)}64%{transform:translateY(0) rotate(0) scale(1)}100%{transform:none}}
+/* B — strobe replay: two cool ghost frames hold the past, the present frame swings */
+.vB .g1{opacity:0.14;transform:rotate(-11deg);transform-origin:42% 94%}
+.vB .g2{opacity:0.3;transform:rotate(-5.5deg);transform-origin:42% 94%}
+.vB .anim{animation:strobe 3.8s linear infinite;transform-origin:42% 94%}
+@keyframes strobe{0%,14%{transform:rotate(-11deg);opacity:1}14.1%{animation-timing-function:cubic-bezier(0.5,0,0.3,1)}38%{transform:rotate(5.5deg)}46%{transform:rotate(3.5deg)}76%{transform:rotate(3.5deg);opacity:1}84%{opacity:0;transform:rotate(3.5deg)}84.1%{transform:rotate(-11deg)}92%{opacity:0}100%{transform:rotate(-11deg);opacity:1}}
+/* C — ready sway: continuous split-step rhythm */
+.vC .anim{animation:sway 2.4s ease-in-out infinite alternate;transform-origin:50% 96%}
+@keyframes sway{from{transform:rotate(-2.3deg)}to{transform:rotate(2.3deg)}}
+@media (prefers-reduced-motion: reduce){.anim,.vA .anim,.vB .anim,.vC .anim{animation:none}.vB .anim{transform:rotate(3.5deg)}}
+</style></head><body>
+<h1>Logo motion — the swing</h1>
+<p class="sub">THREE VARIANTS · WHOLE-FIGURE MOTION (ARM + RACQUET SHARE ONE PATH WITH THE TORSO — LIMBS CAN'T ROTATE INDEPENDENTLY) · ALL FREEZE UNDER REDUCED-MOTION</p>
+<div class="row">
+<div class="panel vA"><div class="stage"><div class="mark anim" data-logo></div></div>
+<div class="cap"><b>A — Coil &amp; extend</b><span>The serve rhythm: load down, extend up, settle. One body, spring easing, long rest between reps.</span></div></div>
+<div class="panel vB"><div class="stage"><div class="mark"><div class="ghost g1" data-logo></div><div class="ghost g2" data-logo></div><div class="ghost anim" data-logo></div></div></div>
+<div class="cap"><b>B — Strobe replay</b><span>Two ghost frames hold the wind-up (past, faded); the present frame swings through to contact, then the rep replays. The brand thesis, animated.</span></div></div>
+<div class="panel vC"><div class="stage"><div class="mark anim" data-logo></div></div>
+<div class="cap"><b>C — Ready sway</b><span>The split-step: a continuous ±2.3° sway at the feet. Calmest; suits small header use.</span></div></div>
+</div>
+<script>
+fetch('../assets/logo-mark.svg').then(r=>r.text()).then(t=>{
+  document.querySelectorAll('[data-logo]').forEach(el=>{el.innerHTML=t;const s=el.querySelector('svg');if(s){s.removeAttribute('width');s.removeAttribute('height');s.style.width='100%';s.style.height='100%';}});
+});
+</script>
+</body></html>

@@ -1,0 +1,18 @@
+<!-- @dsCard group="Components" viewport="700x360" name="PhotoFrame" subtitle="Plain, court-wash and strobe-slice treatments on real archive photos" -->
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:20px;background:var(--surface-page)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const {PhotoFrame}=window.MomentumTennisDesignSystem_0ea6ac;
+function App(){return <div style={{display:'grid',gridTemplateColumns:'1.35fr 0.8fr 1.35fr',gap:16,alignItems:'start'}}>
+  <PhotoFrame src="../../assets/photos/net-rally-l.jpg" alt="Juniors rallying at the net" ratio="4:3" treatment="slice" caption="Strobe slice — one still, five frames" captionRight="NOW →"/>
+  <PhotoFrame src="../../assets/photos/medal-shirt-p.jpg" alt="Student with medal" ratio="3:4" treatment="wash" focal="50% 30%" caption="Court wash"/>
+  <PhotoFrame src="../../assets/photos/deanza-trophies-l.jpg" alt="Players with trophies at De Anza" ratio="4:3" treatment="plain" tag="DE ANZA · SAT 09:00" caption="Plain, tagged" captionRight="2025"/>
+</div>;}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

@@ -1,0 +1,31 @@
+<!-- @dsCard group="Components" viewport="700x760" name="Forms" subtitle="Shared anatomy: tracked-caps label, mono help, dual-channel error; frames instead of radios" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;background:var(--surface-card);padding:20px 24px}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+function mount(){
+  const NS=window.MomentumTennisDesignSystem_0ea6ac;
+  if(!(NS&&NS.Select&&NS.Checkbox&&NS.SegmentedControl&&NS.DateField&&NS.TimeField&&NS.TextArea&&NS.FormSection&&NS.TextField)){setTimeout(mount,200);return;}
+  const {TextField,Select,Checkbox,SegmentedControl,DateField,TimeField,TextArea,FormSection}=NS;
+  function App(){return <FormSection eyebrow="Session details" ticks description="Every control: 48px, square, hairline. Errors are always color + a mono message.">
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
+      <TextField label="Player name" defaultValue="Maya R." help="AS IT APPEARS ON THE ROSTER"/>
+      <TextField label="Guardian email" defaultValue="priya@example" error="enter a full email address"/>
+      <Select label="Court" options={['Court 1','Court 2','Court 3']} defaultValue="Court 2"/>
+      <SegmentedControl label="Class length" options={[{value:'we',label:'Weekend · 2h'},{value:'wd',label:'Weekday · 1.5h'}]} defaultValue="we"/>
+      <DateField label="Start date" defaultValue="2026-09-12" help="YYYY-MM-DD"/>
+      <TimeField label="Start time" defaultValue="16:00" help="24H · ARROWS STEP 15 MIN"/>
+      <TextArea label="Notes" rows={2} placeholder="Optional" style={{gridColumn:'1/-1'}}/>
+      <Checkbox label="Email me schedule changes" defaultChecked/>
+      <Checkbox consent label="I have read this document and agree on behalf of Maya R."/>
+    </div>
+  </FormSection>;}
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+}
+mount();
+</script></body></html>

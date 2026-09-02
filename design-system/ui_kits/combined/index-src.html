@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Momentum Tennis</title>
+<link rel="stylesheet" href="../../styles.css">
+<meta name="ext-resource-dependency" content="../../assets/logo-mark.svg" data-resource-id="logoMark" />
+<meta name="ext-resource-dependency" content="../../assets/logo-mark-field.svg" data-resource-id="logoMarkField" />
+<meta name="ext-resource-dependency" content="../../assets/logo.svg" data-resource-id="logoFull" />
+<meta name="ext-resource-dependency" content="photos/net-rally-l.jpg" data-resource-id="photoNetRally" />
+<meta name="ext-resource-dependency" content="photos/racquets-up-l.jpg" data-resource-id="photoRacquets" />
+<meta name="ext-resource-dependency" content="photos/team-court-wide-l.jpg" data-resource-id="photoTeamWide" />
+<meta name="ext-resource-dependency" content="photos/court-walk-l.jpg" data-resource-id="photoCourtWalk" />
+<meta name="ext-resource-dependency" content="photos/champs-banner-l.jpg" data-resource-id="photoChamps" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0}</style>
+<template id="__bundler_thumbnail" data-bg-color="#1C3655"><svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="800" fill="#1C3655"/><rect x="330" y="200" width="540" height="400" fill="none" stroke="#F7F7F7" stroke-width="8"/><line x1="330" y1="400" x2="870" y2="400" stroke="#F7F7F7" stroke-width="8"/><circle cx="600" cy="330" r="26" fill="#A9BDC9" opacity="0.45"/><circle cx="660" cy="380" r="26" fill="#A9BDC9" opacity="0.7"/><circle cx="720" cy="450" r="28" fill="#E8A33D"/></svg></template>
+</head><body><div id="root"><p style="font:12px/1.5 monospace;padding:24px;color:#46525E">LOADING…</p></div>
+<script type="text/babel" src="sections-combined.jsx"></script>
+<script type="text/babel" src="portal-combined.jsx"></script>
+<script type="text/babel">
+const PORTAL_VIEWS=['portal','stats','calendar','bookings','store','profile'];
+function Root(){
+  const [h,setH]=React.useState((location.hash||'').replace('#',''));
+  React.useEffect(()=>{
+    const f=()=>setH((location.hash||'').replace('#',''));
+    window.addEventListener('hashchange',f);return()=>window.removeEventListener('hashchange',f);
+  },[]);
+  const isPortal=PORTAL_VIEWS.includes(h);
+  React.useEffect(()=>{
+    if(!isPortal){
+      const el=h?document.getElementById(h):null;
+      if(el)window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-84});
+    }
+  },[h,isPortal]);
+  return isPortal?React.createElement(window.MTPortal.Portal,{key:'portal-'+h}):React.createElement(window.MTSections.HomePage,{key:'home'});
+}
+function mount(){
+  const NS=window.MomentumTennisDesignSystem_0ea6ac;
+  if(NS&&NS.SiteNav&&window.MTSections&&window.MTPortal){ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Root));}
+  else{setTimeout(mount,200);}
+}
+mount();
+</script></body></html>

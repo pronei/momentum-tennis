@@ -1,0 +1,11 @@
+/* Momentum Tennis — minimal base rules (defaults consumers get for free). */
+body{font-family:var(--font-sans);color:var(--text-body);background:var(--surface-page);font-size:var(--size-body);line-height:var(--leading-body);margin:0;-webkit-font-smoothing:antialiased}
+::selection{background:var(--court-200);color:var(--ink)}
+a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--link-hover)}
+:focus-visible{outline:2px solid var(--focus-on-light);outline-offset:2px}
+.on-field :focus-visible,.on-field:focus-visible{outline-color:var(--focus-on-dark)}
+.mt-eyebrow{font-family:var(--font-sans);font-size:var(--size-label);font-weight:var(--weight-bold);letter-spacing:var(--track-label);text-transform:uppercase}
+.mt-display{font-family:var(--font-display);font-weight:var(--weight-display);letter-spacing:var(--track-display);line-height:var(--leading-display);text-transform:uppercase}
+.mt-mono{font-family:var(--font-mono);font-size:var(--size-label-sm);line-height:var(--leading-mono)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}

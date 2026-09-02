@@ -1,0 +1,35 @@
+/* Momentum Tennis — type tokens.
+   Display: Chivo (Black). Workhorse: IBM Plex Sans. Data/annotation: IBM Plex Mono.
+   THE TRACKING LAW: text ≤22px set in caps tracks 0.107em (labels, eyebrows, buttons, nav).
+   Display caps ≥28px track 0–0.02em. Never 0.107em at display sizes. */
+:root{
+  --font-display:'Chivo',ant,'Helvetica Neue',Arial,sans-serif;
+  --font-sans:'IBM Plex Sans','Helvetica Neue',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+  /* Scale (px reference; display sizes carry clamp() floors for 360px screens) */
+  --size-display-xl:clamp(2.75rem,7.5vw,4.5rem);   /* 72 — hero only */
+  --size-display:clamp(2.375rem,6vw,3.5rem);      /* 56 — h1 */
+  --size-h2:clamp(1.875rem,4.5vw,2.5rem);           /* 40 */
+  --size-h3:clamp(1.5rem,3.5vw,1.75rem);           /* 28 — smallest "display" size */
+  --size-h4:1.375rem;         /* 22 — largest "label" size */
+  --size-body-lg:1.125rem;    /* 18 */
+  --size-body:1rem;           /* 16 */
+  --size-body-sm:0.875rem;    /* 14 */
+  --size-label:0.8125rem;     /* 13 — eyebrows, buttons, nav */
+  --size-label-sm:0.75rem;    /* 12 — annotations, captions */
+  /* Tracking */
+  --track-label:0.107em;      /* the speaking voice, measured off the legacy site */
+  --track-display:0.01em;     /* display caps; max 0.02em */
+  --track-body:0; /* @kind other */
+  /* Leading */
+  --leading-display:1.02;
+  --leading-tight:1.2;
+  --leading-body:1.55;
+  --leading-mono:1.45;
+  /* Weights */
+  --weight-display:900;       /* Chivo Black */
+  --weight-display-sub:800;
+  --weight-bold:700;
+  --weight-medium:500;
+  --weight-regular:400;
+}

@@ -1,0 +1,46 @@
+# ── dependencies / build output ──────────────────────────────
+node_modules/
+.svelte-kit/
+build/
+dist/
+.wrangler/
+
+# ── environment: secrets never enter git ─────────────────────
+# committed:   .env.example, .env.development, .env.production  (public, non-secret values ONLY)
+# gitignored:  .env, .env.local, any *.local, wrangler .dev.vars (real secrets live here / in CF)
+.env
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*
+!.env.example
+
+# ── supabase local dev ───────────────────────────────────────
+supabase/.temp/
+supabase/.branches/
+
+# ── tests / coverage ─────────────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+
+# ── logs, OS, editors ────────────────────────────────────────
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# ── design exports & heavy reference media (kept locally; the
+#    system's code/docs ARE committed, its 140MB of photo
+#    originals are not — app photos ship via static/ later) ──
+*.zip
+design-system/uploads/
+design-system/scraps/
+design-system/assets/photos/
+design-system/ui_kits/combined/photos/
+
+# ── artifacts of the unrelated racquet project sharing this
+#    directory (recommend relocating them; ignored meanwhile) ─
+blender/
+momentum-racquet-spec-v3.md
+design-b-worksheet.md
