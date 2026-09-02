@@ -5,8 +5,9 @@ programs and scheduling across De Anza College and Murdock Park, guardian/player
 accounts, versioned waivers, credit-based class and lesson booking, payments,
 coach tools, and notifications.
 
-**Status: pre-scaffold.** Schema and phase plan are in [docs/PLAN.md](docs/PLAN.md),
-gated on per-phase approval. Contributor and agent rules: [AGENTS.md](AGENTS.md).
+**Status: phase 0 (foundations) built** — scaffold, validated schema + generated types,
+auth, domain patterns, design-system port, integration skeletons, CI. Phases and decisions:
+[docs/PLAN.md](docs/PLAN.md). Contributor and agent rules: [AGENTS.md](AGENTS.md).
 
 ## Stack
 - **SvelteKit** (Svelte 5) + `@sveltejs/adapter-cloudflare` → Cloudflare Workers
@@ -23,11 +24,17 @@ gated on per-phase approval. Contributor and agent rules: [AGENTS.md](AGENTS.md)
   UI component libraries, ever.
 
 ## Repository layout
+    src/               SvelteKit app — hooks, lib/server (config, db, domain), lib/ds (design-system port), routes
+    supabase/          migrations (append-only), seed.sql, tests/validate.mjs (PGlite harness), config.toml
+    scripts/           gen-db-types.mjs (types from migrations), check-adherence.mjs (design-system lint)
+    workers/cron/      scheduled Worker: Cron Triggers → POST /internal/cron with a shared secret
+    e2e/               Playwright smoke tests (need a reachable Supabase)
     design-system/     tokens, reference components, UI kits, email kit (read-only reference)
-    docs/              PLAN.md (phases + open questions), decisions/ (ADRs)
-    src/               SvelteKit app                    (planned — phase 0)
-    supabase/          migrations, seed                 (planned — phase 0)
-    workers/cron/      scheduled worker                 (planned — phase 7)
+    docs/              PLAN.md (phases, decisions), superpowers/plans/ (phase checklists), decisions/ (ADRs)
+
+## Commands
+`pnpm dev` · `pnpm check` · `pnpm lint` · `pnpm test` · `pnpm build` · `pnpm db:types` ·
+`pnpm db:test` · `pnpm test:e2e` — details and the development loop in [AGENTS.md](AGENTS.md).
 
 Heavy design media (photo originals, export zips) and the unrelated racquet-project
 files are gitignored — see `.gitignore` for the exact list.

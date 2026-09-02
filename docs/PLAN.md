@@ -15,7 +15,7 @@ localized.
 
 | # | Phase | Contents | Depends on | Exit criteria |
 |---|-------|----------|------------|---------------|
-| 0 | Foundations | SvelteKit scaffold, CI (check/lint/test), CD to both CF projects, dev+prod Supabase projects, schema v2 migration + RLS + RPC shells, Supabase auth, design-system port (tokens + core/forms/feedback), seed script | approval of schema v2 | both deployments live behind auth; migration applied; DS components render on a styleguide route |
+| 0 | Foundations — **built 2026-09-02** (`phase-0/foundations`) | SvelteKit scaffold, CI (check/lint/test/build), migration 0001 + PGlite harness + generated types, Supabase auth + server guards, domain patterns (Result/AppError, time, identity, booking, cron, payments idempotency, notify), design-system port (core/forms/feedback) + `/styleguide`, integration skeletons (Stripe webhook, cron endpoint + worker), wrangler + workflows | approval of schema v2 ✓ | code exit criteria met (check/lint/test/build green); **operator steps remain**: create the two Supabase projects + two CF projects, fill env/secrets, GitHub secrets for migrate.yml — see docs/superpowers/plans/2026-09-02-phase-0-foundations.md |
 | 1 | Identity & profiles | guardian onboarding, N players per account, player switcher, adult self-guardianship, restricted minor login, staff roles | 0 | a family with 2 children fully modeled end-to-end on dev |
 | 2 | Waivers | doc/version admin (draft→publish freeze), signing ceremony (capacity resolved server-side), re-consent detection, status surfaces | 1 | version bump forces re-consent; booking gate queryable |
 | 3 | Schedule & availability | locations/courts/availability rules + exceptions, terms/classes/camps/teams CRUD, occurrence generation, ResourceDayView admin editor, public + portal read-only calendars | 1 (2 for gating copy) | Artur can enter the real fall schedule; calendar renders it in academy TZ |
@@ -95,6 +95,7 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
 - 2026-08-30 — Stripe confirmed over Mindbody/CourtReserve/Square. ACH-first,
   cards fallback, bank-pay discount (not surcharge). No ACH installment
   splitting. Interim rail: Stripe Payment Links/Invoices until phase 5.
+- 2026-09-02 — Phase 0 built (branch phase-0/foundations): 62 unit/contract tests + 74 schema checks green; types generated locally from migrations via PGlite (scripts/gen-db-types.mjs) so no CLI/project is needed to type the app.
 - 2026-09-02 — L/M/N added (forgiveness, ball levels, level-tagged slots); schema revalidated, 74 checks. Harness caught three real bugs: audit trigger uuid cast on the settings singleton, re-booking blocked by session-keyed uniqueness, ledger lookups keyed on session instead of booking.
 - 2026-08-31 — Schema v2 finalized and validated in PGlite (59 checks); open questions A–K resolved (see above).
 - 2026-08-31 — Design system extension landed (--state-error #A8432D, forms/

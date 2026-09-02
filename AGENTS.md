@@ -5,8 +5,10 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Pre-scaffold. Schema v2 and the phase plan are proposed in `docs/PLAN.md`, gated on
-approval. The design system in `design-system/` is complete and binding.
+Phase 0 (foundations) built on branch `phase-0/foundations`: scaffold, migration 0001 +
+PGlite harness, generated types, auth + guards, domain patterns, design-system port
+(core/forms/feedback), integration skeletons, CI. Phase plan and decisions: `docs/PLAN.md`.
+Phase-0 checklist: `docs/superpowers/plans/2026-09-02-phase-0-foundations.md`.
 
 ## Prime directives
 1. **Build only the approved phase.** Deliver, stop, wait for explicit approval.
@@ -98,14 +100,47 @@ Never put real family data in dev.
 - When a convention here stops matching reality, update this file in the same
   change — a stale AGENTS.md is worse than none.
 
-## Commands (PLANNED — real once phase 0 scaffolds)
-`pnpm dev` · `pnpm build` · `pnpm check` · `pnpm lint` · `pnpm test` ·
-`pnpm db:types` · `supabase db push` · `wrangler deploy` (workers/cron)
+## Commands
+| command | what it does |
+|---|---|
+| `pnpm dev` | Vite dev server (needs `.env.development` filled + `.env.local` secrets) |
+| `pnpm check` | `svelte-kit sync` + `svelte-check` (types, a11y) — must be clean |
+| `pnpm lint` | prettier check + eslint + design-system adherence (`scripts/check-adherence.mjs`) |
+| `pnpm format` | prettier write |
+| `pnpm test` | vitest: domain units, DS SSR contracts, and the PGlite schema harness |
+| `pnpm db:test` | the schema harness alone (`supabase/tests/validate.mjs`) |
+| `pnpm db:types` | regenerate `src/lib/server/db/database.types.ts` from `supabase/migrations` (CI verifies it is current) |
+| `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` |
+| `pnpm test:e2e` | Playwright smoke against the built app (needs a reachable Supabase) |
+| `supabase db push` | apply migrations (CI does this per deploy branch — `.github/workflows/migrate.yml`) |
+| `wrangler deploy --env dev\|live` | manual deploy; normally Workers Builds deploys from the branch |
+
+Development loop: write the failing test, watch it fail, implement, watch it pass
+(`superpowers:test-driven-development`). Domain functions take the Supabase client as a
+parameter and are tested with narrow fakes; DS components are tested via `svelte/server`
+render; the schema is tested behaviorally in PGlite.
 
 ## Repo map
-- `design-system/` — Claude Design export: tokens (CSS custom properties),
-  JSX reference components, UI kits, email kit, PRODUCT.md. Heavy media is
-  gitignored; code and docs are committed. Treat as read-only reference.
-- `docs/PLAN.md` — phases, exit criteria, open questions. `docs/decisions/` — ADRs.
-- PLANNED (phase 0): `src/` (SvelteKit app), `supabase/` (migrations, seed),
-  `workers/cron/` (scheduled worker), `e2e/`.
+- `src/hooks.server.ts` — per-request RLS client, `safeGetSession`, route-group guards
+  (`(portal)` needs a user, `/coach` staff, `/admin` admin).
+- `src/lib/server/config.ts` (pure, tested) + `config.runtime.ts` ($env wiring) — one
+  validated config; secrets only via `$env/dynamic/private`.
+- `src/lib/server/db/` — `client.ts` (user-scoped), `admin.ts` (service role: webhooks,
+  cron only), `database.types.ts` (generated).
+- `src/lib/server/domain/` — `result.ts` (Result/AppError + Postgres → code mapping +
+  the only copy for refusals), `time.ts` (academy-tz rendering mirroring SQL),
+  `identity/` (staff roles, account profile), `booking/` (RPC wrappers), `cron.ts`
+  (secret check + job dispatch), `payments/` (webhook idempotency port + Supabase
+  store), `notify/` (transactional vs marketing send, insert-first idempotency).
+- `src/lib/ds/` — ported design system (`index.ts` barrel; `core/ forms/ feedback/`);
+  `FieldShell.svelte` is the shared form anatomy. `/styleguide` renders everything.
+- `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `(portal)/portal`
+  (shell + account form: the superforms pattern), `admin` (guarded shell),
+  `internal/cron`, `api/stripe/webhook`.
+- `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
+- `scripts/` — `gen-db-types.mjs`, `check-adherence.mjs`.
+- `workers/cron/` — the scheduled Worker (Cron Triggers → `/internal/cron`).
+- `design-system/` — Claude Design export: tokens (imported as `$ds`), JSX reference
+  components, UI kits, email kit, PRODUCT.md. Media gitignored. Read-only reference.
+- `docs/PLAN.md` — phases, exit criteria, decisions. `docs/superpowers/plans/` — phase
+  checklists. `docs/decisions/` — ADRs.
