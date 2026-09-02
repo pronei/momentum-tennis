@@ -1,9 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Momentum Tennis — schema v2  (finalized 2026-08-31, validated with PGlite)
 --
--- Status: reviewed spec. On phase-0 approval this file becomes
--- supabase/migrations/0001_schema.sql verbatim and this copy is deleted —
--- migrations are then the single source of truth.
+-- Migration 0001. Append-only: never edit once applied — add a new migration.
+-- Behavioral tests: supabase/tests/validate.mjs (PGlite). Types: pnpm db:types.
 --
 -- Conventions
 --   • timestamptz (UTC) everywhere; LOCAL wall-clock only in recurring templates
@@ -1314,12 +1313,3 @@ grant execute on function public.is_staff()                                     
 grant execute on function public.guards(uuid)                                                   to authenticated;
 grant execute on function public.player_is_adult(uuid, timestamptz)                             to authenticated;
 grant execute on function public.can_view_financials(uuid)                                      to authenticated;
-
--- ───────────────────────────── reference seed (moves to supabase/seed.sql in phase 0) ──
-insert into skill_levels (key, label, rank) values
-  ('orange','Orange ball',1),
-  ('green_beginner','Green ball · beginner',2), ('green_intermediate','Green ball · intermediate',3), ('green_advanced','Green ball · advanced',4),
-  ('yellow_intermediate','Yellow ball · intermediate',5), ('yellow_advanced','Yellow ball · advanced',6);
-insert into locations (name) values ('De Anza College'), ('Murdock Park');
-insert into rating_dimensions (key, label, scale_max, sort) values ('court_placement','Court placement',5,0);
-insert into waiver_documents (slug, title) values ('liability','Participation waiver');   -- F: one document; text FROM LEGAL

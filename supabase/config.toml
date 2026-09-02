@@ -1,0 +1,18 @@
+# Supabase CLI config (minimal). Local stack is optional — schema tests run in PGlite.
+project_id = "momentumtennis"
+
+[db]
+major_version = 17
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/auth/callback"]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
