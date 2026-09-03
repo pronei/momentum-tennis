@@ -129,10 +129,11 @@ Never put real family data in dev.
 | `pnpm db:test` | the schema harness alone (`supabase/tests/validate.mjs`) |
 | `pnpm env:check` | verify `config/*.yaml` against the committed env files (leak guard: refuses if a secret has a value in a committed file) |
 | `pnpm db:types` | regenerate `src/lib/server/db/database.types.ts` from `supabase/migrations` (CI verifies it is current) |
+| `pnpm db:push <profile>` | apply `supabase/migrations` to that environment's database directly — password from `.env.local`, project ref and pooler from `config/<profile>.yaml`; no `supabase login`. CI runs the same command |
 | `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` (bakes `.env.production`) |
 | `pnpm build:dev` / `pnpm build:live` | the same build with a profile's public values and `deploy.site_url` — what Workers Builds runs |
+| `pnpm cf …` | wrangler scoped to this repo's Cloudflare account: login state in `.wrangler/home` (gitignored), never the machine-wide login — `pnpm cf login`, `pnpm cf whoami`, `pnpm cf deploy --env dev` |
 | `pnpm test:e2e` | Playwright smoke against the built app (needs a reachable Supabase) |
-| `supabase db push` | apply migrations (CI does this per deploy branch — `.github/workflows/migrate.yml`) |
 | `wrangler deploy --env dev\|live` | manual deploy; normally Workers Builds deploys from the branch |
 
 Development loop: write the failing test, watch it fail, implement, watch it pass

@@ -887,5 +887,18 @@ else {
 	failures++;
 }
 
+// 12. RLS safety net (0006): any table created in public outside our migrations gets RLS enabled
+// by the event trigger — a hand-made or forgotten table can never be world-readable.
+await q(`create table public._rls_probe(id int)`);
+const probeRls = (
+	await q(`select relrowsecurity as enabled from pg_class where relname = '_rls_probe'`)
+).rows[0]?.enabled;
+if (probeRls === true) ok('event trigger enables RLS on a new public table');
+else {
+	console.log('  \u2717 new public table has RLS =', probeRls);
+	failures++;
+}
+await q(`drop table public._rls_probe`);
+
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL CHECKS PASSED');
 process.exit(failures ? 1 : 0);

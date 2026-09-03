@@ -168,7 +168,8 @@ const fns = await q(`
          (select typname from pg_type where oid = p.prorettype) as rettype
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prokind = 'f'
-    and p.prorettype <> 'trigger'::regtype
+    -- trigger and event-trigger functions are not callable through the API
+    and p.prorettype not in ('trigger'::regtype, 'event_trigger'::regtype)
     -- PGlite installs extensions into public; Supabase uses the extensions schema. Skip them.
     and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
   order by p.proname`);

@@ -16,7 +16,8 @@ supabase:
   project_ref: rjiagjfvsaaxezsxfuzq
   url: https://rjiagjfvsaaxezsxfuzq.supabase.co
   plan: free # decision J — dev stays Free; prod moves to Pro before phase 5
-  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/dev (or `supabase db push`)
+  pooler: aws-0-us-west-1 # session pooler host (IPv4): CI and `pnpm db:push --pooler` use it; the direct host is IPv6-only
+  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/dev, or `pnpm db:push dev`
 
 cloudflare:
   account_id: TODO # confirm with `wrangler whoami` — you have more than one account
@@ -39,7 +40,7 @@ stripe:
 # Names only. `wrangler secret put <NAME> --env dev` when deployed. Each is demanded only by
 # the code that uses it (requireSecret), so the app runs before every phase's key exists.
 secrets:
-  - name: SUPABASE_SERVICE_ROLE_KEY
+  - name: SUPABASE_SECRET_KEY
     needed_from: phase 5 (webhooks) and 7 (cron) # anything using the service-role client
   - name: STRIPE_SECRET_KEY
     needed_from: phase 5
@@ -51,7 +52,5 @@ secrets:
     needed_from: phase 7
 
 # GitHub repository secrets the migrate workflow reads for this environment.
-ci_secrets:
-  - SUPABASE_ACCESS_TOKEN
-  - SUPABASE_PROJECT_REF_DEV
-  - SUPABASE_DB_PASSWORD_DEV
+ci_secrets: # migrate.yml — `pnpm db:push dev` needs only the database password
+  - SUPABASE_DB_PASSWORD_DEV # also in .env.local for `pnpm db:push dev`

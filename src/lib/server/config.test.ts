@@ -8,7 +8,7 @@ const core = {
 	EMAIL_FROM: 'Momentum Tennis <no-reply@momentum-tennis.com>'
 };
 const secrets = {
-	SUPABASE_SERVICE_ROLE_KEY: 'service-key',
+	SUPABASE_SECRET_KEY: 'service-key',
 	STRIPE_SECRET_KEY: 'sk_test_x',
 	STRIPE_WEBHOOK_SECRET: 'whsec_x',
 	RESEND_API_KEY: 're_x',

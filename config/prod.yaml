@@ -14,7 +14,8 @@ supabase:
   project_ref: TODO # fill when the production project exists
   url: TODO
   plan: pro # required before phase 5: Free has no backups and pauses after 7 idle days
-  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/live
+  pooler: TODO_pooler_host # dashboard → Connect → Session pooler, e.g. aws-0-us-west-1
+  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/live, or `pnpm db:push prod`
 
 cloudflare:
   account_id: TODO # the same account as dev, confirmed with `wrangler whoami`
@@ -32,7 +33,7 @@ stripe:
   mode: live
 
 secrets:
-  - name: SUPABASE_SERVICE_ROLE_KEY
+  - name: SUPABASE_SECRET_KEY
     needed_from: phase 5 (webhooks) and 7 (cron)
   - name: STRIPE_SECRET_KEY
     needed_from: phase 5
@@ -43,7 +44,5 @@ secrets:
   - name: CRON_SHARED_SECRET
     needed_from: phase 7
 
-ci_secrets:
-  - SUPABASE_ACCESS_TOKEN
-  - SUPABASE_PROJECT_REF_LIVE
-  - SUPABASE_DB_PASSWORD_LIVE
+ci_secrets: # migrate.yml — `pnpm db:push prod` needs only the database password
+  - SUPABASE_DB_PASSWORD_PROD # also in .env.local for `pnpm db:push prod`

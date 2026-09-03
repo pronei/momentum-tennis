@@ -9,12 +9,16 @@ secret is in it by construction: `pnpm env:check` refuses a secret in a committe
 design system's photo originals are gitignored. The publishable Supabase key in
 `.env.development` is public by design — RLS is the guard.
 
+Secrets live in exactly two places: `.env.local` (gitignored — app secrets the code demands
+lazily, plus an operator-only section the scripts read) and the Cloudflare project's secrets.
+`.env.example` is the annotated list of both.
+
 ## 0. Layout
 
-| environment | branch        | Cloudflare worker    | Supabase project                | Stripe |
-|-------------|---------------|----------------------|---------------------------------|--------|
-| dev         | `deploy/dev`  | `momentumtennis-dev` | `rjiagjfvsaaxezsxfuzq` (Free)   | test   |
-| live        | `deploy/live` | `momentumtennis`     | to be created (Pro before ph. 5) | live   |
+| environment | branch        | Cloudflare worker    | Supabase project                       | Stripe |
+|-------------|---------------|----------------------|----------------------------------------|--------|
+| dev         | `deploy/dev`  | `momentumtennis-dev` | `rjiagjfvsaaxezsxfuzq` (Free, OrioleDB) | test   |
+| live        | `deploy/live` | `momentumtennis`     | to be created (Pro, standard Postgres) | live   |
 
 Profiles: `config/dev.yaml`, `config/prod.yaml`. Flow: work → `main` → `deploy/dev` → `deploy/live`.
 
@@ -24,36 +28,57 @@ Profiles: `config/dev.yaml`, `config/prod.yaml`. Flow: work → `main` → `depl
 - CI (`.github/workflows/ci.yml`) runs on every push and PR: env:check, types current, check,
   lint, test, build. Nothing to configure.
 - Migrations (`.github/workflows/migrate.yml`) run on push to `deploy/dev` / `deploy/live` when
-  `supabase/` changes. They need **repository secrets** (Settings → Secrets and variables →
-  Actions):
+  `supabase/migrations/` changes, and on demand (Actions → Migrate database → Run workflow).
+  They run `pnpm db:push <profile>` and need one **repository secret** per environment
+  (Settings → Secrets and variables → Actions):
 
   | secret | where it comes from |
   |---|---|
-  | `SUPABASE_ACCESS_TOKEN` | supabase.com/dashboard/account/tokens — a personal access token for the account that owns the projects |
-  | `SUPABASE_PROJECT_REF_DEV` | `rjiagjfvsaaxezsxfuzq` |
-  | `SUPABASE_DB_PASSWORD_DEV` | dashboard → project → Settings → Database (reset it there if unknown) |
-  | `SUPABASE_PROJECT_REF_LIVE`, `SUPABASE_DB_PASSWORD_LIVE` | when the production project exists |
+  | `SUPABASE_DB_PASSWORD_DEV` | dashboard → project → Settings → Database (reset it there if unknown) — **set** |
+  | `SUPABASE_DB_PASSWORD_PROD` | when the production project exists |
 
-  Until those exist, apply migrations from your machine (step 2). The first push of a branch may
-  not trigger the path-filtered workflow at all — do the first `db push` by hand regardless.
+  Nothing else: the project ref and pooler host are public facts in `config/*.yaml`, and no
+  personal access token is involved. (A `SUPABASE_PROJECT_REF_DEV` secret was set before the
+  workflow was simplified; it is unused and can be deleted.)
 
-## 2. Supabase — dev project (do this first; nothing works until the schema is applied)
+  The first push of a new branch may not trigger the path-filtered workflow — use Run workflow,
+  or `pnpm db:push` from your machine.
 
-The CLI is installed (`supabase --version`). The Supabase MCP in this workspace belongs to a
-different account, so use the CLI or the dashboard only.
+## 2. Supabase — dev project
+
+The Supabase MCP in this workspace belongs to a different account, so use the scripts, the CLI,
+or the dashboard. No `supabase login` or `supabase link` is needed anywhere: the scripts connect
+to the database directly with its password.
+
+**Apply the schema** (`.env.local` holds `SUPABASE_DB_PASSWORD_DEV`; the ref and pooler are in
+`config/dev.yaml`):
 
 ```bash
-supabase login                                         # opens the browser — pick the account that owns rjiagjfvsaaxezsxfuzq
-supabase link --project-ref rjiagjfvsaaxezsxfuzq       # asks for the database password (dashboard → Settings → Database)
-supabase db push                                       # applies supabase/migrations 0001…0005 in order
+pnpm db:push dev              # applies supabase/migrations in order; --dry-run lists them first
 ```
 
-Verify the schema landed (this returns the six ball levels once it has):
+From a network without IPv6 add `--pooler` (the direct host is IPv6-only; CI does this
+automatically). Verify the schema landed — this returns the six ball levels once it has:
 
 ```bash
 curl -s "https://rjiagjfvsaaxezsxfuzq.supabase.co/rest/v1/skill_levels?select=key,rank&order=rank" \
   -H "apikey: $(grep PUBLIC_SUPABASE_PUBLISHABLE_KEY .env.development | cut -d= -f2)"
 ```
+
+Ad-hoc inspection: `brew install libpq`, then
+`/opt/homebrew/opt/libpq/bin/psql "host=db.rjiagjfvsaaxezsxfuzq.supabase.co dbname=postgres user=postgres sslmode=require"`
+with the password from `.env.local`.
+
+**Storage engine.** The dev project was created with **OrioleDB** (Supabase's alpha storage
+engine; `show default_table_access_method` says `orioledb`). The constraints the booking
+guarantees rest on — GiST exclusion for double-booking, partial unique indexes for the weekly
+cap — were verified to be enforced on OrioleDB tables, and the migrations use nothing it lacks.
+**Create the production project as standard Postgres** (pick "Postgres", not "OrioleDB", when
+creating it): a money ledger does not belong on an alpha engine. Recreating dev the same way is
+optional and would give exact parity; the schema applies unchanged either way.
+
+**RLS safety net.** The `ensure_rls` event trigger you created by hand in dev is now migration
+`0006` (identical function, replaced idempotently), so production gets it too. Nothing to do.
 
 Then in the dashboard, **Authentication → URL Configuration**:
 
@@ -62,34 +87,39 @@ Then in the dashboard, **Authentication → URL Configuration**:
   `https://<dev site url>/auth/callback`. Sign-up confirmation emails redirect here.
 - Keep email confirmations on (that is what `supabase/config.toml` assumes locally).
 
-The **service role key** (Settings → API) is not needed until phase 5/7. When it is, it goes
-into `.env.local` locally and `wrangler secret put` deployed — never into git.
+The **secret key** (`sb_secret_…`, Settings → API Keys — it is the service role) is in
+`.env.local` as `SUPABASE_SECRET_KEY`; the deployed worker needs it from phase 5/7 via
+`pnpm cf secret put` — never into git.
 
 Free-plan note (decision J): the dev project pauses after 7 idle days; restore it from the
 dashboard. Production must be on Pro before phase 5 — Free has no backups.
 
 ## 3. Cloudflare — dev worker
 
-You have more than one Cloudflare account, and the Cloudflare MCP in this workspace is for
-another one. Use wrangler, and confirm the account every time:
+You have more than one Cloudflare account. `pnpm cf` is wrangler scoped to **this repo's**
+account: its login state lives in `.wrangler/home` (gitignored) and it never reads the
+machine-wide wrangler login or a `CLOUDFLARE_API_TOKEN` exported in your shell — so the other
+account stays exactly as it is.
 
 ```bash
-npx wrangler whoami                     # is this the account Momentum Tennis should live in?
-npx wrangler logout && npx wrangler login   # if not
+pnpm cf login                 # once: opens the browser — log into the account Momentum Tennis lives in
+pnpm cf whoami                # confirm; put the account id in config/dev.yaml (cloudflare.account_id)
 ```
 
-Put the confirmed account id in `config/dev.yaml` (`cloudflare.account_id`) so it is on record.
+Prefer a token? My Profile → API Tokens → "Edit Cloudflare Workers" template, then
+`CLOUDFLARE_API_TOKEN` (+ `CLOUDFLARE_ACCOUNT_ID`) in `.env.local`; `pnpm cf` uses it and skips
+the login.
 
 **First deploy, by hand** (creates the worker):
 
 ```bash
-pnpm build:dev                          # bakes .env.development's public values, NODE_ENV=production
-npx wrangler deploy --env dev           # → prints https://momentumtennis-dev.<subdomain>.workers.dev
+pnpm build:dev                # bakes .env.development's public values, NODE_ENV=production
+pnpm cf deploy --env dev      # → prints https://momentumtennis-dev.<subdomain>.workers.dev
 ```
 
 Take that URL and:
 
-1. put it in `config/dev.yaml` under `deploy.site_url`, then `pnpm build:dev && npx wrangler deploy --env dev`
+1. put it in `config/dev.yaml` under `deploy.site_url`, then `pnpm build:dev && pnpm cf deploy --env dev`
    once more so the app knows its own origin (auth redirects and email links depend on it);
 2. add `<url>/auth/callback` to Supabase's redirect URLs (step 2).
 
@@ -102,6 +132,8 @@ Take that URL and:
 | Build command | `pnpm build:dev` |
 | Deploy command | `npx wrangler deploy --env dev` |
 
+(Cloudflare's build environment authenticates itself; the wrapper is only for your machine.)
+
 **Protect it** — Zero Trust → Access → Applications → Self-hosted → the workers.dev hostname,
 allow your email(s). Half-built booking flows should not be on the public internet.
 
@@ -109,11 +141,11 @@ allow your email(s). Half-built booking flows should not be on the public intern
 need one answer 503 until it is set):
 
 ```bash
-npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY --env dev   # phase 5/7
-npx wrangler secret put STRIPE_SECRET_KEY --env dev           # phase 5 (sk_test_…)
-npx wrangler secret put STRIPE_WEBHOOK_SECRET --env dev       # phase 5 (from the Stripe webhook endpoint you create for this URL)
-npx wrangler secret put RESEND_API_KEY --env dev              # phase 4/7
-npx wrangler secret put CRON_SHARED_SECRET --env dev          # phase 7 — generate: openssl rand -base64 32
+pnpm cf secret put SUPABASE_SECRET_KEY --env dev       # phase 5/7 — the sb_secret_… key
+pnpm cf secret put STRIPE_SECRET_KEY --env dev         # phase 5 (sk_test_…)
+pnpm cf secret put STRIPE_WEBHOOK_SECRET --env dev     # phase 5 (from the Stripe webhook endpoint you create for this URL)
+pnpm cf secret put RESEND_API_KEY --env dev            # phase 4/7
+pnpm cf secret put CRON_SHARED_SECRET --env dev        # phase 7 — generate: openssl rand -base64 32
 ```
 
 ## 4. Cloudflare — live worker (later)
@@ -125,23 +157,22 @@ project on Pro, no Access protection, and a custom domain: `app.momentum-tennis.
 ## 5. Cron worker (phase 7)
 
 ```bash
-cd workers/cron
-npx wrangler secret put CRON_SHARED_SECRET --env dev          # the same value the app holds
-npx wrangler deploy --env dev                                 # APP_URL comes from workers/cron/wrangler.toml
+pnpm cf secret put CRON_SHARED_SECRET --env dev --config workers/cron/wrangler.toml   # the same value the app holds
+pnpm cf deploy --env dev --config workers/cron/wrangler.toml                          # APP_URL comes from that file
 ```
 
 ## 6. Verify after each step
 
 ```bash
-pnpm env:check                          # profiles agree; what is still TODO
-pnpm build:dev && pnpm preview          # then pnpm test:e2e — runs the smoke suite against the dev Supabase
+pnpm env:check                # profiles agree; what is still TODO
+pnpm build:dev && pnpm preview   # then pnpm test:e2e — runs the smoke suite against the dev Supabase
 ```
 
 ## Local development
 
 ```bash
-cp .env.example .env.local              # optional until a phase needs a secret
-pnpm dev                                # uses .env.development → the dev Supabase project
+cp .env.example .env.local    # fill only what you have; the app demands each secret lazily
+pnpm dev                      # uses .env.development → the dev Supabase project
 ```
 
 Never point local work at production. Never put real family data in dev.

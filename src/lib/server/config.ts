@@ -18,7 +18,7 @@ const optionalSecret = z
 	.optional();
 
 export const SECRET_NAMES = [
-	'SUPABASE_SERVICE_ROLE_KEY',
+	'SUPABASE_SECRET_KEY',
 	'STRIPE_SECRET_KEY',
 	'STRIPE_WEBHOOK_SECRET',
 	'RESEND_API_KEY',
@@ -31,7 +31,7 @@ const schema = z.object({
 	PUBLIC_SUPABASE_PUBLISHABLE_KEY: nonEmpty,
 	PUBLIC_SITE_URL: origin,
 	EMAIL_FROM: nonEmpty,
-	SUPABASE_SERVICE_ROLE_KEY: optionalSecret,
+	SUPABASE_SECRET_KEY: optionalSecret,
 	STRIPE_SECRET_KEY: optionalSecret,
 	STRIPE_WEBHOOK_SECRET: optionalSecret,
 	RESEND_API_KEY: optionalSecret,

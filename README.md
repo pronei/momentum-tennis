@@ -33,7 +33,7 @@ auth, domain patterns, design-system port, integration skeletons, CI. Phases and
     docs/              PLAN.md (phases, decisions), superpowers/plans/ (phase checklists), decisions/ (ADRs)
 
 ## Commands
-`pnpm dev` · `pnpm check` · `pnpm lint` · `pnpm test` · `pnpm build` · `pnpm db:types` ·
+`pnpm dev` · `pnpm check` · `pnpm lint` · `pnpm test` · `pnpm build` · `pnpm db:types` · `pnpm db:push` · `pnpm cf` ·
 `pnpm db:test` · `pnpm test:e2e` — details and the development loop in [AGENTS.md](AGENTS.md).
 
 Heavy design media (photo originals, export zips) and the unrelated racquet-project
