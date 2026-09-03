@@ -121,16 +121,14 @@ export async function createTerm(
 	return ok({ id: (data as { id: string }).id });
 }
 
+/** One term's templates, or every one when no term is named (the session parent picker). */
 export async function listClasses(
 	db: ScheduleDb,
-	termId: string
+	termId?: string
 ): Promise<Result<ClassTemplate[]>> {
-	const { data, error } = await db
-		.from('classes')
-		.select(CLASS_SELECT)
-		.eq('term_id', termId)
-		.order('weekday')
-		.order('start_time_local');
+	const base = db.from('classes').select(CLASS_SELECT);
+	const scoped = termId ? base.eq('term_id', termId) : base;
+	const { data, error } = await scoped.order('weekday').order('start_time_local');
 	if (error) return err(fromPostgres(error));
 	return ok(((data ?? []) as unknown as ClassRow[]).map(toTemplate));
 }

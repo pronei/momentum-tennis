@@ -128,6 +128,20 @@ export async function listDay(
 	return ok(((data ?? []) as unknown as ViewRow[]).map(toSession));
 }
 
+/** One occurrence, read from the same view the grid draws — the edit screen's source. */
+export async function getSession(
+	db: ScheduleDb,
+	id: string
+): Promise<Result<ScheduleSession | null>> {
+	const { data, error } = await db
+		.from('v_schedule_sessions')
+		.select(VIEW_SELECT)
+		.eq('id', id)
+		.maybeSingle();
+	if (error) return err(fromPostgres(error));
+	return ok(data ? toSession(data as unknown as ViewRow) : null);
+}
+
 /** Every session belonging to one camp or team — the detail screens' day list. */
 export async function listByParent(
 	db: ScheduleDb,

@@ -3,9 +3,14 @@
 	import { Button, Eyebrow, Tabs } from '$lib/ds';
 
 	let { children } = $props();
-	// Phase 3 adds Schedule / Programs; 5 Purchases; 2 Waivers; 6 Ratings. Only built routes are linked.
+	// Phase 5 adds Purchases; 6 Ratings. Only built routes are linked.
 	const tabs = [
 		{ id: '/admin', label: 'Overview', href: '/admin' },
+		{ id: '/admin/schedule', label: 'Schedule', href: '/admin/schedule' },
+		{ id: '/admin/availability', label: 'Availability', href: '/admin/availability' },
+		{ id: '/admin/classes', label: 'Classes', href: '/admin/classes' },
+		{ id: '/admin/camps', label: 'Camps', href: '/admin/camps' },
+		{ id: '/admin/teams', label: 'Teams', href: '/admin/teams' },
 		{ id: '/admin/waivers', label: 'Waivers', href: '/admin/waivers' },
 		{ id: '/admin/staff', label: 'Staff', href: '/admin/staff' }
 	];

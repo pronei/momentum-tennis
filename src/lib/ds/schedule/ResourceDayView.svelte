@@ -33,6 +33,7 @@
 		draft,
 		nowTime,
 		onSessionClick,
+		sessionHref,
 		onSlotClick,
 		startHour = 7,
 		endHour = 21,
@@ -50,6 +51,8 @@
 		/** HH:MM — draws the amber now line */
 		nowTime?: string;
 		onSessionClick?: (session: SessionBlock) => void;
+		/** Renders each block as a link instead of a button — the no-JavaScript path */
+		sessionHref?: (session: SessionBlock) => string;
 		/** Click empty grid space → (courtId, "HH:MM" rounded to 30) */
 		onSlotClick?: (courtId: string, start: string) => void;
 		startHour?: number;
@@ -132,8 +135,10 @@
 					onclick={(e) => slotClick(c.id, e)}
 				>
 					{#each sessions.filter((s) => s.court === c.id && (!s.location || s.location === location)) as s (s.id)}
-						<button
-							type="button"
+						<svelte:element
+							this={sessionHref ? 'a' : 'button'}
+							href={sessionHref?.(s)}
+							type={sessionHref ? undefined : 'button'}
 							class="mt-rdv__block mt-rdv__block--{s.type}"
 							class:mt-rdv__block--cancelled={s.cancelled}
 							data-session={s.id}
@@ -146,7 +151,7 @@
 							{#if s.coach && height(s.start, s.end) > 52}
 								<span class="mt-rdv__coach">{s.coach}</span>
 							{/if}
-						</button>
+						</svelte:element>
 					{/each}
 
 					{#if draft && draft.court === c.id}
@@ -268,6 +273,7 @@
 	.mt-rdv__block {
 		border: 1px solid rgba(27, 27, 27, 0.22);
 		cursor: pointer;
+		text-decoration: none;
 	}
 	.mt-rdv__block--camp {
 		background: var(--court-050);

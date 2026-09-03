@@ -4,6 +4,7 @@ import {
 	cancelSession,
 	createSession,
 	filterForPlayer,
+	getSession,
 	listDay,
 	listRange,
 	sessionSchema,
@@ -293,5 +294,47 @@ describe('updateSession, tagging and cancellation', () => {
 		expect(
 			called(calls, 'rpc', 'cancel_session', { p_session: SESSION, p_reason: 'Rained out' })
 		).toBe(true);
+	});
+});
+
+describe('getSession — one occurrence, for the edit screen', () => {
+	it('reads the same view the grid does, so the two cannot disagree', async () => {
+		const calls: unknown[] = [];
+		const db = fakeDb({ calls, tables: { v_schedule_sessions: { data: null } } });
+		const result = await getSession(db, SESSION);
+		expect(result).toEqual({ ok: true, value: null });
+		expect(called(calls, 'from', 'v_schedule_sessions')).toBe(true);
+		expect(called(calls, 'eq', 'id', SESSION)).toBe(true);
+	});
+});
+
+describe('sessionSchema and superforms', () => {
+	it('superValidate can build a form from it — the reason it is flat, not a union', async () => {
+		const { superValidate } = await import('sveltekit-superforms');
+		const { zod4 } = await import('sveltekit-superforms/adapters');
+		const form = await superValidate({ type: 'class', date: '2026-09-12' }, zod4(sessionSchema));
+		expect(form.data.type).toBe('class');
+		expect(form.data.date).toBe('2026-09-12');
+		// defaults exist for every field, so the form renders before anything is typed
+		expect(form.data.kind).toBe('practice');
+		expect(form.data.notes).toBe('');
+	});
+
+	it('reports a refusal against the field it belongs to', async () => {
+		const { superValidate } = await import('sveltekit-superforms');
+		const { zod4 } = await import('sveltekit-superforms/adapters');
+		const form = await superValidate(
+			{
+				type: 'class',
+				parentId: CLASS,
+				courtId: COURT,
+				date: '2026-09-12',
+				start: '11:00',
+				end: '09:00'
+			},
+			zod4(sessionSchema)
+		);
+		expect(form.valid).toBe(false);
+		expect(form.errors.end?.[0]).toBe('End after the start');
 	});
 });

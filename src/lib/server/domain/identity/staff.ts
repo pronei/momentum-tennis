@@ -96,3 +96,14 @@ export async function revokeRole(
 	if (error) return err(fromPostgres(error));
 	return ok(undefined);
 }
+
+/**
+ * Who may be attached to a session as its coach: anyone holding `coach` OR `admin`. Artur runs
+ * the academy and teaches most of it, so a coach-only list would leave out the main coach.
+ */
+export function coachChoices(members: StaffMember[]): { id: string; label: string }[] {
+	return members
+		.filter((m) => m.roles.includes('coach') || m.roles.includes('admin'))
+		.map((m) => ({ id: m.accountId, label: m.fullName || m.email }))
+		.sort((a, b) => a.label.localeCompare(b.label));
+}
