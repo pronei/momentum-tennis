@@ -1696,6 +1696,12 @@ export type Database = {
 				}
 				Returns: boolean
 			}
+			archive_player: {
+				Args: {
+					p_player: string
+				}
+				Returns: undefined
+			}
 			assert_waivers_signed: {
 				Args: {
 					p_player: string
@@ -1839,6 +1845,14 @@ export type Database = {
 					p_user_agent?: string
 				}
 				Returns: string
+			}
+			update_player: {
+				Args: {
+					p_player: string
+					p_full_name: string
+					p_birthdate: string
+				}
+				Returns: undefined
 			}
 		}
 		Enums: {

@@ -45,13 +45,19 @@ await db.exec(`
 `);
 
 console.log('1. schema loads');
+// EVERY migration in order, then the seed — the same thing `supabase db push` applies.
+const migrationsDir = new URL('../migrations/', import.meta.url);
+const migrations = fs
+	.readdirSync(migrationsDir)
+	.filter((f) => f.endsWith('.sql'))
+	.sort();
 const sql =
-	fs.readFileSync(new URL('../migrations/0001_schema.sql', import.meta.url), 'utf8') +
+	migrations.map((f) => fs.readFileSync(new URL(f, migrationsDir), 'utf8')).join('\n') +
 	'\n' +
 	fs.readFileSync(new URL('../seed.sql', import.meta.url), 'utf8');
 try {
 	await db.exec(sql);
-	ok('schema-v2.sql applied without error');
+	ok(`${migrations.length} migration(s) + seed applied without error`);
 } catch (e) {
 	console.log('  ✗ schema failed:', e.message);
 	process.exit(1);
@@ -115,6 +121,73 @@ await expectErr(
 	'minor_self_link'
 );
 ok('two players under one parent + one under another');
+
+console.log('2b. player edits + archive (phase 1)');
+await asUser(PARENT);
+const tmp = (await q(`select create_player('Tmp Typo', '2015-01-01', 'parent') as id`)).rows[0].id;
+await expectOk('guardian corrects a name typo', () =>
+	q(`select update_player($1, 'Tam Tyson', '2015-01-02')`, [tmp])
+);
+const renamed = (await q(`select full_name, birthdate::text from players where id = $1`, [tmp]))
+	.rows[0];
+if (renamed.full_name === 'Tam Tyson' && renamed.birthdate === '2015-01-02')
+	ok('name and birthdate updated');
+else {
+	console.log('  \u2717 rename', renamed);
+	failures++;
+}
+await expectErr(
+	'blank name refused',
+	() => q(`select update_player($1, '   ', '2015-01-02')`, [tmp]),
+	'validation'
+);
+await expectErr(
+	'future birthdate refused',
+	() => q(`select update_player($1, 'Tam Tyson', (now() + interval '1 day')::date)`, [tmp]),
+	'validation'
+);
+await asUser(PARENT2);
+await expectErr(
+	"cannot edit another family's player",
+	() => q(`select update_player($1, 'Hijack', '2015-03-01')`, [maya]),
+	'not_authorized'
+);
+await expectErr(
+	"cannot archive another family's player",
+	() => q(`select archive_player($1)`, [maya]),
+	'not_authorized'
+);
+await asUser(PARENT);
+// an adult self-player may not be edited into a minor — the DB keeps minor_self_link true
+const selfPlayer = (await q(`select create_player('Ann A.', '1990-04-04', 'self') as id`)).rows[0]
+	.id;
+await expectErr(
+	'self-guardian cannot be edited into a minor',
+	() => q(`select update_player($1, 'Ann A.', '2015-04-04')`, [selfPlayer]),
+	'minor_self_link'
+);
+await expectOk('archiving a player ends the guardianship', () =>
+	q(`select archive_player($1)`, [selfPlayer])
+);
+const stillLinked = (
+	await q(
+		`select count(*)::int as n from guardianships where player_id = $1 and ended_at is null`,
+		[selfPlayer]
+	)
+).rows[0].n;
+const rowKept = (await q(`select count(*)::int as n from players where id = $1`, [selfPlayer]))
+	.rows[0].n;
+if (stillLinked === 0 && rowKept === 1) ok('link ended; the player row and its history survive');
+else {
+	console.log('  \u2717 archive', stillLinked, rowKept);
+	failures++;
+}
+await expectErr(
+	'archiving twice refused',
+	() => q(`select archive_player($1)`, [selfPlayer]),
+	'not_authorized'
+);
+await q(`select archive_player($1)`, [tmp]); // leave the roster as section 9 expects it
 
 console.log('3. facilities + availability (H)');
 const loc = (await q(`select id from locations where name = 'Murdock Park'`)).rows[0].id;
