@@ -6,6 +6,7 @@
 	let { data, children } = $props();
 	const tabs = [
 		{ id: '/portal', label: 'Overview', href: '/portal' },
+		{ id: '/portal/schedule', label: 'Schedule', href: '/portal/schedule' },
 		{ id: '/portal/players', label: 'Players', href: '/portal/players' },
 		{ id: '/portal/waivers', label: 'Waivers', href: '/portal/waivers' },
 		{ id: '/portal/account', label: 'Account', href: '/portal/account' }

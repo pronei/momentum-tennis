@@ -90,6 +90,11 @@ group by s.id, c.name, c.location_id, l.name, a.full_name, cl.name, cp.name, tm.
 
 -- 0001's blanket revoke covered only the functions that existed then; a new function is
 -- created with EXECUTE for PUBLIC, so each one grants deliberately (as 0004 does).
+-- The public schedule page reads this view as `anon`; RLS on `sessions` still decides the rows
+-- (scheduled only, unless the caller is staff). Granted explicitly rather than relying on the
+-- project's default privileges for new objects.
+grant select on public.v_schedule_sessions to anon, authenticated;
+
 revoke execute on function public.set_session_levels(uuid, text[]) from public, anon;
 revoke execute on function public.set_class_levels(uuid, text[])   from public, anon;
 grant  execute on function public.set_session_levels(uuid, text[]) to authenticated;
