@@ -5,11 +5,13 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phases 0–2 are built and merged to `main` (foundations, identity & profiles, waivers); `deploy/dev`
-tracks `main`. Migrations 0001–0006 (0005 reference data, 0006 RLS safety net) are applied to the
-dev Supabase project. The restricted minor login is deliberately NOT built — see open question O in
-`docs/PLAN.md`. Phase 3 (schedule & availability) is next: `docs/HANDOFF-opus5.md` scopes phases
-3–7 and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
+Phases 0–3 are built and merged to `main` (foundations, identity & profiles, waivers, schedule &
+availability); `deploy/dev` tracks `main`. Migrations 0001–0007 are applied to the dev Supabase
+project (0005 reference data, 0006 RLS safety net, 0007 schedule). The restricted minor login is
+deliberately NOT built — see open question O in `docs/PLAN.md`. Phase 4 (booking, credits &
+attendance) is next: `docs/HANDOFF-opus5.md` scopes phases 4–7 and the per-phase ritual; its brief
+is `docs/superpowers/plans/2026-09-03-phase-4-booking.brief.md` and must be expanded into a plan
+before any code. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
 
 ## Prime directives
@@ -63,7 +65,13 @@ dev Supabase project. The restricted minor login is deliberately NOT built — s
   on the session — families may cancel and re-book the same occurrence.
 - **Ball levels gate slots:** a player books only sessions tagged with their level
   (`session_skill_levels`); untagged = all levels. Parents set the level at
-  profile creation; only staff change it afterwards.
+  profile creation; only staff change it afterwards. Tag sets are replaced in one
+  act (`set_session_levels`, `set_class_levels`) — a row-by-row rewrite would leave
+  a slot momentarily open to every level, which is a booking gate that lies.
+- **One read model per calendar:** `v_schedule_sessions` (security_invoker) is what
+  the admin grid, the portal list and the public page all read, so they cannot drift.
+  Anon sees scheduled sessions only, and coach names reach staff alone — RLS decides,
+  not the query.
 - **Identity writes are RPCs.** `players` and `guardianships` have no write policies:
   `create_player`, `update_player`, `archive_player`, `set_player_level` are the only
   mutations. Archiving ends the link and keeps the row; it is refused once the player has
@@ -156,19 +164,28 @@ render; the schema is tested behaviorally in PGlite.
 - `src/lib/server/domain/` — `result.ts` (Result/AppError + Postgres → code mapping +
   the only copy for refusals), `time.ts` (academy-tz rendering mirroring SQL),
   `settings.ts` (academy timezone, fails soft), `identity/` (staff roles + console,
-  account profile, players, age mirroring `player_is_adult()`), `booking/` (RPC
+  account profile, players, age mirroring `player_is_adult()`), `schedule/`
+  (`common.ts` shared types and zod primitives, `locations`, `availability`, `classes`,
+  `sessions`, `camps`, `teams`; `fakes.ts` is the test double they share),
+  `booking/` (RPC
   wrappers), `waivers.ts` (documents, versions, status, signing), `cron.ts` (secret check
   + job dispatch), `payments/` (webhook idempotency
   port + Supabase store), `notify/` (transactional vs marketing send, insert-first
   idempotency).
 - `src/lib/components/` — app composites built from `$lib/ds` and the design system's
   `ui_kits` references (`PlayerSwitcher`, `Card`), tested as SSR contracts.
-- `src/lib/ds/` — ported design system (`index.ts` barrel; `core/ forms/ feedback/`);
-  `FieldShell.svelte` is the shared form anatomy. `/styleguide` renders everything.
-- `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `(portal)/portal`
-  (shell carrying the `?player=` context, overview, `players/` roster + new + `[id]`,
-  `waivers/` status + `[versionId]` signing, account form: the superforms pattern),
-  `admin` (guarded shell, `waivers/`, `staff/`), `internal/cron`, `api/stripe/webhook`.
+- `src/lib/ds/` — ported design system (`index.ts` barrel; `core/ forms/ feedback/
+  admin/ schedule/ site/`); `FieldShell.svelte` is the shared form anatomy.
+  `/styleguide` renders everything. Admin lists sort and page through LINKS
+  (`sortHref`/`pageHref`) and `ResourceDayView` takes `sessionHref`: the console works
+  with JavaScript off, and only a `Dialog` confirm needs it.
+- `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `schedule` (public,
+  read-only), `(portal)/portal` (shell carrying the `?player=` context, overview,
+  `schedule/` the family fortnight, `players/` roster + new + `[id]`, `waivers/` status
+  + `[versionId]` signing, account form: the superforms pattern), `admin` (guarded
+  shell, `schedule/` day grid + `new` + `[id]`, `availability/` + `[courtId]`,
+  `classes/` + `[id]`, `camps/` + `[id]`, `teams/` + `[id]`, `waivers/`, `staff/`),
+  `internal/cron`, `api/stripe/webhook`.
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
 - `config/` — one profile per environment (`dev.yaml`, `prod.yaml`); `docs/OPERATIONS.md` is
   the operator runbook (accounts, secrets, one-time links).
