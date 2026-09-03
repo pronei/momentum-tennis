@@ -80,3 +80,13 @@ describe('identity refusals map to codes, not to unexpected', () => {
 		expect(fromPostgres({ message: 'validation: name required' }).code).toBe('validation');
 	});
 });
+
+describe('consent refusals map to codes, not to unexpected', () => {
+	it('maps the tokens sign_waiver and the authoring RPCs raise', () => {
+		expect(fromPostgres({ message: 'not_current_version' }).code).toBe('not_current_version');
+		expect(fromPostgres({ message: 'name_required' }).code).toBe('name_required');
+		expect(fromPostgres({ message: 'minor_cannot_self_sign' }).code).toBe('minor_cannot_self_sign');
+		expect(fromPostgres({ message: 'already_published' }).code).toBe('already_published');
+		expect(fromPostgres({ message: 'unknown_document' }).code).toBe('unknown_document');
+	});
+});
