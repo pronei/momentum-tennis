@@ -2,7 +2,10 @@
 	import {
 		Banner,
 		Button,
+		CampTimeline,
 		Checkbox,
+		ClassTimeline,
+		DataTable,
 		DateField,
 		Dialog,
 		EmptyState,
@@ -10,8 +13,10 @@
 		FormSection,
 		FrameTicks,
 		Pagination,
+		ResourceDayView,
 		SegmentedControl,
 		Select,
+		SessionForm,
 		StatusChip,
 		Tabs,
 		TextArea,
@@ -29,6 +34,40 @@
 	let time = $state('16:00');
 	let agreed = $state(false);
 	let tab = $state('stats');
+	let sgLocation = $state('Murdock Park');
+	const sgCourts = [
+		{ id: 'c1', label: 'MP-1' },
+		{ id: 'c2', label: 'MP-2' }
+	];
+	const sgSessions = [
+		{
+			id: 's1',
+			court: 'c1',
+			start: '09:00',
+			end: '11:00',
+			type: 'class' as const,
+			title: 'Green Saturday',
+			coach: 'ARTUR W.'
+		},
+		{
+			id: 's2',
+			court: 'c2',
+			start: '16:00',
+			end: '17:30',
+			type: 'team' as const,
+			title: 'Momentum 14U',
+			cancelled: true
+		}
+	];
+	const sgColumns = [
+		{ key: 'name', label: 'Class', sortable: true },
+		{ key: 'when', label: 'When', mono: true },
+		{ key: 'seats', label: 'Seats', numeric: true, sortable: true }
+	];
+	const sgRows = [
+		{ name: 'Green Saturday', when: 'SAT 09:00–11:00', seats: 6 },
+		{ name: 'Green Monday', when: 'MON 16:00–17:30', seats: 4 }
+	];
 	const levels = [
 		{ value: 'orange', label: 'Orange ball' },
 		{ value: 'green_beginner', label: 'Green ball · beginner' },
@@ -147,6 +186,52 @@
 				<Button variant="secondary" size="sm" onclick={() => (toastOpen = true)}>Show toast</Button>
 			</div>
 		</div>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Admin — data table</Eyebrow>
+		<DataTable
+			columns={sgColumns}
+			rows={sgRows}
+			sort={{ key: 'seats', dir: 'desc' }}
+			sortHref={(key, dir) => `/styleguide?sort=${key}&dir=${dir}`}
+			empty="NO CLASSES YET"
+		/>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Schedule — day grid</Eyebrow>
+		<ResourceDayView
+			date="2026-09-12 · SATURDAY"
+			location={sgLocation}
+			locations={['Murdock Park', 'De Anza College']}
+			onLocationChange={(l) => (sgLocation = l)}
+			courts={sgCourts}
+			sessions={sgSessions}
+			draft={{ court: 'c1', start: '11:00', end: '12:00' }}
+			nowTime="10:30"
+		/>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Schedule — session form</Eyebrow>
+		<div class="sg__stack">
+			<SessionForm
+				courts={sgCourts}
+				coaches={[{ id: 'a1', label: 'Artur W.' }]}
+				conflict="COURT MP-1 BOOKED 09:00–11:00 — PICK ANOTHER SLOT"
+			/>
+		</div>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Site — class play-by-play</Eyebrow>
+		<div class="sg__stack"><ClassTimeline /></div>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Site — camp day</Eyebrow>
+		<div class="sg__stack"><CampTimeline /></div>
 	</section>
 </main>
 

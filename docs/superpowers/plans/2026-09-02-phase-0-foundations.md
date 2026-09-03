@@ -90,10 +90,14 @@
 
 ## Status (end of session 2026-09-02)
 Done: Tasks 1–7 code-side. `pnpm check`, `pnpm lint`, `pnpm test` (62 unit/contract + schema harness), `pnpm build` green.
-Not done (needs operator access, not code):
-- [ ] Create Supabase projects (dev Free, prod Pro before phase 5); fill `.env.development` / `.env.production` public values; secrets in `.env.local` and CF project secrets
-- [ ] Create Cloudflare Workers projects `momentum-tennis-dev` (branch `deploy/dev`) and `momentum-tennis` (branch `deploy/live`) via Workers Builds; set secrets; protect dev with Cloudflare Access
-- [ ] Deploy `workers/cron` per environment with `APP_URL` var + `CRON_SHARED_SECRET` secret
+Operator steps (need dashboard access, not code) — state re-verified 2026-09-03:
+- [x] Supabase **dev** project created, `.env.development` filled, secrets in `.env.local`, migrations 0001–0006 applied. The **production** project is deliberately not created yet: decision J puts it on Pro and standard Postgres before phase 5
+- [x] Cloudflare **dev** worker `momentum-tennis-dev` created, first deploy done, `deploy.site_url` recorded. Still open: the live worker `momentum-tennis` (branch `deploy/live`), and **Cloudflare Access on the dev host is NOT applied** — the dev URL answers 200 to anonymous requests, though every guarded route redirects to `/login`. `config/dev.yaml` states `access_protected: true` as the intent, not the current state
+- [ ] Deploy `workers/cron` per environment with `APP_URL` var + `CRON_SHARED_SECRET` secret — first needed in phase 7 (`docs/OPERATIONS.md` §7)
 - [x] GitHub repository secret for `.github/workflows/migrate.yml` — `SUPABASE_DB_PASSWORD_DEV` (2026-09-03; the workflow needs nothing else)
-- [ ] Run `pnpm test:e2e` once a dev Supabase exists (auth pages, guards)
+- [x] `pnpm test:e2e` — 9/9 green against a `pnpm build:dev` preview on the dev Supabase (2026-09-03), and the same guards confirmed on the deployed worker
+
+Still blocking the phase-3 *demo* (not its gates), per `docs/OPERATIONS.md` §7: the first admin account
+on dev, the auth-email decision, and `https://momentum-tennis-dev.proneidev.workers.dev/auth/callback`
+in Supabase's redirect URLs — without them nobody can sign in on dev to enter a schedule.
 Deferred by design: DS ports of PhotoFrame, StrobeArc, Wordmark, SiteNav, CourtMeter, ProgramCard, timelines, DataTable, RatingMeter, ResourceDayView, SessionForm — each lands with the phase that first renders it.

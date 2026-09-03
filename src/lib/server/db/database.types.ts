@@ -1666,6 +1666,27 @@ export type Database = {
 				}
 				Relationships: []
 			}
+			v_schedule_sessions: {
+				Row: {
+					id: string | null
+					session_type: Database["public"]["Enums"]["session_type"] | null
+					starts_at: string | null
+					ends_at: string | null
+					status: Database["public"]["Enums"]["session_status"] | null
+					notes: string | null
+					venue_note: string | null
+					court_id: string | null
+					court_name: string | null
+					location_id: string | null
+					location_name: string | null
+					coach_id: string | null
+					coach_name: string | null
+					title: string | null
+					parent_id: string | null
+					level_keys: string[] | null
+				}
+				Relationships: []
+			}
 		}
 		Functions: {
 			academy_local: {
@@ -1842,12 +1863,26 @@ export type Database = {
 				}
 				Returns: undefined
 			}
+			set_class_levels: {
+				Args: {
+					p_class: string
+					p_level_keys: string[]
+				}
+				Returns: number
+			}
 			set_player_level: {
 				Args: {
 					p_player: string
 					p_skill_level_key: string
 				}
 				Returns: undefined
+			}
+			set_session_levels: {
+				Args: {
+					p_session: string
+					p_level_keys: string[]
+				}
+				Returns: number
 			}
 			sign_waiver: {
 				Args: {

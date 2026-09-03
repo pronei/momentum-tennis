@@ -7,15 +7,20 @@ import { describe, expect, it } from 'vitest';
 import {
 	Banner,
 	Button,
+	CampTimeline,
 	Checkbox,
+	ClassTimeline,
+	DataTable,
 	Dialog,
 	EmptyState,
 	Eyebrow,
 	FormSection,
 	FrameTicks,
 	Pagination,
+	ResourceDayView,
 	SegmentedControl,
 	Select,
+	SessionForm,
 	StatusChip,
 	Tabs,
 	TextArea,
@@ -175,5 +180,170 @@ describe('feedback', () => {
 		expect(html(Toast, { open: true, children: text('SAVED · 16:04') })).toMatch(
 			/role="status"[\s\S]*SAVED · 16:04/
 		);
+	});
+});
+
+describe('DataTable — the admin list', () => {
+	const columns = [
+		{ key: 'name', label: 'Class', sortable: true },
+		{ key: 'when', label: 'When', mono: true },
+		{ key: 'seats', label: 'Seats', numeric: true, sortable: true }
+	];
+	const rows = [{ name: 'Green Saturday', when: 'SAT 09:00', seats: 6 }];
+
+	it('marks the sorted column with aria-sort and keeps the others unmarked', () => {
+		const out = html(DataTable, { columns, rows, sort: { key: 'seats', dir: 'desc' } });
+		expect(out).toMatch(/<th[^>]*aria-sort="descending"/);
+		expect(out.match(/aria-sort=/g)).toHaveLength(1);
+	});
+
+	it('sets numeric cells in mono so columns of figures line up', () => {
+		const out = html(DataTable, { columns, rows });
+		expect(out).toMatch(/class="[^"]*mt-dt__cell--num/);
+	});
+
+	it('sorting and paging are links, so the list works without JavaScript', () => {
+		const out = html(DataTable, {
+			columns,
+			rows,
+			page: 2,
+			pages: 4,
+			sortHref: (key: string, dir: string) => `?sort=${key}&dir=${dir}`,
+			pageHref: (page: number) => `?page=${page}`
+		});
+		expect(out).toMatch(/<a[^>]*href="\?sort=seats&amp;dir=asc"/);
+		expect(out).toMatch(/<a[^>]*href="\?page=3"/);
+	});
+
+	it('renders the mono empty line instead of an empty table', () => {
+		const out = html(DataTable, { columns, rows: [], empty: 'NO CLASSES YET' });
+		expect(out).toContain('NO CLASSES YET');
+	});
+
+	it('carries the ≤760px card collapse in the markup, not behind a media listener', () => {
+		const out = html(DataTable, { columns, rows });
+		expect(out).toMatch(/mt-dt__cards/);
+	});
+});
+
+describe('ResourceDayView — the day grid', () => {
+	const courts = [
+		{ id: 'c1', label: 'MP-1' },
+		{ id: 'c2', label: 'MP-2' }
+	];
+	const sessions = [
+		{
+			id: 's1',
+			court: 'c1',
+			start: '09:00',
+			end: '11:00',
+			type: 'class' as const,
+			title: 'Green Saturday'
+		},
+		{
+			id: 's2',
+			court: 'c2',
+			start: '16:00',
+			end: '17:30',
+			type: 'team' as const,
+			title: 'Momentum 14U',
+			cancelled: true
+		}
+	];
+
+	it('draws one column per court and one block per session', () => {
+		const out = html(ResourceDayView, { date: '2026-09-12 · SATURDAY', courts, sessions });
+		expect(out.match(/data-court="/g)).toHaveLength(2);
+		expect(out.match(/data-session="/g)).toHaveLength(2);
+		expect(out).toContain('2026-09-12 · SATURDAY');
+	});
+
+	it('positions blocks with custom properties — no JavaScript layout pass', () => {
+		const out = html(ResourceDayView, { courts, sessions, startHour: 7, rowH: 44 });
+		expect(out).toMatch(/--top:\s*88px/); // 09:00 is two hours past 07:00
+		expect(out).toMatch(/--height:\s*86px/); // two hours less the 2px gutter
+	});
+
+	it('strikes a cancelled session and says so in the mono label', () => {
+		const out = html(ResourceDayView, { courts, sessions });
+		expect(out).toMatch(/mt-rdv__block--cancelled/);
+		expect(out).toContain('CANCELLED');
+	});
+
+	it('shows a refused draft as a dual-channel ERROR line', () => {
+		const out = html(ResourceDayView, {
+			courts,
+			sessions,
+			draft: { court: 'c1', start: '09:00', end: '10:00', conflict: 'COURT 1 BOOKED 09:00–11:00' }
+		});
+		expect(out).toMatch(/role="alert"/);
+		expect(out).toContain('ERROR: COURT 1 BOOKED 09:00–11:00');
+	});
+
+	it('draws the amber now line only when a time is given', () => {
+		expect(html(ResourceDayView, { courts, sessions })).not.toMatch(/mt-rdv__now/);
+		const out = html(ResourceDayView, { courts, sessions, nowTime: '10:30' });
+		expect(out).toMatch(/mt-rdv__now/);
+		expect(out).toContain('NOW 10:30');
+	});
+});
+
+describe('SessionForm — the session fields', () => {
+	const courts = [{ id: 'c1', label: 'MP-1' }];
+	const coaches = [{ id: 'a1', label: 'Artur W.' }];
+
+	it('renders the whole control set the contract names', () => {
+		const out = html(SessionForm, { courts, coaches });
+		expect(out).toMatch(/role="radiogroup"/); // type SegmentedControl
+		expect(out.match(/<select/g)?.length).toBeGreaterThanOrEqual(2); // court + coach
+		expect(out.match(/name="start"|name="end"/g)).toHaveLength(2);
+		expect(out).toMatch(/<textarea/);
+		expect(out).toMatch(/name="date"/);
+	});
+
+	it('shows a conflict as an error Banner and refuses to submit', () => {
+		const out = html(SessionForm, {
+			courts,
+			coaches,
+			conflict: 'COURT 1 BOOKED 09:00–11:00 — PICK ANOTHER SLOT'
+		});
+		expect(out).toMatch(/role="alert"/);
+		expect(out).toContain('COURT 1 BOOKED 09:00–11:00 — PICK ANOTHER SLOT');
+		expect(out).toMatch(/<button[^>]*type="submit"[^>]*disabled/);
+	});
+});
+
+describe('the site timelines', () => {
+	it('ClassTimeline runs three blocks and offsets them by the variant length', () => {
+		const weekend = html(ClassTimeline, {});
+		expect(weekend).toContain('T+0:40');
+		expect(weekend).toContain('T+1:20');
+		expect(weekend).toContain('40 MIN');
+		const weekday = html(ClassTimeline, { variant: 'weekday' });
+		expect(weekday).toContain('T+0:30');
+		expect(weekday).toContain('T+1:00');
+		expect(weekday).toContain('30 MIN');
+	});
+
+	it('ClassTimeline names the three blocks in order', () => {
+		const out = html(ClassTimeline, {});
+		expect(out.indexOf('Technical skill training')).toBeLessThan(out.indexOf('Dynamic drills'));
+		// '&' arrives escaped in the markup, so the search stops at the word
+		expect(out.indexOf('Dynamic drills')).toBeLessThan(out.indexOf('Gameplay'));
+	});
+
+	it('CampTimeline numbers the day frames in order', () => {
+		const out = html(CampTimeline, {});
+		expect(out).toContain('09:00');
+		expect(out.indexOf('>01<')).toBeLessThan(out.indexOf('>05<'));
+	});
+
+	it('CampTimeline takes an override list', () => {
+		const out = html(CampTimeline, {
+			items: [{ time: '08:30', title: 'Warm-up', phase: 'On court' }]
+		});
+		expect(out).toContain('08:30');
+		expect(out).toContain('Warm-up');
+		expect(out).not.toContain('Chess');
 	});
 });

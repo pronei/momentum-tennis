@@ -900,5 +900,96 @@ else {
 }
 await q(`drop table public._rls_probe`);
 
+// 13. Schedule (0007): atomic level tagging and the one read model every calendar reads.
+// MP-1 is reserved Sat 09:00-13:00 and section 4 already parked a class at 09:00-11:00, so this
+// template takes 11:00-13:00 — the availability trigger and the court EXCLUDE both stay satisfied.
+console.log('13. schedule read model + atomic level tags (0007)');
+await expectErr(
+	'tagging a class is admin-only',
+	() => q(`select set_class_levels(gen_random_uuid(), $1)`, [['orange']]),
+	'admin_only'
+);
+await asUser(ADMIN);
+const p3class = (
+	await q(
+		`insert into classes (term_id, name, weekday, start_time_local, duration_minutes, capacity, default_court_id)
+		 values ($1,'P3 Sat late',6,'11:00',120,6,$2) returning id`,
+		[term, court]
+	)
+).rows[0].id;
+await expectOk('set_class_levels tags a template', () =>
+	q(`select set_class_levels($1,$2)`, [p3class, ['green_beginner', 'green_intermediate']])
+);
+const p3gen = (
+	await q(`select generate_class_sessions($1,$2,$3) as r`, [p3class, monday, D.next_sunday])
+).rows[0].r;
+if (p3gen.created === 2 && p3gen.skipped.length === 0)
+	ok('two Saturday occurrences generated in the free 11:00 window');
+else {
+	console.log('  ✗ gen', p3gen);
+	failures++;
+}
+const p3sid = (
+	await q(
+		`select s.id from sessions s join class_sessions cs on cs.session_id = s.id
+		 where cs.class_id = $1 and academy_local(s.starts_at)::date = $2`,
+		[p3class, saturday]
+	)
+).rows[0].id;
+const p3before = (
+	await q(`select count(*)::int as n from session_skill_levels where session_id = $1`, [p3sid])
+).rows[0].n;
+const p3after = (await q(`select set_session_levels($1,$2) as n`, [p3sid, ['orange']])).rows[0].n;
+if (p3before === 2 && p3after === 1) ok('set_session_levels replaces the tag set (2 → 1)');
+else {
+	console.log('  ✗ tags before/after', p3before, p3after);
+	failures++;
+}
+await expectErr(
+	'an unknown level key is refused',
+	() => q(`select set_session_levels($1,$2)`, [p3sid, ['purple']]),
+	'unknown_skill_level'
+);
+await expectErr(
+	'an unknown session is refused',
+	() => q(`select set_session_levels(gen_random_uuid(), $1)`, [['orange']]),
+	'unknown_session'
+);
+await expectErr(
+	'an unknown class is refused',
+	() => q(`select set_class_levels(gen_random_uuid(), $1)`, [['orange']]),
+	'unknown_class'
+);
+const vrow = (
+	await q(
+		`select title, court_name, location_name, session_type, status, parent_id, level_keys
+		 from v_schedule_sessions where id = $1`,
+		[p3sid]
+	)
+).rows[0];
+if (
+	vrow &&
+	vrow.title === 'P3 Sat late' &&
+	vrow.court_name === 'MP-1' &&
+	vrow.location_name === 'Murdock Park' &&
+	vrow.session_type === 'class' &&
+	vrow.parent_id === p3class &&
+	vrow.level_keys.length === 1 &&
+	vrow.level_keys[0] === 'orange'
+)
+	ok('v_schedule_sessions carries title, court, location, parent and level keys');
+else {
+	console.log('  ✗ view row', vrow);
+	failures++;
+}
+const untagged = (await q(`select level_keys from v_schedule_sessions where id = $1`, [tueW1]))
+	.rows[0].level_keys;
+if (Array.isArray(untagged) && untagged.length === 0)
+	ok('an untagged session reads as an empty level list, never null');
+else {
+	console.log('  ✗ untagged level_keys', untagged);
+	failures++;
+}
+
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL CHECKS PASSED');
 process.exit(failures ? 1 : 0);

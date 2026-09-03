@@ -90,3 +90,15 @@ describe('consent refusals map to codes, not to unexpected', () => {
 		expect(fromPostgres({ message: 'unknown_document' }).code).toBe('unknown_document');
 	});
 });
+
+describe('schedule refusals map to codes, not to unexpected', () => {
+	it('maps the tokens the schedule triggers and RPCs raise', () => {
+		expect(
+			fromPostgres({ message: 'availability_in_use: session x would lose its court' }).code
+		).toBe('availability_in_use');
+		expect(fromPostgres({ message: 'camp_out_of_season: camps must fall within …' }).code).toBe(
+			'camp_out_of_season'
+		);
+		expect(fromPostgres({ message: 'unknown_class' }).code).toBe('unknown_class');
+	});
+});

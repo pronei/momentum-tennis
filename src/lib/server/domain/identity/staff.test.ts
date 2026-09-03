@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	coachChoices,
 	findAccountByEmail,
 	grantRole,
 	listStaff,
@@ -117,5 +118,20 @@ describe('grantRole / revokeRole', () => {
 		const r = await revokeRole(db2({ error: { message: 'last_admin' } }), 'a1', 'admin');
 		if (r.ok) throw new Error('expected err');
 		expect(r.error.code).toBe('last_admin');
+	});
+});
+
+describe('coachChoices — who may be put on a session', () => {
+	const members = [
+		{ accountId: 'a1', email: 'artur@x', fullName: 'Artur W.', roles: ['admin' as const] },
+		{ accountId: 'a2', email: 'coach@x', fullName: 'Sam T.', roles: ['coach' as const] },
+		{ accountId: 'a3', email: 'book@x', fullName: 'Office', roles: [] as never[] }
+	];
+	it('offers coaches and admins — the academy owner is usually both', () => {
+		expect(coachChoices(members).map((c) => c.id)).toEqual(['a1', 'a2']);
+	});
+	it('labels by name, falling back to the email when a profile is empty', () => {
+		expect(coachChoices([{ ...members[0], fullName: '' }])[0].label).toBe('artur@x');
+		expect(coachChoices(members)[0].label).toBe('Artur W.');
 	});
 });

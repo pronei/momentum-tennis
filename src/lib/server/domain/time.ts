@@ -61,3 +61,42 @@ export function scopeOf(iso: string | Date, tz: string): 'weekday' | 'weekend' {
 	const dow = localDay(iso, tz).getUTCDay();
 	return dow === 0 || dow === 6 ? 'weekend' : 'weekday';
 }
+
+/** Signed offset of `tz` from UTC at `instant`, in ms — derived with Intl, never hard-coded. */
+function offsetMs(instant: number, tz: string): number {
+	const p = parts(new Date(instant), tz);
+	const seconds = new Date(instant).getUTCSeconds();
+	return (
+		Date.UTC(Number(p.y), Number(p.m) - 1, Number(p.d), Number(p.hh), Number(p.mm), seconds) -
+		instant
+	);
+}
+
+/**
+ * The UTC instants bounding a local calendar day: `[startsAt, endsAt)` for `localDate`
+ * (YYYY-MM-DD) in `tz`. A day is 23, 24 or 25 hours long depending on DST, so both ends are
+ * resolved independently — the pair is what a `starts_at >= … and starts_at < …` query needs.
+ */
+export function dayBounds(localDate: string, tz: string): { startsAt: string; endsAt: string } {
+	const [y, m, d] = localDate.split('-').map(Number);
+	const nextDate = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+	return { startsAt: localMidnight(localDate, tz), endsAt: localMidnight(nextDate, tz) };
+}
+
+/**
+ * The UTC instant of a local wall-clock date and time in `tz` — what SQL does with
+ * `(date + time) at time zone academy_tz()`. The offset is read at the answer, not at the
+ * guess: on a DST day midnight and mid-morning sit on different sides of the change, so
+ * counting hours from midnight would land an hour out twice a year.
+ */
+export function localInstant(localDate: string, localTime: string, tz: string): string {
+	const [y, m, d] = localDate.split('-').map(Number);
+	const [hh, mm] = localTime.split(':').map(Number);
+	const wall = Date.UTC(y, m - 1, d, hh, mm);
+	const guess = wall - offsetMs(wall, tz);
+	return new Date(wall - offsetMs(guess, tz)).toISOString();
+}
+
+/** UTC instant of the midnight that opens `localDate` in `tz`. */
+const localMidnight = (localDate: string, tz: string): string =>
+	localInstant(localDate, '00:00', tz);

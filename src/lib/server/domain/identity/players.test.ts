@@ -6,6 +6,7 @@ import {
 	listPlayers,
 	listSkillLevels,
 	newPlayerSchema,
+	searchPlayers,
 	setPlayerLevel,
 	updatePlayer,
 	type PlayersDb
@@ -16,7 +17,7 @@ type Reply = { data?: unknown; error?: { message: string; code?: string } | null
 /** A chainable, awaitable stand-in for the PostgREST builder — awaited at any depth. */
 function queryFake(reply: Reply, calls: unknown[] = []) {
 	const chain: Record<string, unknown> = {};
-	for (const m of ['select', 'eq', 'is', 'order', 'limit', 'maybeSingle']) {
+	for (const m of ['select', 'eq', 'is', 'ilike', 'order', 'limit', 'maybeSingle']) {
 		chain[m] = (...args: unknown[]) => {
 			calls.push([m, ...args]);
 			return chain;
@@ -237,5 +238,28 @@ describe('listSkillLevels', () => {
 		]);
 		expect(calls).toContainEqual(['eq', 'active', true]);
 		expect(calls).toContainEqual(['order', 'rank']);
+	});
+});
+
+describe('searchPlayers — the staff-only roster lookup', () => {
+	it('matches on name, case-insensitively, and caps the result', async () => {
+		const calls: unknown[] = [];
+		const db = fakeDb({
+			calls,
+			table: { data: [{ id: 'p1', full_name: 'Maya R.', birthdate: '2014-04-02' }] }
+		});
+		const result = await searchPlayers(db, ' may ');
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.value[0]).toMatchObject({ id: 'p1', fullName: 'Maya R.' });
+		expect(calls).toContainEqual(['ilike', 'full_name', '%may%']);
+		expect(calls).toContainEqual(['limit', 20]);
+	});
+
+	it('an empty query asks for nothing rather than the whole academy', async () => {
+		const calls: unknown[] = [];
+		const db = fakeDb({ calls, table: { data: [] } });
+		expect(await searchPlayers(db, '   ')).toEqual({ ok: true, value: [] });
+		expect(calls).toHaveLength(0);
 	});
 });

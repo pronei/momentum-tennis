@@ -18,7 +18,7 @@ localized.
 | 0 | Foundations — **built 2026-09-02** (`phase-0/foundations`) | SvelteKit scaffold, CI (check/lint/test/build), migration 0001 + PGlite harness + generated types, Supabase auth + server guards, domain patterns (Result/AppError, time, identity, booking, cron, payments idempotency, notify), design-system port (core/forms/feedback) + `/styleguide`, integration skeletons (Stripe webhook, cron endpoint + worker), wrangler + workflows | approval of schema v2 ✓ | code exit criteria met (check/lint/test/build green); **operator steps remain**: create the two Supabase projects + two CF projects, fill env/secrets, GitHub secrets for migrate.yml — see docs/superpowers/plans/2026-09-02-phase-0-foundations.md |
 | 1 | Identity & profiles — **built 2026-09-02** (`phase-1/identity`) | guardian onboarding, N players per account (add/edit/archive), player switcher and `?player=` context, adult self-guardianship, staff role management; migrations 0002 (player writes) + 0003 (last-admin guard) | 0 | code exit criteria met (check/lint/test/build green, 93 unit + 83 schema checks); **restricted minor login deferred pending question O**; end-to-end on dev still needs the phase-0 operator steps |
 | 2 | Waivers — **built 2026-09-02** (`phase-2/waivers`) | document/version admin (draft → publish freeze), signing ceremony with capacity resolved server-side, re-consent detection and banner, status surfaces; migration 0004 (authoring RPCs, hash computed in SQL) | 1 | met: publishing a new version makes every earlier signature stop satisfying the gate, proven in the harness (section 11); `assert_waivers_signed()` and `v_player_waiver_status` are what phase 4 will call, and the portal reads the same view |
-| 3 | Schedule & availability | locations/courts/availability rules + exceptions, terms/classes/camps/teams CRUD, occurrence generation, ResourceDayView admin editor, public + portal read-only calendars | 1 (2 for gating copy) | Artur can enter the real fall schedule; calendar renders it in academy TZ |
+| 3 | Schedule & availability — **built 2026-09-03** (`phase-3/schedule`) | locations/courts/availability rules + exceptions, terms/classes/camps/teams CRUD, occurrence generation, ResourceDayView admin editor, public + portal read-only calendars; migration 0007 (atomic level tagging, `v_schedule_sessions`) | 1 (2 for gating copy) | met in code: the whole schedule is enterable through `/admin`, and one read model renders it in academy time for admin, families and the public. 246 unit/contract tests, 109 schema checks. The dev walk-through waits on the first admin account (operator step) |
 | 4 | Booking, credits & attendance | scoped class booking with weekly cap, private-lesson booking, cancellation/reversal policy, capacity + waitlist, attendance marking (coach + admin), admin credit grants, booking-confirmation email | 2, 3 | double-booking + cap + waiver gate all enforced by DB under concurrent load; a real week bookable on dev |
 | 5 | Payments | Stripe Checkout (ACH-first + cards, Apple Pay, Google Pay, Cash App Pay, Link), idempotent webhooks → ledger issuance, receipts, purchases dashboard + ledger drill-in, refunds/reversals | 4 | test-mode purchase → credits → booking → refund, fully audited; Payment Links interim retired |
 | 6 | Ratings & coach tools | rating dimensions admin, coach entry UI, CourtMeter/RatingMeter surfaces, history | 1 | court placement drives the portal meter with accessible text values |
@@ -104,6 +104,19 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-09-03 — Phase 3 built (branch `phase-3/schedule`): migration 0007 adds `set_session_levels`
+  / `set_class_levels` (a tag set is replaced in one act — a partial rewrite leaves a slot open to
+  every level) and `v_schedule_sessions`, the single `security_invoker` read model the admin grid,
+  the portal list and the public page all read. `schedule/` domain module in six files; the
+  DataTable, ResourceDayView, SessionForm, ClassTimeline and CampTimeline ports; `/admin/schedule`,
+  `/admin/availability`, `/admin/classes`, `/admin/camps`, `/admin/teams`; `/portal/schedule` and
+  the public `/schedule`. Decided while building: `sessionSchema` is one flat object with
+  refinements rather than a discriminated union (superforms needs a single object shape); the
+  console navigates by links so it works without JavaScript; `localInstant` reads the zone offset
+  at the answer, not at midnight, so a session on a DST morning lands on the wall clock the form
+  asked for. Calendar library: **none** — the spike found `.ec-event` carries a box-shadow and a
+  3px radius with no variable to reach them (`docs/decisions/2026-09-03-calendar-library.md`).
+  Answers to the phase's six opening questions are in the checklist.
 - 2026-09-03 — Dev deployed: https://momentum-tennis-dev.proneidev.workers.dev (worker
   `momentum-tennis-dev`; production will be `momentum-tennis`). Database stays Postgres on Supabase,
   not Workers D1 (`docs/decisions/2026-09-03-postgres-on-supabase-not-d1.md`); Workers KV kept for
@@ -135,6 +148,8 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
 - 2026-08-25 — Calendar: Schedule-X resource view is paid (€479/yr); use
   @event-calendar/core (MIT, Svelte, free resource views) for admin, bespoke
   token-styled month/day views for parents; theming spike opens phase 3.
+  **Superseded 2026-09-03 by the spike** (`docs/decisions/2026-09-03-calendar-library.md`):
+  no calendar dependency — the ResourceDayView port ships alone.
 - 2026-08-25 — Cron: stock adapter-cloudflare has no scheduled() handler →
   dedicated `workers/cron` worker calling a shared-secret internal endpoint.
 - 2026-08-30 — Stripe confirmed over Mindbody/CourtReserve/Square. ACH-first,

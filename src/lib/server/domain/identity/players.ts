@@ -146,3 +146,24 @@ export async function setPlayerLevel(
 	if (error) return err(fromPostgres(error));
 	return ok(undefined);
 }
+
+/**
+ * Find players by name. Staff only in practice: `read_players` admits `is_staff()` or a guardian,
+ * so a family account searching would only ever match its own children. An empty query asks for
+ * nothing — a roster picker should not open by listing every child in the academy.
+ */
+export async function searchPlayers(
+	db: PlayersDb,
+	query: string
+): Promise<Result<{ id: string; fullName: string; birthdate: string }[]>> {
+	const q = query.trim();
+	if (!q) return ok([]);
+	const { data, error } = await db
+		.from('players')
+		.select('id, full_name, birthdate')
+		.ilike('full_name', `%${q.toLowerCase()}%`)
+		.order('full_name')
+		.limit(20);
+	if (error) return err(fromPostgres(error));
+	return ok((data ?? []).map((p) => ({ id: p.id, fullName: p.full_name, birthdate: p.birthdate })));
+}
