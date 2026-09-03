@@ -124,9 +124,47 @@ wrangler. Authenticate for **that** account one of two ways:
   tokens are 40 bare characters — an `sbp_…` value is a Supabase token, not a Cloudflare one.
 - **Login:** `pnpm cf login` opens the browser once; state lands in `.wrangler/home`.
 
+**The token, exactly.** dash.cloudflare.com → My Profile → API Tokens → Create Token → Create Custom
+Token. Name it `momentumtennis-wrangler-<machine>`. Cloudflare cannot scope a token to one Worker —
+the account is the unit — so this one token serves dev now and prod later; dev/prod separation is
+`--env` plus `config/prod.yaml` staying TODO until the production worker exists.
+
+| scope | permission | level | why |
+|---|---|---|---|
+| Account | Workers Scripts | Edit | deploy both workers (script, static assets, cron triggers, secrets); attaching a custom domain uses this same permission |
+| Account | Account Settings | Read | lets wrangler verify the account (`pnpm cf whoami`) |
+| Account | Workers Tail | Read | `pnpm cf tail --env dev` for live logs |
+| Zone | Zone | Read | resolves the zone when `app.momentum-tennis.com` is attached at launch |
+| Zone | Workers Routes | Edit | only if production ever deploys on a route instead of a custom domain; harmless now |
+
+Leave out everything else: Workers KV / R2 / D1 / Queues / AI (unused), DNS (custom domains are
+created through the Workers endpoint, which issues the DNS records and certificate itself), Access
+(configure it in the dashboard), any Edit on Account Settings.
+
+- **Account Resources:** Include → Specific account → the Momentum Tennis account
+  (`cloudflare.account_id` in `config/dev.yaml`). Never "All accounts" — the other account must
+  stay out of reach.
+- **Zone Resources:** Include → All zones from an account → the same account. The
+  `momentum-tennis.com` zone does not exist yet; this covers it when it does, without re-issuing.
+- **Client IP filtering:** empty (a laptop's address changes). **TTL:** set an end date about a
+  year out and diary it; wrangler fails loudly when it expires.
+
+The secret is shown once and starts with `cfut_`; put it in `.env.local` as `CLOUDFLARE_API_TOKEN`.
+`CLOUDFLARE_ACCOUNT_ID` is not needed — the wrapper supplies the profile's.
+
 ```bash
 pnpm cf whoami                # must show the recorded account, and only it
 ```
+
+**Account-level prerequisites** (dashboard, one-time, no token involved):
+
+| resource | needed for | where |
+|---|---|---|
+| `workers.dev` subdomain | the dev worker's URL `https://momentumtennis-dev.<subdomain>.workers.dev` — register it **before** the first deploy | Workers & Pages → Overview → Your subdomain |
+| Workers plan | Free is enough for dev; production needs **Workers Paid** (the Free plan's daily request cap is a hard stop) | Workers & Pages → Plans |
+| Workers Builds git connection | `deploy/dev` deploying itself; Cloudflare generates its own API token for builds — none of yours | Workers & Pages → the worker → Settings → Builds |
+| Zero Trust organisation | Access protection on the dev host (free tier) | Zero Trust → Access → Applications |
+| `momentum-tennis.com` zone | the production custom domain `app.momentum-tennis.com` — the zone must be on Cloudflare (nameservers at GoDaddy → Cloudflare; the root keeps pointing at the legacy site by DNS record, decision J) | Add a site |
 
 **First deploy, by hand** (creates the worker):
 
