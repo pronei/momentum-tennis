@@ -67,3 +67,16 @@ describe('describeError — plain, earned, no exclamation points', () => {
 		expect(describeError('weekly_cap')).toMatch(/one .* class per week/i);
 	});
 });
+
+describe('identity refusals map to codes, not to unexpected', () => {
+	it('maps the tokens the identity RPCs raise', () => {
+		expect(fromPostgres({ message: 'staff_only' }).code).toBe('staff_only');
+		expect(fromPostgres({ message: 'admin_only' }).code).toBe('admin_only');
+		expect(fromPostgres({ message: 'minor_self_link' }).code).toBe('minor_self_link');
+		expect(fromPostgres({ message: 'unknown_skill_level: purple' }).code).toBe(
+			'unknown_skill_level'
+		);
+		expect(fromPostgres({ message: 'player_has_history' }).code).toBe('player_has_history');
+		expect(fromPostgres({ message: 'validation: name required' }).code).toBe('validation');
+	});
+});

@@ -4,7 +4,12 @@
 const CODES = [
 	'not_authenticated',
 	'not_authorized',
+	'staff_only',
+	'admin_only',
 	'validation',
+	'minor_self_link',
+	'unknown_skill_level',
+	'player_has_history',
 	'waiver_required',
 	'weekly_cap',
 	'insufficient_credits',
@@ -66,7 +71,13 @@ export function fromPostgres(e: PgLike | null | undefined): AppError {
 const COPY: Record<ErrorCode, string> = {
 	not_authenticated: 'Sign in to continue.',
 	not_authorized: 'This account cannot act for that player.',
+	staff_only: 'Only academy staff can do that.',
+	admin_only: 'Only an administrator can do that.',
 	validation: 'Check the highlighted fields.',
+	minor_self_link: 'A player under 18 cannot be their own guardian.',
+	unknown_skill_level: 'That ball level is not one the academy offers.',
+	player_has_history:
+		'This player has bookings or credits, so the academy has to remove them. Contact us.',
 	waiver_required: 'A current waiver must be signed for this player before booking.',
 	weekly_cap: 'One weekday or weekend class per week per package. This week already has one.',
 	insufficient_credits: 'No valid credits for this class type. Buy a package to continue.',
