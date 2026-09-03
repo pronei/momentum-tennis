@@ -135,6 +135,8 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
 - 2026-08-25 — Calendar: Schedule-X resource view is paid (€479/yr); use
   @event-calendar/core (MIT, Svelte, free resource views) for admin, bespoke
   token-styled month/day views for parents; theming spike opens phase 3.
+  **Superseded 2026-09-03 by the spike** (`docs/decisions/2026-09-03-calendar-library.md`):
+  no calendar dependency — the ResourceDayView port ships alone.
 - 2026-08-25 — Cron: stock adapter-cloudflare has no scheduled() handler →
   dedicated `workers/cron` worker calling a shared-secret internal endpoint.
 - 2026-08-30 — Stripe confirmed over Mindbody/CourtReserve/Square. ACH-first,
