@@ -264,3 +264,56 @@ export async function signWaiver(
 	if (error) return err(fromPostgres(error));
 	return ok({ signatureId: data as string });
 }
+
+export type WaiverVersionDetail = {
+	id: string;
+	documentId: string;
+	title: string;
+	slug: string;
+	version: number;
+	publishedAt: string | null;
+	contentMd: string;
+	contentSha256: string;
+	/** False once a newer version has been published — the screen says so instead of signing. */
+	isCurrent: boolean;
+};
+
+/** The exact text a signature will point at, with the stamp the screen prints above it. */
+export async function getVersion(
+	db: WaiversDb,
+	versionId: string
+): Promise<Result<WaiverVersionDetail | null>> {
+	const { data, error } = await db
+		.from('waiver_versions')
+		.select(
+			'id, document_id, version, published_at, content_md, content_sha256, waiver_documents ( id, title, slug )'
+		)
+		.eq('id', versionId)
+		.maybeSingle();
+	if (error) return err(fromPostgres(error));
+	if (!data) return ok(null);
+	const v = data as unknown as VersionRow & {
+		document_id: string;
+		content_md: string;
+		content_sha256: string;
+	};
+
+	const { data: current, error: cError } = await db
+		.from('v_current_waiver_versions')
+		.select('waiver_version_id')
+		.eq('document_id', v.document_id)
+		.maybeSingle();
+	if (cError) return err(fromPostgres(cError));
+
+	return ok({
+		id: v.id,
+		documentId: v.document_id,
+		title: v.waiver_documents?.title ?? '',
+		slug: v.waiver_documents?.slug ?? '',
+		version: v.version,
+		publishedAt: v.published_at,
+		contentMd: v.content_md,
+		contentSha256: v.content_sha256,
+		isCurrent: (current as { waiver_version_id: string } | null)?.waiver_version_id === v.id
+	});
+}

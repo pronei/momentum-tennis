@@ -7,6 +7,7 @@
 	const tabs = [
 		{ id: '/portal', label: 'Overview', href: '/portal' },
 		{ id: '/portal/players', label: 'Players', href: '/portal/players' },
+		{ id: '/portal/waivers', label: 'Waivers', href: '/portal/waivers' },
 		{ id: '/portal/account', label: 'Account', href: '/portal/account' }
 	];
 	const active = $derived(

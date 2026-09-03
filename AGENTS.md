@@ -5,11 +5,11 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phase 0 (foundations) built on `phase-0/foundations`; phase 1 (identity & profiles) built on
-`phase-1/identity`: migrations 0002–0003, the identity domain module, the portal player
-roster with a `?player=` context, and the admin staff console. The restricted minor login is
-deliberately NOT built — see open question O in `docs/PLAN.md`. Phase plan and decisions:
-`docs/PLAN.md`. Phase checklists: `docs/superpowers/plans/`.
+Phases 0–2 are built: foundations (`phase-0/foundations`), identity & profiles
+(`phase-1/identity`), waivers (`phase-2/waivers`). Migrations 0001–0004. The restricted minor
+login is deliberately NOT built — see open question O in `docs/PLAN.md`. Phase 3 (schedule &
+availability) is next. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
+`docs/superpowers/plans/`.
 
 ## Prime directives
 1. **Build only the approved phase.** Deliver, stop, wait for explicit approval.
@@ -68,6 +68,10 @@ deliberately NOT built — see open question O in `docs/PLAN.md`. Phase plan and
   `update_player` both enforce it.
 - **The academy always has an admin.** Deleting the last `admin` row is refused (0003):
   it would leave nobody able to grant the role back.
+- **Consent is versioned and append-only.** Publishing freezes a version and makes every
+  earlier signature stop satisfying the gate; `v_player_waiver_status` and
+  `assert_waivers_signed()` are the single truth the portal and booking both read. Version
+  numbers and `content_sha256` are produced in SQL (0004), never by the app.
 - **Guardians pay, players consume.** Purchases attach to accounts; credits,
   bookings, waiver coverage, and ratings attach to named players. An adult player
   is a `self` guardianship — same shape, not a special case. Minority is derived
@@ -144,7 +148,8 @@ render; the schema is tested behaviorally in PGlite.
   the only copy for refusals), `time.ts` (academy-tz rendering mirroring SQL),
   `settings.ts` (academy timezone, fails soft), `identity/` (staff roles + console,
   account profile, players, age mirroring `player_is_adult()`), `booking/` (RPC
-  wrappers), `cron.ts` (secret check + job dispatch), `payments/` (webhook idempotency
+  wrappers), `waivers.ts` (documents, versions, status, signing), `cron.ts` (secret check
+  + job dispatch), `payments/` (webhook idempotency
   port + Supabase store), `notify/` (transactional vs marketing send, insert-first
   idempotency).
 - `src/lib/components/` — app composites built from `$lib/ds` and the design system's
@@ -153,8 +158,8 @@ render; the schema is tested behaviorally in PGlite.
   `FieldShell.svelte` is the shared form anatomy. `/styleguide` renders everything.
 - `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `(portal)/portal`
   (shell carrying the `?player=` context, overview, `players/` roster + new + `[id]`,
-  account form: the superforms pattern), `admin` (guarded shell, `staff/`),
-  `internal/cron`, `api/stripe/webhook`.
+  `waivers/` status + `[versionId]` signing, account form: the superforms pattern),
+  `admin` (guarded shell, `waivers/`, `staff/`), `internal/cron`, `api/stripe/webhook`.
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
 - `config/` — one profile per environment (`dev.yaml`, `prod.yaml`).
 - `scripts/` — `gen-db-types.mjs`, `check-adherence.mjs`, `check-env.mjs`.

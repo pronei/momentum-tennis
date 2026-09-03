@@ -44,3 +44,13 @@ test('staff role management is refused, not hidden, for anonymous users', async 
 	const res = await page.goto('/admin/staff');
 	expect(res?.url()).toMatch(/\/login/);
 });
+
+test('waiver signing is guarded — consent is never reachable anonymously', async ({ page }) => {
+	await page.goto('/portal/waivers');
+	await expect(page).toHaveURL(/\/login\?next=%2Fportal%2Fwaivers/);
+});
+
+test('waiver authoring is admin-only', async ({ page }) => {
+	const res = await page.goto('/admin/waivers');
+	expect(res?.url()).toMatch(/\/login/);
+});

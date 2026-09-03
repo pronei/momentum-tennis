@@ -1,6 +1,6 @@
 # Phase 2 — Waivers Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax. Read `AGENTS.md` first — prime directive 5 governs this phase: **waiver copy comes FROM LEGAL. Never draft it, never claim legal sufficiency.**
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [x]`) syntax. Read `AGENTS.md` first — prime directive 5 governs this phase: **waiver copy comes FROM LEGAL. Never draft it, never claim legal sufficiency.**
 
 **Goal:** The academy publishes a versioned waiver; a guardian signs it for a named player in a recorded capacity; publishing a new version forces everyone to re-consent, and booking can ask "is this player covered?" and get a truthful answer.
 
@@ -45,46 +45,46 @@ and no screen claims a signature is legally sufficient.
 ## Tasks
 
 ### Task 1: Migration 0004 + the re-consent proof
-- [ ] Harness section 11 (at the END, after every booking section — publishing a new version
+- [x] Harness section 11 (at the END, after every booking section — publishing a new version
       invalidates signatures, which would break sections 6–8 if it ran earlier): draft v2 is not
       current; a draft is editable; publishing makes it current; every earlier signature stops
       satisfying; `assert_waivers_signed` raises `waiver_required`; publishing twice is refused;
       editing a published version is refused; signing the superseded version is refused; signing
       v2 restores coverage.
-- [ ] Run `pnpm db:test` → RED (`create_waiver_draft` does not exist)
-- [ ] Write `0004`: version = `max+1` inside the RPC (atomic), `content_sha256` computed with
+- [x] Run `pnpm db:test` → RED (`create_waiver_draft` does not exist)
+- [x] Write `0004`: version = `max+1` inside the RPC (atomic), `content_sha256` computed with
       core `sha256()` so it cannot disagree with the text, publish refuses an already-published
       version and empty content.
-- [ ] Run `pnpm db:test` → GREEN; `pnpm db:types`; commit
+- [x] Run `pnpm db:test` → GREEN; `pnpm db:types`; commit
 
 ### Task 2: Refusal codes
-- [ ] Failing test for `not_current_version`, `name_required`, `minor_cannot_self_sign`,
+- [x] Failing test for `not_current_version`, `name_required`, `minor_cannot_self_sign`,
       `already_published`; add to `CODES` and `COPY`; GREEN; commit with Task 3
 
 ### Task 3: Waivers domain module
-- [ ] Failing tests: `listDocuments` (current version + draft), `listVersions`,
+- [x] Failing tests: `listDocuments` (current version + draft), `listVersions`,
       `createDocument`, `createDraft`, `updateDraft`, `publishVersion`, `playerWaiverStatus`
       (satisfied/unsatisfied shape), `signWaiver` (passes typed name, maps every refusal),
       `pendingReconsent`. Narrow fakes, as in `players.test.ts`.
-- [ ] Implement; GREEN; commit
+- [x] Implement; GREEN; commit
 
 ### Task 4: Admin authoring
-- [ ] `/admin/waivers`: documents with current version and a `StatusChip`; add a document.
-- [ ] `/admin/waivers/[id]`: version history, draft editor (`TextArea`), publish behind a
+- [x] `/admin/waivers`: documents with current version and a `StatusChip`; add a document.
+- [x] `/admin/waivers/[id]`: version history, draft editor (`TextArea`), publish behind a
       `Dialog` whose consequence line names how many signers will have to re-consent.
-- [ ] Waivers tab in the admin layout. Verify; commit
+- [x] Waivers tab in the admin layout. Verify; commit
 
 ### Task 5: Portal signing
-- [ ] `/portal/waivers`: the current player's documents with status and a "Review and sign" action.
-- [ ] `/portal/waivers/[versionId]`: the version text in a hairline scroll frame with a mono
+- [x] `/portal/waivers`: the current player's documents with status and a "Review and sign" action.
+- [x] `/portal/waivers/[versionId]`: the version text in a hairline scroll frame with a mono
       version stamp, a capacity line the guardian cannot edit, typed name, consent `Checkbox`,
       one amber action; signed state shows the receipt.
-- [ ] Re-consent `Banner` on the portal overview when the current player is not covered.
-- [ ] Verify; commit
+- [x] Re-consent `Banner` on the portal overview when the current player is not covered.
+- [x] Verify; commit
 
 ### Task 6: E2E, docs, final gate
-- [ ] e2e for the new guarded routes; update `docs/PLAN.md`, `AGENTS.md`, this checklist.
-- [ ] `pnpm env:check && pnpm check && pnpm lint && pnpm test && pnpm build` all green; commit
+- [x] e2e for the new guarded routes; update `docs/PLAN.md`, `AGENTS.md`, this checklist.
+- [x] `pnpm env:check && pnpm check && pnpm lint && pnpm test && pnpm build` all green; commit
 
 ## Exit criteria
 
@@ -93,3 +93,24 @@ and no screen claims a signature is legally sufficient.
 - An admin can author and publish; a guardian can sign for a named player in a recorded capacity;
   a minor can never self-sign.
 - All gates green.
+
+## Status (end of session 2026-09-02)
+
+Built and committed on `phase-2/waivers`. `pnpm env:check`, `pnpm check` (0 errors, 0 warnings),
+`pnpm lint`, `pnpm test` (110 unit/contract + 99 schema checks) and `pnpm build` all green.
+
+The exit criterion is proven in the database, not just the UI: harness section 11 publishes a
+second version and asserts that every earlier signature stops satisfying `v_player_waiver_status`,
+that `assert_waivers_signed()` refuses, that the superseded version can no longer be signed, and
+that both signatures survive.
+
+No migration was needed for the consent MECHANISM — 0001 already carried it. 0004 adds only the
+authoring half.
+
+Known limitations, by choice:
+- Publishing a version needs JavaScript (the confirm is a `Dialog`). It fails closed, and the
+  draft editor itself works without JS.
+- The signing screen renders the stored text as plain pre-wrapped text, not rendered Markdown.
+  Rendering someone else's Markdown means either a sanitiser dependency or an injection risk;
+  the text is displayed verbatim instead, which is also what "this is exactly what was signed"
+  argues for.

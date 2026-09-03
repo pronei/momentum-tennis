@@ -12,6 +12,15 @@
 	<Banner tone="error">{data.playersError}</Banner>
 {/if}
 
+{#if data.reconsentNeeded && player}
+	<Banner tone="error">
+		{player.fullName} needs a signed waiver before booking.
+		{#snippet action()}
+			<Button variant="secondary" size="sm" href="/portal/waivers">Review and sign</Button>
+		{/snippet}
+	</Banner>
+{/if}
+
 {#if !player}
 	<EmptyState ticks>
 		No players yet. Add everyone in your family who trains with us — you can add more later

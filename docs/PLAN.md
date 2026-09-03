@@ -17,7 +17,7 @@ localized.
 |---|-------|----------|------------|---------------|
 | 0 | Foundations — **built 2026-09-02** (`phase-0/foundations`) | SvelteKit scaffold, CI (check/lint/test/build), migration 0001 + PGlite harness + generated types, Supabase auth + server guards, domain patterns (Result/AppError, time, identity, booking, cron, payments idempotency, notify), design-system port (core/forms/feedback) + `/styleguide`, integration skeletons (Stripe webhook, cron endpoint + worker), wrangler + workflows | approval of schema v2 ✓ | code exit criteria met (check/lint/test/build green); **operator steps remain**: create the two Supabase projects + two CF projects, fill env/secrets, GitHub secrets for migrate.yml — see docs/superpowers/plans/2026-09-02-phase-0-foundations.md |
 | 1 | Identity & profiles — **built 2026-09-02** (`phase-1/identity`) | guardian onboarding, N players per account (add/edit/archive), player switcher and `?player=` context, adult self-guardianship, staff role management; migrations 0002 (player writes) + 0003 (last-admin guard) | 0 | code exit criteria met (check/lint/test/build green, 93 unit + 83 schema checks); **restricted minor login deferred pending question O**; end-to-end on dev still needs the phase-0 operator steps |
-| 2 | Waivers | doc/version admin (draft→publish freeze), signing ceremony (capacity resolved server-side), re-consent detection, status surfaces | 1 | version bump forces re-consent; booking gate queryable |
+| 2 | Waivers — **built 2026-09-02** (`phase-2/waivers`) | document/version admin (draft → publish freeze), signing ceremony with capacity resolved server-side, re-consent detection and banner, status surfaces; migration 0004 (authoring RPCs, hash computed in SQL) | 1 | met: publishing a new version makes every earlier signature stop satisfying the gate, proven in the harness (section 11); `assert_waivers_signed()` and `v_player_waiver_status` are what phase 4 will call, and the portal reads the same view |
 | 3 | Schedule & availability | locations/courts/availability rules + exceptions, terms/classes/camps/teams CRUD, occurrence generation, ResourceDayView admin editor, public + portal read-only calendars | 1 (2 for gating copy) | Artur can enter the real fall schedule; calendar renders it in academy TZ |
 | 4 | Booking, credits & attendance | scoped class booking with weekly cap, private-lesson booking, cancellation/reversal policy, capacity + waitlist, attendance marking (coach + admin), admin credit grants, booking-confirmation email | 2, 3 | double-booking + cap + waiver gate all enforced by DB under concurrent load; a real week bookable on dev |
 | 5 | Payments | Stripe Checkout (ACH-first + cards, Apple Pay, Google Pay, Cash App Pay, Link), idempotent webhooks → ledger issuance, receipts, purchases dashboard + ledger drill-in, refunds/reversals | 4 | test-mode purchase → credits → booking → refund, fully audited; Payment Links interim retired |
@@ -104,6 +104,16 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-09-02 — Phase 2 built (branch phase-2/waivers): migration 0004 adds the authoring half
+  (create_waiver_draft, update_waiver_draft, publish_waiver_version) — version numbers are
+  allocated under a document lock and content_sha256 is computed in SQL so the fingerprint
+  cannot drift from the signed text. Admin authoring and the portal signing ceremony ship;
+  the re-consent banner and the booking gate read one view. 110 unit tests, 99 schema checks.
+- 2026-09-02 — Environment profiles: config/dev.yaml and config/prod.yaml describe each
+  environment (Supabase project, Cloudflare workers, deploy branch, Stripe mode, secret NAMES);
+  `pnpm env:check` binds them to the committed env files and fails if a secret ever carries a
+  value in one. Dev Supabase credentials filled in; PUBLIC_SUPABASE_ANON_KEY renamed to
+  PUBLIC_SUPABASE_PUBLISHABLE_KEY to match the key Supabase now issues.
 - 2026-09-02 — Phase 1 built (branch phase-1/identity): migrations 0002 (update_player,
   archive_player) and 0003 (last-admin guard); identity domain module; portal player
   roster, add/edit, `?player=` context; admin staff console. 93 unit/contract tests and

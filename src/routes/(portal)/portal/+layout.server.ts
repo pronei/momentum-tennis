@@ -1,6 +1,7 @@
 import { ageOn, isAdultOn } from '$lib/server/domain/identity/age';
 import { listPlayers } from '$lib/server/domain/identity/players';
 import { describeError } from '$lib/server/domain/result';
+import { needsReconsent, playerWaiverStatus } from '$lib/server/domain/waivers';
 import type { LayoutServerLoad } from './$types';
 
 /**
@@ -28,7 +29,14 @@ export const load: LayoutServerLoad = async ({ locals, url, parent }) => {
 	const requested = url.searchParams.get('player');
 	const currentPlayer = players.find((p) => p.id === requested) ?? players[0] ?? null;
 
+	// Consent status for whoever the page is about: the re-consent banner and phase 4's
+	// booking gate read the same view, so they can never disagree.
+	const status = currentPlayer ? await playerWaiverStatus(locals.supabase, currentPlayer.id) : null;
+	const waiverStatus = status?.ok ? status.value : [];
+
 	return {
+		waiverStatus,
+		reconsentNeeded: needsReconsent(waiverStatus),
 		account: account ?? { full_name: '', email: locals.user!.email ?? '', phone: null },
 		players,
 		currentPlayer,

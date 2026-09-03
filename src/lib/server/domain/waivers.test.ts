@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	createDraft,
+	getVersion,
 	documentSchema,
 	draftSchema,
 	listDocuments,
@@ -253,5 +254,66 @@ describe('authoring', () => {
 		});
 		const r = await signerCountForDocument(db, 'd1');
 		expect(r).toEqual({ ok: true, value: 2 });
+	});
+});
+
+describe('getVersion — what the signing screen shows', () => {
+	it('returns the exact text, its stamp, and whether it is still the current version', async () => {
+		const db = fakeDb({
+			tables: {
+				waiver_versions: {
+					data: {
+						id: 'v3',
+						version: 3,
+						published_at: '2026-06-01T00:00:00Z',
+						content_md: 'FROM LEGAL',
+						content_sha256: 'abc',
+						document_id: 'd1',
+						waiver_documents: { id: 'd1', title: 'Participation waiver', slug: 'liability' }
+					}
+				},
+				v_current_waiver_versions: { data: { waiver_version_id: 'v3' } }
+			}
+		});
+		const r = await getVersion(db, 'v3');
+		if (!r.ok) throw new Error('expected ok');
+		expect(r.value).toEqual({
+			id: 'v3',
+			documentId: 'd1',
+			title: 'Participation waiver',
+			slug: 'liability',
+			version: 3,
+			publishedAt: '2026-06-01T00:00:00Z',
+			contentMd: 'FROM LEGAL',
+			contentSha256: 'abc',
+			isCurrent: true
+		});
+	});
+
+	it('reports a superseded version as not current, so the screen can say so', async () => {
+		const db = fakeDb({
+			tables: {
+				waiver_versions: {
+					data: {
+						id: 'v2',
+						version: 2,
+						published_at: '2025-01-01T00:00:00Z',
+						content_md: 'older',
+						content_sha256: 'def',
+						document_id: 'd1',
+						waiver_documents: { id: 'd1', title: 'Participation waiver', slug: 'liability' }
+					}
+				},
+				v_current_waiver_versions: { data: { waiver_version_id: 'v3' } }
+			}
+		});
+		const r = await getVersion(db, 'v2');
+		if (!r.ok || !r.value) throw new Error('expected a version');
+		expect(r.value.isCurrent).toBe(false);
+	});
+
+	it('returns null for a version that does not exist', async () => {
+		const r = await getVersion(fakeDb({ tables: { waiver_versions: { data: null } } }), 'nope');
+		expect(r).toEqual({ ok: true, value: null });
 	});
 });
