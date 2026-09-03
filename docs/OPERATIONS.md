@@ -125,7 +125,7 @@ wrangler. Authenticate for **that** account one of two ways:
 - **Login:** `pnpm cf login` opens the browser once; state lands in `.wrangler/home`.
 
 **The token, exactly.** dash.cloudflare.com → My Profile → API Tokens → Create Token → Create Custom
-Token. Name it `momentumtennis-wrangler-<machine>`. Cloudflare cannot scope a token to one Worker —
+Token. Name it `momentum-tennis-wrangler-<machine>`. Cloudflare cannot scope a token to one Worker —
 the account is the unit — so this one token serves dev now and prod later; dev/prod separation is
 `--env` plus `config/prod.yaml` staying TODO until the production worker exists.
 

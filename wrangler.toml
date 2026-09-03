@@ -16,6 +16,12 @@ enabled = true
 # `wrangler deploy --env dev` / `--env live` when deploying by hand.
 [env.dev]
 name = "momentum-tennis-dev"
+# Public runtime values (not secrets). $env/dynamic/private reads the worker's vars, not the .env
+# file the build read, so anything the app demands at request time and is not PUBLIC_* lives here.
+[env.dev.vars]
+EMAIL_FROM = "Momentum Tennis (dev) <onboarding@resend.dev>"
 
 [env.live]
 name = "momentum-tennis"
+[env.live.vars]
+EMAIL_FROM = "Momentum Tennis <no-reply@momentum-tennis.com>" # confirm against the verified Resend domain at launch

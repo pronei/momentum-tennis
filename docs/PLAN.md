@@ -104,6 +104,11 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-09-03 — Dev deployed: https://momentum-tennis-dev.proneidev.workers.dev (worker
+  `momentum-tennis-dev`; production will be `momentum-tennis`). Database stays Postgres on Supabase,
+  not Workers D1 (`docs/decisions/2026-09-03-postgres-on-supabase-not-d1.md`); Workers KV kept for
+  edge caching only. Phase 3 plan written (`docs/superpowers/plans/2026-09-03-phase-3-schedule.md`);
+  phases 4–7 have briefs to expand at their start.
 - 2026-09-03 — Operations: dev database migrated (0001–0006) with `pnpm db:push` (direct connection,
   no Supabase login); the Supabase GitHub integration on `deploy/dev` is the automatic migration writer
   and `migrate.yml` the manual fallback; `pnpm cf` scopes wrangler to this repo's Cloudflare account;

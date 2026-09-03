@@ -21,9 +21,11 @@ src/routes/admin/waivers and src/routes/(portal)/portal/account (the route and s
 design-system/readme.md and design-system/PRODUCT.md (the port contract).
 
 Rules, non-negotiable:
-- One phase at a time. Open phase N by posting its batched questions (recommended default first)
-  and its plan at docs/superpowers/plans/<date>-phase-N-<name>.md (bite-sized tasks, exact files,
-  the test code, the commands). Implement on branch phase-N/<name> from main. When the exit
+- One phase at a time. Phase 3 already has its plan: docs/superpowers/plans/2026-09-03-phase-3-schedule.md
+  — post its opening questions, then execute it task by task (superpowers:executing-plans). Phases
+  4–7 have briefs (docs/superpowers/plans/2026-09-03-phase-N-*.brief.md): at each phase start, post
+  the brief's questions and expand it into a full plan (superpowers:writing-plans) before coding.
+  Implement on branch phase-N/<name> from main. When the exit
   criteria in docs/PLAN.md are met and every gate is green: merge to main, fast-forward deploy/dev,
   push, confirm the migration landed on the dev project, update AGENTS.md status and the docs/PLAN.md
   decision log, report, and STOP. Never start the next phase without approval.
@@ -47,8 +49,8 @@ Rules, non-negotiable:
   pnpm test · pnpm db:test · pnpm db:types leaves no diff · pnpm build:dev. Keep AGENTS.md true —
   update it in the same change when a convention moves.
 
-Begin with phase 3 (schedule & availability) as scoped in docs/HANDOFF-opus5.md §2: post its
-questions and its plan first, then wait for the go.
+Follow AGENTS.md "Editing discipline": surgical edits, commit to an approach, no extra validation
+scripts, literal prose. Begin with phase 3: post the six questions from its plan, then wait for the go.
 ```
 
 ## 1. State on 2026-09-03
@@ -185,7 +187,11 @@ preference centre; the Resend adapter wired; the cron worker deployed with `CRON
 **Operator.** Resend domain and key, the shared secret on both sides, the cron worker deploy,
 marketing and unsubscribe copy from legal.
 
-## 7. The ritual, every phase
+## 7. Decisions on record
+`docs/decisions/2026-09-03-postgres-on-supabase-not-d1.md` — why the database stays Postgres on Supabase
+and what Workers KV is for. Calendar library: decided by the phase-3 spike (Task 12), recorded there.
+
+## 8. The ritual, every phase
 
 1. Branch `phase-N/<name>` from `main`. Post questions (defaults first) and the plan; wait for the go.
 2. RED before GREEN for every unit: domain (vitest, fakes), schema (harness section), component (SSR).
