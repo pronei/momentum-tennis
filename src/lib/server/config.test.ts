@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { parseEnv } from './config';
+import { parseEnv, requireSecret } from './config';
 
-const valid = {
+const core = {
 	PUBLIC_SUPABASE_URL: 'https://abc.supabase.co',
 	PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test',
 	PUBLIC_SITE_URL: 'http://localhost:5173',
-	EMAIL_FROM: 'Momentum Tennis <no-reply@momentum-tennis.com>',
+	EMAIL_FROM: 'Momentum Tennis <no-reply@momentum-tennis.com>'
+};
+const secrets = {
 	SUPABASE_SERVICE_ROLE_KEY: 'service-key',
 	STRIPE_SECRET_KEY: 'sk_test_x',
 	STRIPE_WEBHOOK_SECRET: 'whsec_x',
@@ -13,32 +15,50 @@ const valid = {
 	CRON_SHARED_SECRET: 'a-long-random-secret-value'
 };
 
-describe('parseEnv', () => {
+describe('parseEnv — the core is strict, the integrations are lazy', () => {
 	it('returns a typed config from a complete environment', () => {
-		const cfg = parseEnv(valid);
+		const cfg = parseEnv({ ...core, ...secrets });
 		expect(cfg.supabaseUrl).toBe('https://abc.supabase.co');
 		expect(cfg.siteUrl).toBe('http://localhost:5173');
-		expect(cfg.stripe.secretKey).toBe('sk_test_x');
-		expect(cfg.cronSharedSecret).toBe('a-long-random-secret-value');
+		expect(cfg.secrets.STRIPE_SECRET_KEY).toBe('sk_test_x');
+		expect(requireSecret(cfg, 'CRON_SHARED_SECRET')).toBe('a-long-random-secret-value');
 	});
 
-	it('names every missing variable in one error, never a partial config', () => {
-		const { SUPABASE_SERVICE_ROLE_KEY: _a, RESEND_API_KEY: _b, ...partial } = valid;
+	it('the app renders with only its core values — integration secrets arrive with their phases', () => {
+		const cfg = parseEnv(core);
+		expect(cfg.supabasePublishableKey).toBe('sb_publishable_test');
+		expect(cfg.secrets).toEqual({});
+	});
+
+	it('names every missing core variable in one error, never a partial config', () => {
+		const { PUBLIC_SUPABASE_URL: _a, EMAIL_FROM: _b, ...partial } = core;
 		void _a;
 		void _b;
-		expect(() => parseEnv(partial)).toThrowError(/SUPABASE_SERVICE_ROLE_KEY/);
-		expect(() => parseEnv(partial)).toThrowError(/RESEND_API_KEY/);
+		expect(() => parseEnv(partial)).toThrowError(/PUBLIC_SUPABASE_URL/);
+		expect(() => parseEnv(partial)).toThrowError(/EMAIL_FROM/);
 	});
 
-	it('rejects a site URL that is not an absolute http(s) origin', () => {
-		expect(() => parseEnv({ ...valid, PUBLIC_SITE_URL: 'momentum-tennis.com' })).toThrowError(
-			/PUBLIC_SITE_URL/
+	it('requireSecret fails at the point of use, naming the variable and where it is set', () => {
+		const cfg = parseEnv(core);
+		expect(() => requireSecret(cfg, 'STRIPE_WEBHOOK_SECRET')).toThrowError(
+			/STRIPE_WEBHOOK_SECRET.*config\//
 		);
 	});
 
-	it('treats blank strings as missing (a copied .env.example must not pass)', () => {
-		expect(() => parseEnv({ ...valid, STRIPE_WEBHOOK_SECRET: '' })).toThrowError(
-			/STRIPE_WEBHOOK_SECRET/
+	it('treats a blank secret as absent (a copied .env.example must not count as set)', () => {
+		const cfg = parseEnv({ ...core, STRIPE_SECRET_KEY: '  ' });
+		expect(cfg.secrets.STRIPE_SECRET_KEY).toBeUndefined();
+	});
+
+	it('still refuses a weak cron secret when one is supplied', () => {
+		expect(() => parseEnv({ ...core, CRON_SHARED_SECRET: 'short' })).toThrowError(
+			/CRON_SHARED_SECRET/
+		);
+	});
+
+	it('rejects a site URL that is not an absolute http(s) origin', () => {
+		expect(() => parseEnv({ ...core, PUBLIC_SITE_URL: 'momentum-tennis.com' })).toThrowError(
+			/PUBLIC_SITE_URL/
 		);
 	});
 });

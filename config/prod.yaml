@@ -4,6 +4,8 @@
 # Migrations reach here only after they have run on dev.
 #
 # Verify this profile agrees with the env file:  pnpm env:check
+# Build for this environment:                    pnpm build:live
+# Step-by-step setup:                            docs/OPERATIONS.md
 name: prod
 description: Live academy. Real family data. Migrations arrive dev-first, never directly.
 env_file: .env.production
@@ -15,20 +17,31 @@ supabase:
   migrations_applied_by: .github/workflows/migrate.yml on push to deploy/live
 
 cloudflare:
+  account_id: TODO # the same account as dev, confirmed with `wrangler whoami`
   worker: momentumtennis
   cron_worker: momentumtennis-cron
   deploy_branch: deploy/live
   access_protected: false # public site
 
+deploy:
+  build: pnpm build:live
+  command: npx wrangler deploy --env live
+  site_url: https://momentum-tennis.com # decision J: app.momentum-tennis.com first, root cutover later
+
 stripe:
   mode: live
 
 secrets:
-  - SUPABASE_SERVICE_ROLE_KEY
-  - STRIPE_SECRET_KEY
-  - STRIPE_WEBHOOK_SECRET
-  - RESEND_API_KEY
-  - CRON_SHARED_SECRET
+  - name: SUPABASE_SERVICE_ROLE_KEY
+    needed_from: phase 5 (webhooks) and 7 (cron)
+  - name: STRIPE_SECRET_KEY
+    needed_from: phase 5
+  - name: STRIPE_WEBHOOK_SECRET
+    needed_from: phase 5
+  - name: RESEND_API_KEY
+    needed_from: phase 4 / 7
+  - name: CRON_SHARED_SECRET
+    needed_from: phase 7
 
 ci_secrets:
   - SUPABASE_ACCESS_TOKEN

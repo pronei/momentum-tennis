@@ -54,7 +54,13 @@ Each environment is described by a profile in `config/` — `dev.yaml` and `prod
 holding what an operator needs (Supabase project, Cloudflare workers, deploy branch,
 Stripe mode, and the names of the secrets it expects). Values the app reads at runtime
 live in the env files; `pnpm env:check` verifies the two agree and refuses if a secret
-ever appears in a committed file.
+ever appears in a committed file. `pnpm build:dev` / `pnpm build:live` build with the
+profile's public values (a plain `vite build` would bake `.env.production` into dev).
+Integration secrets are demanded only by the code that uses them, so an environment runs
+before every phase's keys exist.
+
+Step-by-step account setup — GitHub, Supabase, Cloudflare — is in
+[docs/OPERATIONS.md](docs/OPERATIONS.md).
 
 Environment variables: same names everywhere, different values per environment —
 see `.env.example` for the canonical annotated list. Committed
@@ -62,7 +68,6 @@ see `.env.example` for the canonical annotated list. Committed
 `.env.local` locally and Cloudflare project secrets when deployed.
 
 ## Getting started
-1. Prereqs: Node 22+, pnpm, Supabase CLI, wrangler.
-2. `cp .env.example .env.local` and fill the secrets (test-mode keys).
-3. Fill the `TODO` values in `.env.development` (dev Supabase project).
-4. `pnpm install && pnpm dev`
+1. Prereqs: Node 22+, pnpm, Supabase CLI (`brew install supabase/tap/supabase`), wrangler (in devDependencies).
+2. `pnpm install && pnpm dev` — `.env.development` already points at the dev Supabase project.
+3. Secrets only when a phase needs one: `cp .env.example .env.local` and fill that one in.

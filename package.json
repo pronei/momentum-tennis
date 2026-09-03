@@ -20,7 +20,9 @@
 		"test:e2e": "playwright test",
 		"db:test": "node supabase/tests/validate.mjs",
 		"db:types": "node scripts/gen-db-types.mjs",
-		"env:check": "node scripts/check-env.mjs"
+		"env:check": "node scripts/check-env.mjs",
+		"build:dev": "node scripts/build-env.mjs dev",
+		"build:live": "node scripts/build-env.mjs prod"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^5.20260901.1",

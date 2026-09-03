@@ -27,7 +27,9 @@ availability) is next. Phase plan and decisions: `docs/PLAN.md`. Phase checklist
    legal sufficiency, e-signature validity, or compliance.
 6. **Secrets never enter git, code, or committed env files.**
    `.env.development` / `.env.production` hold public values only; secrets live in
-   `.env.local` (local) and Cloudflare project secrets (deployed).
+   `.env.local` (local) and Cloudflare project secrets (deployed). Integration secrets
+   are demanded where they are used (`requireSecret`, `secretOr503`), never at startup:
+   an environment must not need a Stripe key to render the login page.
 
 ## Design-system rules (binding — see design-system/readme.md)
 - Tokens only: no raw hex, no off-scale px, fonts Chivo / IBM Plex Sans / IBM Plex
@@ -127,7 +129,8 @@ Never put real family data in dev.
 | `pnpm db:test` | the schema harness alone (`supabase/tests/validate.mjs`) |
 | `pnpm env:check` | verify `config/*.yaml` against the committed env files (leak guard: refuses if a secret has a value in a committed file) |
 | `pnpm db:types` | regenerate `src/lib/server/db/database.types.ts` from `supabase/migrations` (CI verifies it is current) |
-| `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` |
+| `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` (bakes `.env.production`) |
+| `pnpm build:dev` / `pnpm build:live` | the same build with a profile's public values and `deploy.site_url` — what Workers Builds runs |
 | `pnpm test:e2e` | Playwright smoke against the built app (needs a reachable Supabase) |
 | `supabase db push` | apply migrations (CI does this per deploy branch — `.github/workflows/migrate.yml`) |
 | `wrangler deploy --env dev\|live` | manual deploy; normally Workers Builds deploys from the branch |
@@ -161,8 +164,10 @@ render; the schema is tested behaviorally in PGlite.
   `waivers/` status + `[versionId]` signing, account form: the superforms pattern),
   `admin` (guarded shell, `waivers/`, `staff/`), `internal/cron`, `api/stripe/webhook`.
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
-- `config/` — one profile per environment (`dev.yaml`, `prod.yaml`).
-- `scripts/` — `gen-db-types.mjs`, `check-adherence.mjs`, `check-env.mjs`.
+- `config/` — one profile per environment (`dev.yaml`, `prod.yaml`); `docs/OPERATIONS.md` is
+  the operator runbook (accounts, secrets, one-time links).
+- `scripts/` — `gen-db-types.mjs`, `check-adherence.mjs`, `check-env.mjs`, `build-env.mjs`
+  (+ `lib/env-file.mjs` shared by the last two).
 - `workers/cron/` — the scheduled Worker (Cron Triggers → `/internal/cron`).
 - `design-system/` — Claude Design export: tokens (imported as `$ds`), JSX reference
   components, UI kits, email kit, PRODUCT.md. Media gitignored. Read-only reference.

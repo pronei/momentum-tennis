@@ -11,47 +11,15 @@
 // Values still to be filled in ("TODO…") are reported as not-configured, not as failures:
 // production is legitimately unconfigured until the project exists.
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
-import { parse } from 'yaml';
+import { isPlaceholder, listProfiles, readProfile, root } from './lib/env-file.mjs';
 
-const root = new URL('..', import.meta.url).pathname;
 const only = process.argv[2];
-const profiles = fs
-	.readdirSync(path.join(root, 'config'))
-	.filter((f) => f.endsWith('.yaml'))
-	.filter((f) => !only || f === `${only}.yaml`)
-	.sort();
-
-if (!profiles.length) {
+const names = listProfiles().filter((n) => !only || n === only);
+if (!names.length) {
 	console.error(only ? `No profile config/${only}.yaml` : 'No profiles in config/');
 	process.exit(1);
 }
 
-/** KEY=VALUE lines; strips quotes and trailing comments outside quotes. */
-function parseEnvFile(text) {
-	const out = {};
-	for (const raw of text.split('\n')) {
-		const line = raw.trim();
-		if (!line || line.startsWith('#')) continue;
-		const eq = line.indexOf('=');
-		if (eq === -1) continue;
-		const key = line.slice(0, eq).trim();
-		let value = line.slice(eq + 1).trim();
-		if (value.startsWith('"') || value.startsWith("'")) {
-			const quote = value[0];
-			const end = value.indexOf(quote, 1);
-			value = end === -1 ? value.slice(1) : value.slice(1, end);
-		} else {
-			const hash = value.indexOf('#');
-			if (hash !== -1) value = value.slice(0, hash).trim();
-		}
-		out[key] = value;
-	}
-	return out;
-}
-
-const isPlaceholder = (v) => !v || /^TODO/i.test(v);
 let errors = 0;
 let pending = 0;
 
@@ -63,23 +31,20 @@ try {
 	errors++;
 }
 
-for (const file of profiles) {
-	const profile = parse(fs.readFileSync(path.join(root, 'config', file), 'utf8'));
-	const label = profile.name ?? file;
-	console.log(`\n${label} — ${profile.description ?? ''}`);
-
-	const envPath = path.join(root, profile.env_file);
-	if (!fs.existsSync(envPath)) {
+for (const name of names) {
+	const { profile, env } = readProfile(name);
+	console.log(`\n${profile.name ?? name} — ${profile.description ?? ''}`);
+	if (!env) {
 		console.error(`  ✗ env_file ${profile.env_file} does not exist`);
 		errors++;
 		continue;
 	}
-	const env = parseEnvFile(fs.readFileSync(envPath, 'utf8'));
 
 	// A committed env file holds public values only. A secret with a value here is a leak.
-	for (const name of profile.secrets ?? []) {
-		if (env[name]) {
-			console.error(`  ✗ ${profile.env_file} sets ${name} — secrets belong in .env.local or CF`);
+	for (const secret of profile.secrets ?? []) {
+		const key = typeof secret === 'string' ? secret : secret.name;
+		if (env[key]) {
+			console.error(`  ✗ ${profile.env_file} sets ${key} — secrets belong in .env.local or CF`);
 			errors++;
 		}
 	}
@@ -97,16 +62,24 @@ for (const file of profiles) {
 		console.log(`  ✓ supabase ${ref} · ${profile.supabase.plan}`);
 	}
 
-	const unset = ['PUBLIC_SITE_URL', 'PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'EMAIL_FROM'].filter((k) =>
+	const unset = ['PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'EMAIL_FROM'].filter((k) =>
 		isPlaceholder(env[k])
 	);
+	if (isPlaceholder(profile.deploy?.site_url)) unset.push('deploy.site_url (profile)');
 	if (unset.length) {
 		console.log(`  · not configured yet: ${unset.join(', ')}`);
+		pending++;
+	}
+	if (isPlaceholder(profile.cloudflare?.account_id)) {
+		console.log('  · cloudflare account_id not confirmed (wrangler whoami)');
 		pending++;
 	}
 
 	console.log(
 		`  · cloudflare ${profile.cloudflare?.worker} ← ${profile.cloudflare?.deploy_branch}`
+	);
+	console.log(
+		`  · build: ${profile.deploy?.build ?? '?'} · deploy: ${profile.deploy?.command ?? '?'}`
 	);
 	console.log(
 		`  · stripe ${profile.stripe?.mode} · ${(profile.secrets ?? []).length} secrets by name`

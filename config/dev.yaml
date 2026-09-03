@@ -6,6 +6,8 @@
 # .env.local, deployed they are Cloudflare project secrets.
 #
 # Verify this profile agrees with the env file:  pnpm env:check
+# Build for this environment:                    pnpm build:dev
+# Step-by-step setup:                            docs/OPERATIONS.md
 name: dev
 description: Shared development. Safe to break. Never holds real family data.
 env_file: .env.development
@@ -14,24 +16,39 @@ supabase:
   project_ref: rjiagjfvsaaxezsxfuzq
   url: https://rjiagjfvsaaxezsxfuzq.supabase.co
   plan: free # decision J — dev stays Free; prod moves to Pro before phase 5
-  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/dev
+  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/dev (or `supabase db push`)
 
 cloudflare:
+  account_id: TODO # confirm with `wrangler whoami` — you have more than one account
   worker: momentumtennis-dev
   cron_worker: momentumtennis-cron-dev
   deploy_branch: deploy/dev
   access_protected: true # keep half-built booking flows off the public internet
 
+deploy:
+  # Workers Builds: build command / deploy command for the connected repo.
+  build: pnpm build:dev
+  command: npx wrangler deploy --env dev
+  # The origin the deployed app believes it has (auth redirects, email links). Baked in at
+  # build time by scripts/build-env.mjs. Fill in after the first deploy prints the URL.
+  site_url: TODO # https://momentumtennis-dev.<account-subdomain>.workers.dev
+
 stripe:
   mode: test
 
-# Names only. `wrangler secret put <NAME> --env dev` when deployed.
+# Names only. `wrangler secret put <NAME> --env dev` when deployed. Each is demanded only by
+# the code that uses it (requireSecret), so the app runs before every phase's key exists.
 secrets:
-  - SUPABASE_SERVICE_ROLE_KEY
-  - STRIPE_SECRET_KEY
-  - STRIPE_WEBHOOK_SECRET
-  - RESEND_API_KEY
-  - CRON_SHARED_SECRET
+  - name: SUPABASE_SERVICE_ROLE_KEY
+    needed_from: phase 5 (webhooks) and 7 (cron) # anything using the service-role client
+  - name: STRIPE_SECRET_KEY
+    needed_from: phase 5
+  - name: STRIPE_WEBHOOK_SECRET
+    needed_from: phase 5
+  - name: RESEND_API_KEY
+    needed_from: phase 4 (booking confirmations) / 7
+  - name: CRON_SHARED_SECRET
+    needed_from: phase 7
 
 # GitHub repository secrets the migrate workflow reads for this environment.
 ci_secrets:
