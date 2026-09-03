@@ -92,7 +92,7 @@
 Done: Tasks 1–7 code-side. `pnpm check`, `pnpm lint`, `pnpm test` (62 unit/contract + schema harness), `pnpm build` green.
 Not done (needs operator access, not code):
 - [ ] Create Supabase projects (dev Free, prod Pro before phase 5); fill `.env.development` / `.env.production` public values; secrets in `.env.local` and CF project secrets
-- [ ] Create Cloudflare Workers projects `momentumtennis-dev` (branch `deploy/dev`) and `momentumtennis` (branch `deploy/live`) via Workers Builds; set secrets; protect dev with Cloudflare Access
+- [ ] Create Cloudflare Workers projects `momentum-tennis-dev` (branch `deploy/dev`) and `momentum-tennis` (branch `deploy/live`) via Workers Builds; set secrets; protect dev with Cloudflare Access
 - [ ] Deploy `workers/cron` per environment with `APP_URL` var + `CRON_SHARED_SECRET` secret
 - [x] GitHub repository secret for `.github/workflows/migrate.yml` — `SUPABASE_DB_PASSWORD_DEV` (2026-09-03; the workflow needs nothing else)
 - [ ] Run `pnpm test:e2e` once a dev Supabase exists (auth pages, guards)

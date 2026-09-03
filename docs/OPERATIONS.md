@@ -17,8 +17,8 @@ lazily, plus an operator-only section the scripts read) and the Cloudflare proje
 
 | environment | branch        | Cloudflare worker    | Supabase project                       | Stripe |
 |-------------|---------------|----------------------|----------------------------------------|--------|
-| dev         | `deploy/dev`  | `momentumtennis-dev` | `rjiagjfvsaaxezsxfuzq` (Free, OrioleDB) | test   |
-| live        | `deploy/live` | `momentumtennis`     | to be created (Pro, standard Postgres) | live   |
+| dev         | `deploy/dev`  | `momentum-tennis-dev` | `rjiagjfvsaaxezsxfuzq` (Free, OrioleDB) | test   |
+| live        | `deploy/live` | `momentum-tennis`     | to be created (Pro, standard Postgres) | live   |
 
 Profiles: `config/dev.yaml`, `config/prod.yaml`. Flow: work → `main` → `deploy/dev` → `deploy/live`.
 
@@ -132,12 +132,13 @@ the account is the unit — so this one token serves dev now and prod later; dev
 | scope | permission | level | why |
 |---|---|---|---|
 | Account | Workers Scripts | Edit | deploy both workers (script, static assets, cron triggers, secrets); attaching a custom domain uses this same permission |
+| Account | Workers KV Storage | Edit | kept for later: edge cache of public schedule reads and rate-limit counters — never authoritative data |
 | Account | Account Settings | Read | lets wrangler verify the account (`pnpm cf whoami`) |
 | Account | Workers Tail | Read | `pnpm cf tail --env dev` for live logs |
 | Zone | Zone | Read | resolves the zone when `app.momentum-tennis.com` is attached at launch |
 | Zone | Workers Routes | Edit | only if production ever deploys on a route instead of a custom domain; harmless now |
 
-Leave out everything else: Workers KV / R2 / D1 / Queues / AI (unused), DNS (custom domains are
+Leave out everything else: R2 / D1 / Queues / AI (unused), DNS (custom domains are
 created through the Workers endpoint, which issues the DNS records and certificate itself), Access
 (configure it in the dashboard), any Edit on Account Settings.
 
@@ -160,7 +161,7 @@ pnpm cf whoami                # must show the recorded account, and only it
 
 | resource | needed for | where |
 |---|---|---|
-| `workers.dev` subdomain | the dev worker's URL `https://momentumtennis-dev.<subdomain>.workers.dev` — register it **before** the first deploy | Workers & Pages → Overview → Your subdomain |
+| `workers.dev` subdomain | the dev worker's URL `https://momentum-tennis-dev.<subdomain>.workers.dev` — register it **before** the first deploy | Workers & Pages → Overview → Your subdomain |
 | Workers plan | Free is enough for dev; production needs **Workers Paid** (the Free plan's daily request cap is a hard stop) | Workers & Pages → Plans |
 | Workers Builds git connection | `deploy/dev` deploying itself; Cloudflare generates its own API token for builds — none of yours | Workers & Pages → the worker → Settings → Builds |
 | Zero Trust organisation | Access protection on the dev host (free tier) | Zero Trust → Access → Applications |
@@ -170,7 +171,7 @@ pnpm cf whoami                # must show the recorded account, and only it
 
 ```bash
 pnpm build:dev                # bakes .env.development's public values, NODE_ENV=production
-pnpm cf deploy --env dev      # → prints https://momentumtennis-dev.<subdomain>.workers.dev
+pnpm cf deploy --env dev      # → prints https://momentum-tennis-dev.<subdomain>.workers.dev
 ```
 
 Take that URL and:
@@ -180,7 +181,7 @@ Take that URL and:
 2. add `<url>/auth/callback` to Supabase's redirect URLs (step 2).
 
 **Connect the repository** so `deploy/dev` deploys itself — dashboard: Workers & Pages →
-`momentumtennis-dev` → Settings → Builds → connect `pronei/momentum-tennis`:
+`momentum-tennis-dev` → Settings → Builds → connect `pronei/momentum-tennis`:
 
 | setting | value |
 |---|---|

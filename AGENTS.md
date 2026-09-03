@@ -89,7 +89,7 @@ dev Supabase project. The restricted minor login is deliberately NOT built — s
 ## Environments
 | | dev | prod |
 |---|---|---|
-| Cloudflare project | `momentumtennis-dev` | `momentumtennis` |
+| Cloudflare project | `momentum-tennis-dev` | `momentum-tennis` |
 | Deploy branch | `deploy/dev` | `deploy/live` |
 | Supabase project | dev project | prod project |
 | Stripe | test mode | live mode |
@@ -103,6 +103,10 @@ Migrations apply dev-first, prod on release. Never point local dev at prod.
 Never put real family data in dev.
 
 ## Working conventions
+- Editing discipline: edit files surgically, never rewrite a file to change a part of it; choose an
+  approach and commit to it — revisit only when new information contradicts the reasoning; add no
+  validation scripts beyond the existing gates unless one is critical; write literally — when a
+  plain phrase exists, use it.
 - TypeScript strict; Svelte 5 runes; pnpm.
 - Layering: routes stay thin → `src/lib/server/domain/*` owns logic (one module
   per bounded context: identity, waivers, scheduling, booking, ledger, payments,

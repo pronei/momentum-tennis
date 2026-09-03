@@ -21,8 +21,8 @@ supabase:
 
 cloudflare:
   account_id: b9197a95ffbf22df91759b251ad853eb
-  worker: momentumtennis-dev
-  cron_worker: momentumtennis-cron-dev
+  worker: momentum-tennis-dev
+  cron_worker: momentum-tennis-cron-dev
   deploy_branch: deploy/dev
   access_protected: true # keep half-built booking flows off the public internet
 
@@ -32,7 +32,7 @@ deploy:
   command: npx wrangler deploy --env dev
   # The origin the deployed app believes it has (auth redirects, email links). Baked in at
   # build time by scripts/build-env.mjs. Fill in after the first deploy prints the URL.
-  site_url: TODO # https://momentumtennis-dev.<account-subdomain>.workers.dev
+  site_url: https://momentum-tennis-dev.proneidev.workers.dev
 
 stripe:
   mode: test

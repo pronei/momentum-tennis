@@ -44,8 +44,8 @@ Two Cloudflare Workers projects, branch-deployed from this repo:
 
 | environment | CF project | branch | Supabase | Stripe |
 |---|---|---|---|---|
-| dev | `momentumtennis-dev` | `deploy/dev` | dev project | test mode |
-| live | `momentumtennis` | `deploy/live` | prod project | live mode |
+| dev | `momentum-tennis-dev` | `deploy/dev` | dev project | test mode |
+| live | `momentum-tennis` | `deploy/live` | prod project | live mode |
 
 Flow: feature → `main` → merge to `deploy/dev` (verify on the dev deployment) →
 merge to `deploy/live`. Database migrations apply to dev first, prod on release.

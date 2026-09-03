@@ -19,8 +19,8 @@ supabase:
 
 cloudflare:
   account_id: TODO # the same account as dev, confirmed with `wrangler whoami`
-  worker: momentumtennis
-  cron_worker: momentumtennis-cron
+  worker: momentum-tennis
+  cron_worker: momentum-tennis-cron
   deploy_branch: deploy/live
   access_protected: false # public site
 

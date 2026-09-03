@@ -1,7 +1,7 @@
 # Scheduled worker. The stock SvelteKit adapter exposes no scheduled() handler, so this tiny
 # worker owns the Cron Triggers and calls the app's /internal/cron endpoint with a shared secret.
 # Per environment: set APP_URL as a var and CRON_SHARED_SECRET as a secret (same value the app holds).
-name = "momentumtennis-cron"
+name = "momentum-tennis-cron"
 main = "src/index.ts"
 compatibility_date = "2026-08-01"
 
@@ -9,12 +9,12 @@ compatibility_date = "2026-08-01"
 crons = ["*/15 * * * *", "0 9 * * *"]
 
 [vars]
-APP_URL = "https://momentumtennis-dev.workers.dev"
+APP_URL = "https://momentum-tennis-dev.proneidev.workers.dev"
 
 [env.dev]
-name = "momentumtennis-cron-dev"
+name = "momentum-tennis-cron-dev"
 
 [env.live]
-name = "momentumtennis-cron"
+name = "momentum-tennis-cron"
 [env.live.vars]
 APP_URL = "https://app.momentum-tennis.com"
