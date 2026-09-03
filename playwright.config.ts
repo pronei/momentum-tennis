@@ -7,7 +7,8 @@ export default defineConfig({
 	timeout: 30_000,
 	use: { baseURL: 'http://localhost:4173' },
 	webServer: {
-		command: 'pnpm build && pnpm preview --port 4173',
+		// build:dev bakes the dev profile's public values; a plain build bakes .env.production's placeholders and cannot start.
+		command: 'pnpm build:dev && pnpm preview --port 4173',
 		port: 4173,
 		reuseExistingServer: !process.env.CI
 	}

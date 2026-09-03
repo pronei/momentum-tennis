@@ -1,15 +1,16 @@
 name: Migrate database
 
-# Applies supabase/migrations to the environment a deploy branch targets:
-#   deploy/dev → config/dev.yaml, deploy/live → config/prod.yaml.
-# One repository secret per environment — the database password (SUPABASE_DB_PASSWORD_DEV /
-# SUPABASE_DB_PASSWORD_PROD). The project ref and pooler host are public facts in config/*.yaml.
-# No personal access token: `pnpm db:push` connects to the database directly (via the session
-# pooler here, because GitHub-hosted runners have no IPv6).
+# Manual fallback for applying supabase/migrations. The automatic writer is the Supabase GitHub
+# integration (dashboard → Integrations → GitHub), connected with production branch deploy/dev:
+# Supabase applies migrations itself on every push there. Two writers on one push would race,
+# so this workflow runs on demand only — Actions → Migrate database → Run workflow, choosing the
+# branch (deploy/dev → config/dev.yaml, deploy/live → config/prod.yaml). Use it for an environment
+# without the integration, or to re-run after a failure.
+#
+# It runs `pnpm db:push <profile>` and needs one repository secret per environment — the database
+# password (SUPABASE_DB_PASSWORD_DEV / SUPABASE_DB_PASSWORD_PROD). Project ref and pooler host are
+# public facts in config/*.yaml; the pooler is used because GitHub-hosted runners have no IPv6.
 on:
-  push:
-    branches: [deploy/dev, deploy/live]
-    paths: ['supabase/migrations/**']
   workflow_dispatch:
 
 jobs:

@@ -104,6 +104,13 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-09-03 — Operations: dev database migrated (0001–0006) with `pnpm db:push` (direct connection,
+  no Supabase login); the Supabase GitHub integration on `deploy/dev` is the automatic migration writer
+  and `migrate.yml` the manual fallback; `pnpm cf` scopes wrangler to this repo's Cloudflare account;
+  `SUPABASE_SERVICE_ROLE_KEY` renamed `SUPABASE_SECRET_KEY`; 0005 moves reference data out of
+  `seed.sql` (db push never applies seeds); 0006 captures the RLS safety-net event trigger. Finding:
+  the dev project runs Supabase's OrioleDB engine — constraints verified enforced, production must be
+  standard Postgres. Handoff for phases 3–7 written: `docs/HANDOFF-opus5.md`.
 - 2026-09-02 — Phase 2 built (branch phase-2/waivers): migration 0004 adds the authoring half
   (create_waiver_draft, update_waiver_draft, publish_waiver_version) — version numbers are
   allocated under a document lock and content_sha256 is computed in SQL so the fingerprint

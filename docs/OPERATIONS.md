@@ -27,10 +27,12 @@ Profiles: `config/dev.yaml`, `config/prod.yaml`. Flow: work → `main` → `depl
 - Remote: `git@github.com:pronei/momentum-tennis.git`. Default branch `main`.
 - CI (`.github/workflows/ci.yml`) runs on every push and PR: env:check, types current, check,
   lint, test, build. Nothing to configure.
-- Migrations (`.github/workflows/migrate.yml`) run on push to `deploy/dev` / `deploy/live` when
-  `supabase/migrations/` changes, and on demand (Actions → Migrate database → Run workflow).
-  They run `pnpm db:push <profile>` and need one **repository secret** per environment
-  (Settings → Secrets and variables → Actions):
+- Migrations: the **Supabase GitHub integration** (project dashboard → Integrations → GitHub) is
+  connected with production branch `deploy/dev`, so Supabase applies `supabase/migrations` itself
+  on every push to that branch. After a phase lands, confirm in dashboard → Database → Migrations
+  that the new version is listed. `.github/workflows/migrate.yml` is the **manual fallback**
+  (Actions → Migrate database → Run workflow, pick the branch): it runs `pnpm db:push <profile>`
+  and needs one repository secret per environment:
 
   | secret | where it comes from |
   |---|---|
@@ -40,9 +42,6 @@ Profiles: `config/dev.yaml`, `config/prod.yaml`. Flow: work → `main` → `depl
   Nothing else: the project ref and pooler host are public facts in `config/*.yaml`, and no
   personal access token is involved. (A `SUPABASE_PROJECT_REF_DEV` secret was set before the
   workflow was simplified; it is unused and can be deleted.)
-
-  The first push of a new branch may not trigger the path-filtered workflow — use Run workflow,
-  or `pnpm db:push` from your machine.
 
 ## 2. Supabase — dev project
 
@@ -80,6 +79,22 @@ optional and would give exact parity; the schema applies unchanged either way.
 **RLS safety net.** The `ensure_rls` event trigger you created by hand in dev is now migration
 `0006` (identical function, replaced idempotently), so production gets it too. Nothing to do.
 
+**First admin.** Roles live in `staff_members`; the app grants roles only through an existing admin,
+so the first one is made by hand. Sign up in the app (or on the dev site), then in the dashboard's
+SQL editor:
+
+```sql
+insert into staff_members (account_id, role)
+select id, 'admin' from accounts where email = 'artur@example.com'
+on conflict do nothing;
+```
+
+**Auth emails.** Supabase's built-in mailer only delivers to members of your Supabase organisation
+and is rate-limited, so test families never receive confirmation mail. Pick one for dev:
+Authentication → Providers → Email → **Confirm email off** (dev only; fastest), or custom SMTP
+through Resend now (Authentication → SMTP Settings: host `smtp.resend.com`, port 465, user `resend`,
+password = the Resend API key), which production needs anyway.
+
 Then in the dashboard, **Authentication → URL Configuration**:
 
 - Site URL: the dev site URL (from step 3; `http://localhost:5173` until then).
@@ -101,14 +116,17 @@ account: its login state lives in `.wrangler/home` (gitignored) and it never rea
 machine-wide wrangler login or a `CLOUDFLARE_API_TOKEN` exported in your shell — so the other
 account stays exactly as it is.
 
-```bash
-pnpm cf login                 # once: opens the browser — log into the account Momentum Tennis lives in
-pnpm cf whoami                # confirm; put the account id in config/dev.yaml (cloudflare.account_id)
-```
+The account is recorded in `config/dev.yaml` (`cloudflare.account_id`); the wrapper passes it to
+wrangler. Authenticate for **that** account one of two ways:
 
-Prefer a token? My Profile → API Tokens → "Edit Cloudflare Workers" template, then
-`CLOUDFLARE_API_TOKEN` (+ `CLOUDFLARE_ACCOUNT_ID`) in `.env.local`; `pnpm cf` uses it and skips
-the login.
+- **Token** (dash.cloudflare.com → My Profile → API Tokens → Create Token → "Edit Cloudflare Workers"
+  template, account = the recorded one): put it in `.env.local` as `CLOUDFLARE_API_TOKEN`. Cloudflare
+  tokens are 40 bare characters — an `sbp_…` value is a Supabase token, not a Cloudflare one.
+- **Login:** `pnpm cf login` opens the browser once; state lands in `.wrangler/home`.
+
+```bash
+pnpm cf whoami                # must show the recorded account, and only it
+```
 
 **First deploy, by hand** (creates the worker):
 
@@ -167,6 +185,23 @@ pnpm cf deploy --env dev --config workers/cron/wrangler.toml                    
 pnpm env:check                # profiles agree; what is still TODO
 pnpm build:dev && pnpm preview   # then pnpm test:e2e — runs the smoke suite against the dev Supabase
 ```
+
+## 7. Readiness by phase — what the operator must have done before each phase can be exercised on dev
+
+Code gates never wait on these; the "deliverable on the dev deployment" half of a phase's gate does.
+
+| before | needed | where |
+|---|---|---|
+| phase 3 | first admin on dev (SQL above); auth emails decided (confirm-email off in dev, or Resend SMTP); Cloudflare token or login for the recorded account → first deploy → `deploy.site_url` → redeploy; `<site>/auth/callback` in Supabase redirect URLs; Access protection on the dev host | §2, §3 |
+| phase 4 | nothing new — credits are admin-granted; a few test families signed up on dev | — |
+| phase 5 | Stripe **test** secret key and a webhook endpoint for `https://<dev site>/api/stripe/webhook` (its signing secret) as Cloudflare secrets; payment methods enabled in Stripe (ACH Direct Debit activation, Apple Pay domain registration, Cash App Pay, Link); refund wording and tax stance from Artur/accountant (decision E); production Supabase project on **Pro, standard Postgres** before anything goes live (decision J) | §3, Stripe dashboard |
+| phase 6 | nothing | — |
+| phase 7 | Resend account, verified sending domain (DNS at GoDaddy), API key → `RESEND_API_KEY`; `CRON_SHARED_SECRET` in the app and the cron worker; cron worker deployed; marketing/unsubscribe copy from legal | §3, §5 |
+| launch | production Supabase (Pro, standard Postgres) with the GitHub integration on `deploy/live` and `SUPABASE_DB_PASSWORD_PROD` set; production worker + `app.momentum-tennis.com`; live Stripe keys and webhook; waiver text, privacy policy and terms from legal; Access removed from live | §4 |
+
+Unrelated but pending: delete the unused `SUPABASE_PROJECT_REF_DEV` repository secret; revoke the
+Supabase personal access token that was pasted into chat (dashboard → Account → Access Tokens) if it
+is not in use elsewhere.
 
 ## Local development
 

@@ -5,11 +5,12 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phases 0–2 are built: foundations (`phase-0/foundations`), identity & profiles
-(`phase-1/identity`), waivers (`phase-2/waivers`). Migrations 0001–0004. The restricted minor
-login is deliberately NOT built — see open question O in `docs/PLAN.md`. Phase 3 (schedule &
-availability) is next. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
-`docs/superpowers/plans/`.
+Phases 0–2 are built and merged to `main` (foundations, identity & profiles, waivers); `deploy/dev`
+tracks `main`. Migrations 0001–0006 (0005 reference data, 0006 RLS safety net) are applied to the
+dev Supabase project. The restricted minor login is deliberately NOT built — see open question O in
+`docs/PLAN.md`. Phase 3 (schedule & availability) is next: `docs/HANDOFF-opus5.md` scopes phases
+3–7 and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
+`docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
 
 ## Prime directives
 1. **Build only the approved phase.** Deliver, stop, wait for explicit approval.
@@ -129,7 +130,7 @@ Never put real family data in dev.
 | `pnpm db:test` | the schema harness alone (`supabase/tests/validate.mjs`) |
 | `pnpm env:check` | verify `config/*.yaml` against the committed env files (leak guard: refuses if a secret has a value in a committed file) |
 | `pnpm db:types` | regenerate `src/lib/server/db/database.types.ts` from `supabase/migrations` (CI verifies it is current) |
-| `pnpm db:push <profile>` | apply `supabase/migrations` to that environment's database directly — password from `.env.local`, project ref and pooler from `config/<profile>.yaml`; no `supabase login`. CI runs the same command |
+| `pnpm db:push <profile>` | apply `supabase/migrations` to that environment's database directly — password from `.env.local`, project ref and pooler from `config/<profile>.yaml`; no `supabase login`. The Supabase GitHub integration applies them on push to `deploy/dev`; `migrate.yml` (manual) runs this command as the fallback |
 | `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` (bakes `.env.production`) |
 | `pnpm build:dev` / `pnpm build:live` | the same build with a profile's public values and `deploy.site_url` — what Workers Builds runs |
 | `pnpm cf …` | wrangler scoped to this repo's Cloudflare account: login state in `.wrangler/home` (gitignored), never the machine-wide login — `pnpm cf login`, `pnpm cf whoami`, `pnpm cf deploy --env dev` |
