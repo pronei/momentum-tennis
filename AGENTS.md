@@ -88,6 +88,10 @@ deliberately NOT built — see open question O in `docs/PLAN.md`. Phase plan and
 | Stripe | test mode | live mode |
 | Secrets | CF project secrets · `.env.local` locally | CF project secrets |
 
+Each environment has a profile in `config/` (`dev.yaml`, `prod.yaml`): Supabase project,
+Cloudflare workers, deploy branch, Stripe mode, and the NAMES of its secrets — never
+values. `pnpm env:check` binds the profile to its env file so the two cannot drift.
+
 Migrations apply dev-first, prod on release. Never point local dev at prod.
 Never put real family data in dev.
 
@@ -117,6 +121,7 @@ Never put real family data in dev.
 | `pnpm format` | prettier write |
 | `pnpm test` | vitest: domain units, DS SSR contracts, and the PGlite schema harness |
 | `pnpm db:test` | the schema harness alone (`supabase/tests/validate.mjs`) |
+| `pnpm env:check` | verify `config/*.yaml` against the committed env files (leak guard: refuses if a secret has a value in a committed file) |
 | `pnpm db:types` | regenerate `src/lib/server/db/database.types.ts` from `supabase/migrations` (CI verifies it is current) |
 | `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` |
 | `pnpm test:e2e` | Playwright smoke against the built app (needs a reachable Supabase) |
@@ -151,7 +156,8 @@ render; the schema is tested behaviorally in PGlite.
   account form: the superforms pattern), `admin` (guarded shell, `staff/`),
   `internal/cron`, `api/stripe/webhook`.
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
-- `scripts/` — `gen-db-types.mjs`, `check-adherence.mjs`.
+- `config/` — one profile per environment (`dev.yaml`, `prod.yaml`).
+- `scripts/` — `gen-db-types.mjs`, `check-adherence.mjs`, `check-env.mjs`.
 - `workers/cron/` — the scheduled Worker (Cron Triggers → `/internal/cron`).
 - `design-system/` — Claude Design export: tokens (imported as `$ds`), JSX reference
   components, UI kits, email kit, PRODUCT.md. Media gitignored. Read-only reference.

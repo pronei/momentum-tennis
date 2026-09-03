@@ -8,7 +8,7 @@ const origin = z.url({ protocol: /^https?$/ });
 
 const schema = z.object({
 	PUBLIC_SUPABASE_URL: origin,
-	PUBLIC_SUPABASE_ANON_KEY: nonEmpty,
+	PUBLIC_SUPABASE_PUBLISHABLE_KEY: nonEmpty,
 	PUBLIC_SITE_URL: origin,
 	EMAIL_FROM: nonEmpty,
 	SUPABASE_SERVICE_ROLE_KEY: nonEmpty,
@@ -20,7 +20,7 @@ const schema = z.object({
 
 export type Config = Readonly<{
 	supabaseUrl: string;
-	supabaseAnonKey: string;
+	supabasePublishableKey: string;
 	supabaseServiceRoleKey: string;
 	siteUrl: string;
 	emailFrom: string;
@@ -38,7 +38,7 @@ export function parseEnv(source: Record<string, string | undefined>): Config {
 	const v = parsed.data;
 	return {
 		supabaseUrl: v.PUBLIC_SUPABASE_URL,
-		supabaseAnonKey: v.PUBLIC_SUPABASE_ANON_KEY,
+		supabasePublishableKey: v.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 		supabaseServiceRoleKey: v.SUPABASE_SERVICE_ROLE_KEY,
 		siteUrl: v.PUBLIC_SITE_URL,
 		emailFrom: v.EMAIL_FROM,

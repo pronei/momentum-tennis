@@ -1,0 +1,36 @@
+# Momentum Tennis — production environment profile.
+#
+# Same shape as config/dev.yaml. Real families, real money, real consent records.
+# Migrations reach here only after they have run on dev.
+#
+# Verify this profile agrees with the env file:  pnpm env:check
+name: prod
+description: Live academy. Real family data. Migrations arrive dev-first, never directly.
+env_file: .env.production
+
+supabase:
+  project_ref: TODO # fill when the production project exists
+  url: TODO
+  plan: pro # required before phase 5: Free has no backups and pauses after 7 idle days
+  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/live
+
+cloudflare:
+  worker: momentumtennis
+  cron_worker: momentumtennis-cron
+  deploy_branch: deploy/live
+  access_protected: false # public site
+
+stripe:
+  mode: live
+
+secrets:
+  - SUPABASE_SERVICE_ROLE_KEY
+  - STRIPE_SECRET_KEY
+  - STRIPE_WEBHOOK_SECRET
+  - RESEND_API_KEY
+  - CRON_SHARED_SECRET
+
+ci_secrets:
+  - SUPABASE_ACCESS_TOKEN
+  - SUPABASE_PROJECT_REF_LIVE
+  - SUPABASE_DB_PASSWORD_LIVE

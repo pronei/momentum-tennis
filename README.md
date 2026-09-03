@@ -50,12 +50,18 @@ Two Cloudflare Workers projects, branch-deployed from this repo:
 Flow: feature → `main` → merge to `deploy/dev` (verify on the dev deployment) →
 merge to `deploy/live`. Database migrations apply to dev first, prod on release.
 
+Each environment is described by a profile in `config/` — `dev.yaml` and `prod.yaml` —
+holding what an operator needs (Supabase project, Cloudflare workers, deploy branch,
+Stripe mode, and the names of the secrets it expects). Values the app reads at runtime
+live in the env files; `pnpm env:check` verifies the two agree and refuses if a secret
+ever appears in a committed file.
+
 Environment variables: same names everywhere, different values per environment —
 see `.env.example` for the canonical annotated list. Committed
 `.env.development` / `.env.production` carry **public values only**; secrets go in
 `.env.local` locally and Cloudflare project secrets when deployed.
 
-## Getting started (once phase 0 lands)
+## Getting started
 1. Prereqs: Node 22+, pnpm, Supabase CLI, wrangler.
 2. `cp .env.example .env.local` and fill the secrets (test-mode keys).
 3. Fill the `TODO` values in `.env.development` (dev Supabase project).

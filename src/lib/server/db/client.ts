@@ -8,8 +8,8 @@ import type { Database } from './database.types';
  * this is the client for routes, load functions and actions. Never use it for webhooks or cron.
  */
 export function createRequestSupabase(event: RequestEvent) {
-	const { supabaseUrl, supabaseAnonKey } = getConfig();
-	return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+	const { supabaseUrl, supabasePublishableKey } = getConfig();
+	return createServerClient<Database>(supabaseUrl, supabasePublishableKey, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookies) => {

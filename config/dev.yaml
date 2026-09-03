@@ -1,0 +1,40 @@
+# Momentum Tennis — dev environment profile.
+#
+# What an operator or CI needs to know about this environment, in one place.
+# App runtime values live in `env_file` (public values only, committed).
+# Secrets are listed BY NAME here and never by value: locally they live in
+# .env.local, deployed they are Cloudflare project secrets.
+#
+# Verify this profile agrees with the env file:  pnpm env:check
+name: dev
+description: Shared development. Safe to break. Never holds real family data.
+env_file: .env.development
+
+supabase:
+  project_ref: rjiagjfvsaaxezsxfuzq
+  url: https://rjiagjfvsaaxezsxfuzq.supabase.co
+  plan: free # decision J — dev stays Free; prod moves to Pro before phase 5
+  migrations_applied_by: .github/workflows/migrate.yml on push to deploy/dev
+
+cloudflare:
+  worker: momentumtennis-dev
+  cron_worker: momentumtennis-cron-dev
+  deploy_branch: deploy/dev
+  access_protected: true # keep half-built booking flows off the public internet
+
+stripe:
+  mode: test
+
+# Names only. `wrangler secret put <NAME> --env dev` when deployed.
+secrets:
+  - SUPABASE_SERVICE_ROLE_KEY
+  - STRIPE_SECRET_KEY
+  - STRIPE_WEBHOOK_SECRET
+  - RESEND_API_KEY
+  - CRON_SHARED_SECRET
+
+# GitHub repository secrets the migrate workflow reads for this environment.
+ci_secrets:
+  - SUPABASE_ACCESS_TOKEN
+  - SUPABASE_PROJECT_REF_DEV
+  - SUPABASE_DB_PASSWORD_DEV

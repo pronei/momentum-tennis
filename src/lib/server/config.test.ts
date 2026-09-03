@@ -3,7 +3,7 @@ import { parseEnv } from './config';
 
 const valid = {
 	PUBLIC_SUPABASE_URL: 'https://abc.supabase.co',
-	PUBLIC_SUPABASE_ANON_KEY: 'anon-key',
+	PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test',
 	PUBLIC_SITE_URL: 'http://localhost:5173',
 	EMAIL_FROM: 'Momentum Tennis <no-reply@momentum-tennis.com>',
 	SUPABASE_SERVICE_ROLE_KEY: 'service-key',
