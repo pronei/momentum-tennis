@@ -17,7 +17,7 @@ supabase:
   url: https://rjiagjfvsaaxezsxfuzq.supabase.co
   plan: free # decision J — dev stays Free; prod moves to Pro before phase 5
   pooler: aws-0-us-west-1 # session pooler host (IPv4): CI and `pnpm db:push --pooler` use it; the direct host is IPv6-only
-  migrations_applied_by: Supabase GitHub integration on push to deploy/dev; fallback: migrate.yml (Run workflow) or `pnpm db:push dev`
+  migrations_applied_by: 'Supabase GitHub integration on push to deploy/dev; fallback: migrate.yml (Run workflow) or `pnpm db:push dev`'
 
 cloudflare:
   account_id: b9197a95ffbf22df91759b251ad853eb
