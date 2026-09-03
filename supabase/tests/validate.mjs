@@ -784,5 +784,108 @@ else {
 	failures++;
 }
 
+console.log('11. a new version forces re-consent (phase 2)');
+// LAST on purpose: publishing v2 invalidates every v1 signature, which would break the
+// booking sections above if it ran earlier.
+await asUser(ADMIN);
+const v2 = (await q(`select create_waiver_draft($1, 'FROM LEGAL v2') as id`, [doc])).rows[0].id;
+const draft = (
+	await q(`select version, content_sha256, published_at from waiver_versions where id = $1`, [v2])
+).rows[0];
+if (
+	draft.version === 2 &&
+	/^[0-9a-f]{64}$/.test(draft.content_sha256) &&
+	draft.published_at === null
+)
+	ok('draft is version 2, hashed in SQL, unpublished');
+else {
+	console.log('  \u2717 draft', draft);
+	failures++;
+}
+const currentBefore = (
+	await q(`select version from v_current_waiver_versions where document_id = $1`, [doc])
+).rows[0].version;
+const satisfiedBefore = (
+	await q(`select satisfied from v_player_waiver_status where player_id = $1`, [maya])
+).rows[0].satisfied;
+if (currentBefore === 1 && satisfiedBefore === true)
+	ok('a draft changes nothing: v1 is still current and Maya is still covered');
+else {
+	console.log('  \u2717 draft leaked', currentBefore, satisfiedBefore);
+	failures++;
+}
+await expectOk('a draft is editable', () =>
+	q(`select update_waiver_draft($1, 'FROM LEGAL v2 (revised)')`, [v2])
+);
+const rehashed = (await q(`select content_sha256 from waiver_versions where id = $1`, [v2])).rows[0]
+	.content_sha256;
+if (rehashed !== draft.content_sha256)
+	ok('editing the text re-hashes it — the fingerprint cannot drift');
+else {
+	console.log('  \u2717 hash unchanged after edit');
+	failures++;
+}
+await asUser(PARENT);
+await expectErr(
+	'only an admin may author a version',
+	() => q(`select create_waiver_draft($1, 'sneaky')`, [doc]),
+	'admin_only'
+);
+await asUser(ADMIN);
+await expectOk('publishing v2', () => q(`select publish_waiver_version($1)`, [v2]));
+const currentAfter = (
+	await q(`select version from v_current_waiver_versions where document_id = $1`, [doc])
+).rows[0].version;
+if (currentAfter === 2) ok('v2 is now the current version');
+else {
+	console.log('  \u2717 current', currentAfter);
+	failures++;
+}
+const stale = (await q(`select count(*)::int as n from v_player_waiver_status where not satisfied`))
+	.rows[0].n;
+if (stale >= 4) ok(`every earlier signature stopped satisfying (${stale} players need re-consent)`);
+else {
+	console.log('  \u2717 reconsent', stale);
+	failures++;
+}
+await expectErr(
+	'the booking gate refuses a player who has not re-signed',
+	() => q(`select assert_waivers_signed($1)`, [maya]),
+	'waiver_required'
+);
+await expectErr(
+	'publishing twice refused',
+	() => q(`select publish_waiver_version($1)`, [v2]),
+	'already_published'
+);
+await expectErr(
+	'a published version cannot be edited',
+	() => q(`select update_waiver_draft($1, 'tamper')`, [v2]),
+	'already_published'
+);
+await asUser(PARENT);
+await expectErr(
+	'signing the superseded version refused',
+	() => q(`select sign_waiver($1,$2,'Priya R.')`, [v1, maya]),
+	'not_current_version'
+);
+await expectErr(
+	'a typed name is required',
+	() => q(`select sign_waiver($1,$2,'   ')`, [v2, maya]),
+	'name_required'
+);
+await expectOk('re-signing v2 restores coverage', () =>
+	q(`select sign_waiver($1,$2,'Priya R.')`, [v2, maya])
+);
+await expectOk('the gate passes again', () => q(`select assert_waivers_signed($1)`, [maya]));
+const sigs = (
+	await q(`select count(*)::int as n from waiver_signatures where player_id = $1`, [maya])
+).rows[0].n;
+if (sigs === 2) ok('both signatures are kept — consent history is append-only');
+else {
+	console.log('  \u2717 signatures', sigs);
+	failures++;
+}
+
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL CHECKS PASSED');
 process.exit(failures ? 1 : 0);

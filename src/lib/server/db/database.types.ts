@@ -1764,6 +1764,13 @@ export type Database = {
 				}
 				Returns: string
 			}
+			create_waiver_draft: {
+				Args: {
+					p_document: string
+					p_content: string
+				}
+				Returns: string
+			}
 			expire_credits: {
 				Args: Record<PropertyKey, never>
 				Returns: number
@@ -1829,6 +1836,12 @@ export type Database = {
 				}
 				Returns: number
 			}
+			publish_waiver_version: {
+				Args: {
+					p_version: string
+				}
+				Returns: undefined
+			}
 			set_player_level: {
 				Args: {
 					p_player: string
@@ -1853,6 +1866,19 @@ export type Database = {
 					p_birthdate: string
 				}
 				Returns: undefined
+			}
+			update_waiver_draft: {
+				Args: {
+					p_version: string
+					p_content: string
+				}
+				Returns: undefined
+			}
+			waiver_content_hash: {
+				Args: {
+					p_content: string
+				}
+				Returns: string
 			}
 		}
 		Enums: {
