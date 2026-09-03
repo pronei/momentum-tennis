@@ -83,12 +83,20 @@ export function dayBounds(localDate: string, tz: string): { startsAt: string; en
 	return { startsAt: localMidnight(localDate, tz), endsAt: localMidnight(nextDate, tz) };
 }
 
-/** UTC instant of the midnight that opens `localDate` in `tz`. */
-function localMidnight(localDate: string, tz: string): string {
+/**
+ * The UTC instant of a local wall-clock date and time in `tz` — what SQL does with
+ * `(date + time) at time zone academy_tz()`. The offset is read at the answer, not at the
+ * guess: on a DST day midnight and mid-morning sit on different sides of the change, so
+ * counting hours from midnight would land an hour out twice a year.
+ */
+export function localInstant(localDate: string, localTime: string, tz: string): string {
 	const [y, m, d] = localDate.split('-').map(Number);
-	const wall = Date.UTC(y, m - 1, d);
-	// One correction pass: the offset at the guess can differ from the offset at the answer
-	// across a DST edge, and applying the answer's own offset settles it.
+	const [hh, mm] = localTime.split(':').map(Number);
+	const wall = Date.UTC(y, m - 1, d, hh, mm);
 	const guess = wall - offsetMs(wall, tz);
 	return new Date(wall - offsetMs(guess, tz)).toISOString();
 }
+
+/** UTC instant of the midnight that opens `localDate` in `tz`. */
+const localMidnight = (localDate: string, tz: string): string =>
+	localInstant(localDate, '00:00', tz);

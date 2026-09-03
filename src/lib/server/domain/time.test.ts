@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { academyDate, academyRange, academyTime, dayBounds, isoWeekStart, scopeOf } from './time';
+import {
+	academyDate,
+	academyRange,
+	academyTime,
+	dayBounds,
+	isoWeekStart,
+	localInstant,
+	scopeOf
+} from './time';
 
 const LA = 'America/Los_Angeles';
 
@@ -54,5 +62,23 @@ describe('dayBounds — the UTC window a calendar day query needs', () => {
 	it('rolls over month and year ends', () => {
 		expect(dayBounds('2026-12-31', LA).endsAt).toBe('2027-01-01T08:00:00.000Z');
 		expect(dayBounds('2026-01-31', LA).endsAt).toBe('2026-02-01T08:00:00.000Z');
+	});
+});
+
+describe('localInstant — wall clock to UTC, the conversion SQL does with `at time zone`', () => {
+	it('resolves an ordinary day', () => {
+		expect(localInstant('2026-09-12', '09:00', LA)).toBe('2026-09-12T16:00:00.000Z');
+	});
+
+	it('uses the offset in force at the time, not the one at midnight', () => {
+		// 2026-03-08 clocks spring forward at 02:00. Midnight is PST (-8), 10:00 is PDT (-7):
+		// counting ten hours from local midnight would land an hour late.
+		expect(localInstant('2026-03-08', '10:00', LA)).toBe('2026-03-08T17:00:00.000Z');
+		expect(localInstant('2026-03-08', '01:00', LA)).toBe('2026-03-08T09:00:00.000Z');
+	});
+
+	it('resolves both sides of the November fall-back', () => {
+		expect(localInstant('2026-11-01', '01:30', LA)).toBe('2026-11-01T08:30:00.000Z');
+		expect(localInstant('2026-11-01', '09:00', LA)).toBe('2026-11-01T17:00:00.000Z');
 	});
 });
