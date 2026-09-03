@@ -1,6 +1,6 @@
 # Phase 1 — Identity & Profiles Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Read `AGENTS.md` first — its prime directives override taste.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking. Read `AGENTS.md` first — its prime directives override taste.
 
 **Goal:** A guardian signs up, adds the players in their family (name, birthdate, ball level), switches between them in the portal, and corrects a mistake — while an admin grants staff roles. The adult player is the same shape as a child, not a special case.
 
@@ -48,7 +48,7 @@
 
 **Files:** Create `supabase/migrations/0002_identity.sql`; Modify `supabase/tests/validate.mjs`
 
-- [ ] **Step 1: Write the failing schema checks** — append a new section to `supabase/tests/validate.mjs` immediately after the `2. actors` section (before `console.log('3. facilities…')`):
+- [x] **Step 1: Write the failing schema checks** — append a new section to `supabase/tests/validate.mjs` immediately after the `2. actors` section (before `console.log('3. facilities…')`):
 
 ```js
 console.log('2b. player edits + archive (phase 1)');
@@ -101,12 +101,12 @@ await expectErr(
 );
 ```
 
-- [ ] **Step 2: Run the harness to verify it fails**
+- [x] **Step 2: Run the harness to verify it fails**
 
 Run: `pnpm db:test`
 Expected: FAIL with `function update_player(...) does not exist`
 
-- [ ] **Step 3: Write the migration**
+- [x] **Step 3: Write the migration**
 
 ```sql
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -162,12 +162,12 @@ grant execute on function public.update_player(uuid, text, date) to authenticate
 grant execute on function public.archive_player(uuid)            to authenticated;
 ```
 
-- [ ] **Step 4: Run the harness to verify it passes**
+- [x] **Step 4: Run the harness to verify it passes**
 
 Run: `pnpm db:test`
 Expected: `ALL CHECKS PASSED` with the new 2b checks listed
 
-- [ ] **Step 5: Regenerate types and commit**
+- [x] **Step 5: Regenerate types and commit**
 
 ```bash
 pnpm db:types
@@ -179,7 +179,7 @@ git commit -m "feat(db): update_player and archive_player RPCs with schema check
 
 **Files:** Modify `src/lib/server/domain/result.ts`; Test `src/lib/server/domain/result.test.ts`
 
-- [ ] **Step 1: Write the failing test** — append to `result.test.ts`:
+- [x] **Step 1: Write the failing test** — append to `result.test.ts`:
 
 ```ts
 describe('identity refusals map to codes, not to unexpected', () => {
@@ -193,9 +193,9 @@ describe('identity refusals map to codes, not to unexpected', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `pnpm exec vitest run src/lib/server/domain/result.test.ts`; expected FAIL: received `'unexpected'`.
+- [x] **Step 2: Run to verify it fails** — `pnpm exec vitest run src/lib/server/domain/result.test.ts`; expected FAIL: received `'unexpected'`.
 
-- [ ] **Step 3: Add the codes** — add `'staff_only'`, `'admin_only'`, `'minor_self_link'`, `'unknown_skill_level'`, `'player_has_history'` to `CODES`, and to `COPY`:
+- [x] **Step 3: Add the codes** — add `'staff_only'`, `'admin_only'`, `'minor_self_link'`, `'unknown_skill_level'`, `'player_has_history'` to `CODES`, and to `COPY`:
 
 ```ts
 	staff_only: 'Only academy staff can do that.',
@@ -205,14 +205,14 @@ describe('identity refusals map to codes, not to unexpected', () => {
 	player_has_history: 'This player has bookings or credits. The academy has to remove them.',
 ```
 
-- [ ] **Step 4: Run to verify it passes** (the existing "sentence for every known code" loop covers the new copy).
-- [ ] **Step 5: Commit** — `git commit -m "feat(server): map identity refusals to typed codes"`
+- [x] **Step 4: Run to verify it passes** (the existing "sentence for every known code" loop covers the new copy).
+- [x] **Step 5: Commit** — `git commit -m "feat(server): map identity refusals to typed codes"`
 
 ### Task 3: Age helper
 
 **Files:** Create `src/lib/server/domain/identity/age.ts`, `age.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -236,8 +236,8 @@ describe('isAdultOn — mirrors player_is_adult() in SQL', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails** — module not found.
-- [ ] **Step 3: Implement** using `academyDate()` from `../time` so the local-date rule is shared:
+- [x] **Step 2: Run to verify it fails** — module not found.
+- [x] **Step 3: Implement** using `academyDate()` from `../time` so the local-date rule is shared:
 
 ```ts
 import { academyDate } from '../time';
@@ -250,58 +250,58 @@ export function isAdultOn(birthdate: string, tz: string, at: string | Date = new
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes.**
-- [ ] **Step 5: Commit** with Task 4.
+- [x] **Step 4: Run to verify it passes.**
+- [x] **Step 5: Commit** with Task 4.
 
 ### Task 4: Players domain module
 
 **Files:** Create `src/lib/server/domain/identity/players.ts`, `players.test.ts`
 
-- [ ] **Step 1: Write the failing tests** — cover: `createPlayer` passes the four RPC arguments and returns the id; a blank level key is sent as `null` (not `''`, which the RPC would reject as unknown); `updatePlayer` and `archivePlayer` pass their arguments; `setPlayerLevel` maps `staff_only`; `listPlayers` selects only the caller's active players and returns level key/label; every refusal maps through `fromPostgres`. Use the narrow-fake pattern from `account.test.ts`.
-- [ ] **Step 2: Run to verify they fail** — module not found.
-- [ ] **Step 3: Implement** — zod schemas (`newPlayerSchema`, `editPlayerSchema`) colocated; functions take `PlayersDb = Pick<SupabaseClient<Database>, 'from' | 'rpc'>`; all return `Result`.
-- [ ] **Step 4: Run to verify they pass.**
-- [ ] **Step 5: Commit** — `git commit -m "feat(identity): players domain module and age helper"`
+- [x] **Step 1: Write the failing tests** — cover: `createPlayer` passes the four RPC arguments and returns the id; a blank level key is sent as `null` (not `''`, which the RPC would reject as unknown); `updatePlayer` and `archivePlayer` pass their arguments; `setPlayerLevel` maps `staff_only`; `listPlayers` selects only the caller's active players and returns level key/label; every refusal maps through `fromPostgres`. Use the narrow-fake pattern from `account.test.ts`.
+- [x] **Step 2: Run to verify they fail** — module not found.
+- [x] **Step 3: Implement** — zod schemas (`newPlayerSchema`, `editPlayerSchema`) colocated; functions take `PlayersDb = Pick<SupabaseClient<Database>, 'from' | 'rpc'>`; all return `Result`.
+- [x] **Step 4: Run to verify they pass.**
+- [x] **Step 5: Commit** — `git commit -m "feat(identity): players domain module and age helper"`
 
 ### Task 5: PlayerSwitcher composite
 
 **Files:** Create `src/lib/components/PlayerSwitcher.svelte`, `src/lib/components/components.test.ts`
 
-- [ ] **Step 1: Write the failing SSR contract test** — a `role="group"` labelled Player; one button per player; the current one carries `aria-pressed="true"`; names render; hrefs preserve the current path with `?player=<id>` when rendered as links.
-- [ ] **Step 2: Run to verify it fails.**
-- [ ] **Step 3: Implement** — port `PlayerSwitcher` from `design-system/ui_kits/portal/portal-flows.jsx` verbatim (44px targets, mono 0.6875rem caps, court-050 fill + ink border when current, hairline otherwise), as links so switching works without JS.
-- [ ] **Step 4: Run to verify it passes.**
-- [ ] **Step 5: Commit** — `git commit -m "feat(ui): player switcher composite"`
+- [x] **Step 1: Write the failing SSR contract test** — a `role="group"` labelled Player; one button per player; the current one carries `aria-pressed="true"`; names render; hrefs preserve the current path with `?player=<id>` when rendered as links.
+- [x] **Step 2: Run to verify it fails.**
+- [x] **Step 3: Implement** — port `PlayerSwitcher` from `design-system/ui_kits/portal/portal-flows.jsx` verbatim (44px targets, mono 0.6875rem caps, court-050 fill + ink border when current, hairline otherwise), as links so switching works without JS.
+- [x] **Step 4: Run to verify it passes.**
+- [x] **Step 5: Commit** — `git commit -m "feat(ui): player switcher composite"`
 
 ### Task 6: Portal — onboarding, roster, add, edit
 
 **Files:** Modify `(portal)/portal/+layout.server.ts`, `+layout.svelte`, `+page.svelte`; create `players/+page.svelte`, `players/new/+page.{server.ts,svelte}`, `players/[id]/+page.{server.ts,svelte}`
 
-- [ ] **Step 1: Layout load** — fetch the caller's active players (id, name, birthdate, level key/label) ordered by name; resolve `?player=` against that list, falling back to the first; expose `players`, `currentPlayer`, `tz`.
-- [ ] **Step 2: Layout shell** — add the Players tab; render `PlayerSwitcher` under the title when `players.length > 1`.
-- [ ] **Step 3: Overview** — zero players: an `EmptyState` with one primary action, "Add your first player". One or more: a summary per current player — name, mono `BALL LEVEL · <LABEL>` (or `LEVEL NOT SET`), mono `AGE <n> · <MINOR|ADULT>` — and honest mono notes that credits and bookings arrive in later phases.
-- [ ] **Step 4: Roster** — `players/+page.svelte` lists every player with level and an edit link, plus "Add a player".
-- [ ] **Step 5: Add** — `players/new` with the superforms exemplar: name, birthdate (`DateField`), relationship (`SegmentedControl`: myself / my child / I am their guardian), ball level (`Select`, optional, help text "The academy sets the level after that"). Calls `createPlayer`, redirects to the roster with the new player selected.
-- [ ] **Step 6: Edit** — `players/[id]` edits name and birthdate; shows the level read-only with mono `SET BY THE ACADEMY`; archive as a `Dialog` confirm whose consequence line is mono and whose confirm is a secondary button (never amber).
-- [ ] **Step 7: Verify** — `pnpm check && pnpm lint && pnpm test` green.
-- [ ] **Step 8: Commit** — `git commit -m "feat(portal): guardian onboarding, player roster, add and edit"`
+- [x] **Step 1: Layout load** — fetch the caller's active players (id, name, birthdate, level key/label) ordered by name; resolve `?player=` against that list, falling back to the first; expose `players`, `currentPlayer`, `tz`.
+- [x] **Step 2: Layout shell** — add the Players tab; render `PlayerSwitcher` under the title when `players.length > 1`.
+- [x] **Step 3: Overview** — zero players: an `EmptyState` with one primary action, "Add your first player". One or more: a summary per current player — name, mono `BALL LEVEL · <LABEL>` (or `LEVEL NOT SET`), mono `AGE <n> · <MINOR|ADULT>` — and honest mono notes that credits and bookings arrive in later phases.
+- [x] **Step 4: Roster** — `players/+page.svelte` lists every player with level and an edit link, plus "Add a player".
+- [x] **Step 5: Add** — `players/new` with the superforms exemplar: name, birthdate (`DateField`), relationship (`SegmentedControl`: myself / my child / I am their guardian), ball level (`Select`, optional, help text "The academy sets the level after that"). Calls `createPlayer`, redirects to the roster with the new player selected.
+- [x] **Step 6: Edit** — `players/[id]` edits name and birthdate; shows the level read-only with mono `SET BY THE ACADEMY`; archive as a `Dialog` confirm whose consequence line is mono and whose confirm is a secondary button (never amber).
+- [x] **Step 7: Verify** — `pnpm check && pnpm lint && pnpm test` green.
+- [x] **Step 8: Commit** — `git commit -m "feat(portal): guardian onboarding, player roster, add and edit"`
 
 ### Task 7: Admin staff roles
 
 **Files:** Create `src/routes/admin/staff/+page.server.ts`, `+page.svelte`; modify `identity/staff.ts`, `staff.test.ts`, `admin/+layout.svelte`
 
-- [ ] **Step 1: Write the failing tests** for `listStaff`, `grantRole`, `revokeRole` (narrow fakes; `grantRole` upserts `(account_id, role)`; a failure maps through `fromPostgres`).
-- [ ] **Step 2: Run to verify they fail.**
-- [ ] **Step 3: Implement** the three functions; the page lists staff with `StatusChip`, grants a role by email (resolved against `accounts`, which staff may read), and revokes with a `Dialog` confirm.
-- [ ] **Step 4: Run to verify they pass;** add the Staff tab to the admin layout.
-- [ ] **Step 5: Commit** — `git commit -m "feat(admin): staff role management"`
+- [x] **Step 1: Write the failing tests** for `listStaff`, `grantRole`, `revokeRole` (narrow fakes; `grantRole` upserts `(account_id, role)`; a failure maps through `fromPostgres`).
+- [x] **Step 2: Run to verify they fail.**
+- [x] **Step 3: Implement** the three functions; the page lists staff with `StatusChip`, grants a role by email (resolved against `accounts`, which staff may read), and revokes with a `Dialog` confirm.
+- [x] **Step 4: Run to verify they pass;** add the Staff tab to the admin layout.
+- [x] **Step 5: Commit** — `git commit -m "feat(admin): staff role management"`
 
 ### Task 8: E2E, docs, final gate
 
-- [ ] **Step 1:** extend `e2e/smoke.test.ts` — `/portal/players` and `/admin/staff` redirect anonymous users to login with `next`.
-- [ ] **Step 2:** update `docs/PLAN.md` (phase 1 row → built, decision log entry) and `AGENTS.md` (status, repo map).
-- [ ] **Step 3:** run the full gate: `pnpm check && pnpm lint && pnpm test && pnpm build`.
-- [ ] **Step 4:** commit — `git commit -m "chore: e2e coverage and docs for phase 1"`
+- [x] **Step 1:** extend `e2e/smoke.test.ts` — `/portal/players` and `/admin/staff` redirect anonymous users to login with `next`.
+- [x] **Step 2:** update `docs/PLAN.md` (phase 1 row → built, decision log entry) and `AGENTS.md` (status, repo map).
+- [x] **Step 3:** run the full gate: `pnpm check && pnpm lint && pnpm test && pnpm build`.
+- [x] **Step 4:** commit — `git commit -m "chore: e2e coverage and docs for phase 1"`
 
 ## Exit criteria
 
@@ -309,3 +309,26 @@ export function isAdultOn(birthdate: string, tz: string, at: string | Date = new
 - The schema harness passes with the new 2b checks.
 - A guardian can sign up, add two children with ball levels, switch between them, correct a name, and archive a mistake; an adult can add themselves as `self`; an admin can grant and revoke staff roles.
 - Verified end-to-end on the dev deployment once the operator steps from phase 0 are done (`pnpm test:e2e`) — the one criterion this session cannot close.
+
+## Status (end of session 2026-09-02)
+
+Built and committed on `phase-1/identity`. `pnpm check` (0 errors, 0 warnings), `pnpm lint`,
+`pnpm test` (93 unit/contract + 83 schema checks) and `pnpm build` all green.
+
+Deliberately not built:
+- The restricted minor login (question O) — it creates an account for a minor, so it waits
+  for an answer. Everything else in the phase-1 row shipped.
+
+Known limitations, by choice:
+- Removing a player needs JavaScript: the confirm is a `Dialog`, and without JS it never
+  opens. It fails closed (the destructive action simply is not offered), and every other
+  form on the page works without JS.
+- `pnpm test:e2e` still cannot run — it needs a reachable Supabase, which is a phase-0
+  operator step. The new specs are written and will run as soon as dev exists.
+
+Two defects found while building, both fixed here:
+- `supabase/tests/validate.mjs` applied only `0001_schema.sql`, so it would have silently
+  ignored 0002 and every later migration. It now applies the whole directory in order.
+- `scripts/check-adherence.mjs` reported a legal `font-family: var(--font-sans)`: the
+  optional whitespace in its rule could match zero characters, letting the negative
+  lookahead see the space instead of the value.

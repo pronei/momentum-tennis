@@ -16,7 +16,7 @@ localized.
 | # | Phase | Contents | Depends on | Exit criteria |
 |---|-------|----------|------------|---------------|
 | 0 | Foundations — **built 2026-09-02** (`phase-0/foundations`) | SvelteKit scaffold, CI (check/lint/test/build), migration 0001 + PGlite harness + generated types, Supabase auth + server guards, domain patterns (Result/AppError, time, identity, booking, cron, payments idempotency, notify), design-system port (core/forms/feedback) + `/styleguide`, integration skeletons (Stripe webhook, cron endpoint + worker), wrangler + workflows | approval of schema v2 ✓ | code exit criteria met (check/lint/test/build green); **operator steps remain**: create the two Supabase projects + two CF projects, fill env/secrets, GitHub secrets for migrate.yml — see docs/superpowers/plans/2026-09-02-phase-0-foundations.md |
-| 1 | Identity & profiles | guardian onboarding, N players per account, player switcher, adult self-guardianship, restricted minor login, staff roles | 0 | a family with 2 children fully modeled end-to-end on dev |
+| 1 | Identity & profiles — **built 2026-09-02** (`phase-1/identity`) | guardian onboarding, N players per account (add/edit/archive), player switcher and `?player=` context, adult self-guardianship, staff role management; migrations 0002 (player writes) + 0003 (last-admin guard) | 0 | code exit criteria met (check/lint/test/build green, 93 unit + 83 schema checks); **restricted minor login deferred pending question O**; end-to-end on dev still needs the phase-0 operator steps |
 | 2 | Waivers | doc/version admin (draft→publish freeze), signing ceremony (capacity resolved server-side), re-consent detection, status surfaces | 1 | version bump forces re-consent; booking gate queryable |
 | 3 | Schedule & availability | locations/courts/availability rules + exceptions, terms/classes/camps/teams CRUD, occurrence generation, ResourceDayView admin editor, public + portal read-only calendars | 1 (2 for gating copy) | Artur can enter the real fall schedule; calendar renders it in academy TZ |
 | 4 | Booking, credits & attendance | scoped class booking with weekly cap, private-lesson booking, cancellation/reversal policy, capacity + waitlist, attendance marking (coach + admin), admin credit grants, booking-confirmation email | 2, 3 | double-booking + cap + waiver gate all enforced by DB under concurrent load; a real week bookable on dev |
@@ -86,7 +86,30 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   slot's tags; an untagged slot is open to all levels; a player without a level
   can only book untagged slots (`level_required`). Replaces the old min/max range.
 
+## Open questions raised by phase 1 (recommended default first)
+- **O — how a restricted minor login is created. NOT BUILT; the rest of phase 1 shipped
+  without it.** The schema already supports it (an account linked `role='self'` to a minor,
+  which `can_view_financials()` correctly starves of money), but `create_player` refuses to
+  create that link, so there is deliberately no path to one yet. Recommendation: a
+  guardian-initiated invite — the guardian enters the child's email, Supabase sends an
+  invite, and on first sign-in an RPC links that account to the named player as `self`,
+  allowed only for a player the inviting guardian already guards. Alternatives: no child
+  login at all (the family shares the guardian login), or staff-created logins. Blocked
+  because it creates an account for a minor.
+- **P — what a guardian may edit after the player turns 18.** Implemented as: unchanged.
+  The link persists per decision G, so the guardian keeps edit rights until it is ended.
+  Alternative: freeze guardian edits at 18 and require the player's own account.
+- **Q — birthdate correction.** Implemented as: guardians may correct it, audited on
+  `players` — otherwise a typo has no fix without support. The database refuses an edit
+  that would leave an account self-guarding a minor.
+
 ## Decision log
+- 2026-09-02 — Phase 1 built (branch phase-1/identity): migrations 0002 (update_player,
+  archive_player) and 0003 (last-admin guard); identity domain module; portal player
+  roster, add/edit, `?player=` context; admin staff console. 93 unit/contract tests and
+  83 schema checks green. Two defects found and fixed while building: the PGlite harness
+  applied only 0001 (it would have silently ignored every later migration), and the
+  adherence checker's font-family rule reported a legal `var(--font-sans)`.
 - 2026-08-25 — Calendar: Schedule-X resource view is paid (€479/yr); use
   @event-calendar/core (MIT, Svelte, free resource views) for admin, bespoke
   token-styled month/day views for parents; theming spike opens phase 3.

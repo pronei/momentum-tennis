@@ -5,10 +5,11 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phase 0 (foundations) built on branch `phase-0/foundations`: scaffold, migration 0001 +
-PGlite harness, generated types, auth + guards, domain patterns, design-system port
-(core/forms/feedback), integration skeletons, CI. Phase plan and decisions: `docs/PLAN.md`.
-Phase-0 checklist: `docs/superpowers/plans/2026-09-02-phase-0-foundations.md`.
+Phase 0 (foundations) built on `phase-0/foundations`; phase 1 (identity & profiles) built on
+`phase-1/identity`: migrations 0002–0003, the identity domain module, the portal player
+roster with a `?player=` context, and the admin staff console. The restricted minor login is
+deliberately NOT built — see open question O in `docs/PLAN.md`. Phase plan and decisions:
+`docs/PLAN.md`. Phase checklists: `docs/superpowers/plans/`.
 
 ## Prime directives
 1. **Build only the approved phase.** Deliver, stop, wait for explicit approval.
@@ -60,6 +61,13 @@ Phase-0 checklist: `docs/superpowers/plans/2026-09-02-phase-0-foundations.md`.
 - **Ball levels gate slots:** a player books only sessions tagged with their level
   (`session_skill_levels`); untagged = all levels. Parents set the level at
   profile creation; only staff change it afterwards.
+- **Identity writes are RPCs.** `players` and `guardianships` have no write policies:
+  `create_player`, `update_player`, `archive_player`, `set_player_level` are the only
+  mutations. Archiving ends the link and keeps the row; it is refused once the player has
+  credits or bookings. No account may end up self-guarding a minor — `create_player` and
+  `update_player` both enforce it.
+- **The academy always has an admin.** Deleting the last `admin` row is refused (0003):
+  it would leave nobody able to grant the role back.
 - **Guardians pay, players consume.** Purchases attach to accounts; credits,
   bookings, waiver coverage, and ratings attach to named players. An adult player
   is a `self` guardianship — same shape, not a special case. Minority is derived
@@ -129,13 +137,18 @@ render; the schema is tested behaviorally in PGlite.
   cron only), `database.types.ts` (generated).
 - `src/lib/server/domain/` — `result.ts` (Result/AppError + Postgres → code mapping +
   the only copy for refusals), `time.ts` (academy-tz rendering mirroring SQL),
-  `identity/` (staff roles, account profile), `booking/` (RPC wrappers), `cron.ts`
-  (secret check + job dispatch), `payments/` (webhook idempotency port + Supabase
-  store), `notify/` (transactional vs marketing send, insert-first idempotency).
+  `settings.ts` (academy timezone, fails soft), `identity/` (staff roles + console,
+  account profile, players, age mirroring `player_is_adult()`), `booking/` (RPC
+  wrappers), `cron.ts` (secret check + job dispatch), `payments/` (webhook idempotency
+  port + Supabase store), `notify/` (transactional vs marketing send, insert-first
+  idempotency).
+- `src/lib/components/` — app composites built from `$lib/ds` and the design system's
+  `ui_kits` references (`PlayerSwitcher`, `Card`), tested as SSR contracts.
 - `src/lib/ds/` — ported design system (`index.ts` barrel; `core/ forms/ feedback/`);
   `FieldShell.svelte` is the shared form anatomy. `/styleguide` renders everything.
 - `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `(portal)/portal`
-  (shell + account form: the superforms pattern), `admin` (guarded shell),
+  (shell carrying the `?player=` context, overview, `players/` roster + new + `[id]`,
+  account form: the superforms pattern), `admin` (guarded shell, `staff/`),
   `internal/cron`, `api/stripe/webhook`.
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
 - `scripts/` — `gen-db-types.mjs`, `check-adherence.mjs`.

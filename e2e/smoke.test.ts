@@ -25,3 +25,22 @@ test('admin is refused, not hidden, for anonymous users', async ({ page }) => {
 	const res = await page.goto('/admin');
 	expect(res?.url()).toMatch(/\/login/);
 });
+
+test('the player roster is guarded at the server, like the rest of the portal', async ({
+	page
+}) => {
+	await page.goto('/portal/players');
+	await expect(page).toHaveURL(/\/login\?next=%2Fportal%2Fplayers/);
+});
+
+test('adding a player is guarded too — the form is never reachable anonymously', async ({
+	page
+}) => {
+	await page.goto('/portal/players/new');
+	await expect(page).toHaveURL(/\/login\?next=%2Fportal%2Fplayers%2Fnew/);
+});
+
+test('staff role management is refused, not hidden, for anonymous users', async ({ page }) => {
+	const res = await page.goto('/admin/staff');
+	expect(res?.url()).toMatch(/\/login/);
+});
