@@ -4,8 +4,17 @@
 
 	let { children } = $props();
 	// Phase 3 adds Schedule / Programs; 5 Purchases; 2 Waivers; 6 Ratings. Only built routes are linked.
-	const tabs = [{ id: '/admin', label: 'Overview', href: '/admin' }];
-	const active = $derived(tabs.find((t) => page.url.pathname.startsWith(t.id))?.id);
+	const tabs = [
+		{ id: '/admin', label: 'Overview', href: '/admin' },
+		{ id: '/admin/staff', label: 'Staff', href: '/admin/staff' }
+	];
+	// longest match wins, so /admin/staff does not also light up Overview
+	const active = $derived(
+		tabs
+			.map((t) => t.id)
+			.filter((id) => page.url.pathname === id || page.url.pathname.startsWith(id + '/'))
+			.sort((a, b) => b.length - a.length)[0]
+	);
 </script>
 
 <div class="admin">

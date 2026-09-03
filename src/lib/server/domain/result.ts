@@ -10,6 +10,7 @@ const CODES = [
 	'minor_self_link',
 	'unknown_skill_level',
 	'player_has_history',
+	'last_admin',
 	'waiver_required',
 	'weekly_cap',
 	'insufficient_credits',
@@ -78,6 +79,7 @@ const COPY: Record<ErrorCode, string> = {
 	unknown_skill_level: 'That ball level is not one the academy offers.',
 	player_has_history:
 		'This player has bookings or credits, so the academy has to remove them. Contact us.',
+	last_admin: 'The academy needs at least one administrator. Grant the role to someone else first.',
 	waiver_required: 'A current waiver must be signed for this player before booking.',
 	weekly_cap: 'One weekday or weekend class per week per package. This week already has one.',
 	insufficient_credits: 'No valid credits for this class type. Buy a package to continue.',

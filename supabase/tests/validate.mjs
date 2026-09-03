@@ -189,6 +189,28 @@ await expectErr(
 );
 await q(`select archive_player($1)`, [tmp]); // leave the roster as section 9 expects it
 
+console.log('2c. staff roles keep at least one admin (phase 1)');
+await expectErr(
+	'the last admin cannot be revoked — that would lock the academy out',
+	() => q(`delete from staff_members where account_id = $1 and role = 'admin'`, [ADMIN]),
+	'last_admin'
+);
+await q(`insert into staff_members values ($1,'admin')`, [PARENT2]);
+await expectOk('with a second admin in place, one may be revoked', () =>
+	q(`delete from staff_members where account_id = $1 and role = 'admin'`, [PARENT2])
+);
+await expectOk('a coach role is not an admin role and revokes freely', () =>
+	q(`delete from staff_members where account_id = $1 and role = 'coach'`, [COACH])
+);
+await q(`insert into staff_members values ($1,'coach')`, [COACH]); // restore for later sections
+const adminsLeft = (await q(`select count(*)::int as n from staff_members where role = 'admin'`))
+	.rows[0].n;
+if (adminsLeft === 1) ok('exactly one admin survives the section');
+else {
+	console.log('  \u2717 admins', adminsLeft);
+	failures++;
+}
+
 console.log('3. facilities + availability (H)');
 const loc = (await q(`select id from locations where name = 'Murdock Park'`)).rows[0].id;
 const court = (
