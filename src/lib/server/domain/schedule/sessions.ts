@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Database } from '$lib/server/db/database.types';
-import { err, fromPostgres, ok, type Result } from '$lib/server/domain/result';
+import { AppError, err, fromPostgres, ok, type Result } from '$lib/server/domain/result';
 import { dayBounds, localInstant } from '$lib/server/domain/time';
 import { localDate, localTime, type ScheduleDb, uuid } from './common';
 
@@ -128,6 +128,22 @@ export async function listDay(
 	return ok(((data ?? []) as unknown as ViewRow[]).map(toSession));
 }
 
+/** Every session belonging to one camp or team — the detail screens' day list. */
+export async function listByParent(
+	db: ScheduleDb,
+	type: SessionType,
+	parentId: string
+): Promise<Result<ScheduleSession[]>> {
+	const { data, error } = await db
+		.from('v_schedule_sessions')
+		.select(VIEW_SELECT)
+		.eq('session_type', type)
+		.eq('parent_id', parentId)
+		.order('starts_at');
+	if (error) return err(fromPostgres(error));
+	return ok(((data ?? []) as unknown as ViewRow[]).map(toSession));
+}
+
 /**
  * A run of whole local days from `from` — the portal's fortnight and the public page. Asks for
  * scheduled sessions explicitly: anon RLS already limits it, but a signed-in coach reading the
@@ -210,6 +226,11 @@ export async function createSession(
 	input: SessionInput,
 	tz: string
 ): Promise<Result<{ id: string }>> {
+	// Routes validate with superforms, but camps.ts and teams.ts assemble an input themselves —
+	// the one writer checks its own contract rather than trusting every caller.
+	const parsed = sessionSchema.safeParse(input);
+	if (!parsed.success) return err(new AppError('validation', parsed.error.issues[0]?.message));
+
 	const { data, error } = await db
 		.from('sessions')
 		.insert({ session_type: input.type, ...sessionRow(input, tz) })

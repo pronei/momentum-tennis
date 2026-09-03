@@ -16,6 +16,7 @@ const METHODS = [
 	'order',
 	'limit',
 	'insert',
+	'upsert',
 	'update',
 	'delete',
 	'single',
