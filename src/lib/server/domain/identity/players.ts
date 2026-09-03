@@ -21,7 +21,8 @@ const birthdate = z
 export const newPlayerSchema = z.object({
 	fullName,
 	birthdate,
-	relationship: z.enum(RELATIONSHIPS),
+	// 'My child' is the common case; superforms uses this as the form's initial value
+	relationship: z.enum(RELATIONSHIPS).default('parent'),
 	skillLevelKey: z.string().trim().default('')
 });
 export type NewPlayerInput = z.infer<typeof newPlayerSchema>;

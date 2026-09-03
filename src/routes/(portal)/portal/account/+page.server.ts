@@ -3,6 +3,7 @@ import { message, setError, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { profileSchema, updateProfile } from '$lib/server/domain/identity/account';
 import { describeError } from '$lib/server/domain/result';
+import { getAcademyTimezone } from '$lib/server/domain/settings';
 import { academyTime } from '$lib/server/domain/time';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -24,13 +25,7 @@ export const actions: Actions = {
 		if (!form.valid) return fail(400, { form });
 		const result = await updateProfile(locals.supabase, locals.user!.id, form.data);
 		if (!result.ok) return setError(form, '', describeError(result.error.code), { status: 400 });
-		const { data: settings } = await locals.supabase
-			.from('academy_settings')
-			.select('timezone')
-			.maybeSingle();
-		return message(
-			form,
-			`SAVED · ${academyTime(new Date(), settings?.timezone ?? 'America/Los_Angeles')}`
-		);
+		const tz = await getAcademyTimezone(locals.supabase);
+		return message(form, `SAVED · ${academyTime(new Date(), tz)}`);
 	}
 };

@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import PlayerSwitcher from '$lib/components/PlayerSwitcher.svelte';
 	import { Button, Eyebrow, Tabs } from '$lib/ds';
 
 	let { data, children } = $props();
 	const tabs = [
 		{ id: '/portal', label: 'Overview', href: '/portal' },
+		{ id: '/portal/players', label: 'Players', href: '/portal/players' },
 		{ id: '/portal/account', label: 'Account', href: '/portal/account' }
 	];
 	const active = $derived(
@@ -13,6 +15,10 @@
 			.filter((id) => page.url.pathname === id || page.url.pathname.startsWith(id + '/'))
 			.sort((a, b) => b.length - a.length)[0]
 	);
+	// Switching only means something where the page is about one player.
+	const switchable = $derived(
+		page.url.pathname === '/portal' || page.url.pathname === '/portal/players'
+	);
 </script>
 
 <div class="portal">
@@ -20,6 +26,9 @@
 		<div class="portal__id">
 			<Eyebrow ticks>Player portal</Eyebrow>
 			<h1 class="mt-display portal__title">{data.account.full_name || data.account.email}</h1>
+			{#if switchable}
+				<PlayerSwitcher players={data.players} currentId={data.currentPlayer?.id} />
+			{/if}
 		</div>
 		<form method="POST" action="/logout">
 			<Button variant="ghost" size="sm" type="submit">Log out</Button>

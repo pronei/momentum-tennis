@@ -13,7 +13,7 @@ const exts = new Set(['.svelte', '.ts', '.css', '.js']);
 const rules = [
 	{ name: 'raw hex color', re: /#[0-9a-fA-F]{3,8}\b(?![\w-])/ },
 	{ name: 'raw px value', re: /(?<![\w-])(?!760px)\d+px\b/ },
-	{ name: 'off-system font-family', re: /font-family\s*:\s*(?!var\(--font-)/i }
+	{ name: 'off-system font-family', re: /font-family\s*:(?!\s*var\(--font-)/i }
 ];
 const hexInAttrOrId = /(href|id|name|for)=["']#|url\(#|#\{|#\[/; // svelte anchors, svg refs, template syntax
 
