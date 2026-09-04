@@ -102,3 +102,11 @@ describe('schedule refusals map to codes, not to unexpected', () => {
 		expect(fromPostgres({ message: 'unknown_class' }).code).toBe('unknown_class');
 	});
 });
+
+describe('booking refusals map to codes, not to unexpected', () => {
+	it('maps the tokens the booking RPCs raise', () => {
+		expect(fromPostgres({ message: 'not_a_coach' }).code).toBe('not_a_coach');
+		expect(fromPostgres({ message: 'unknown_kind' }).code).toBe('unknown_kind');
+		expect(fromPostgres({ message: 'quantity_positive' }).code).toBe('quantity_positive');
+	});
+});

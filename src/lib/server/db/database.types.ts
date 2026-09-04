@@ -1613,6 +1613,16 @@ export type Database = {
 			}
 		}
 		Views: {
+			v_class_session_seats: {
+				Row: {
+					session_id: string | null
+					capacity: number | null
+					booked: number | null
+					waitlisted: number | null
+					seats_left: number | null
+				}
+				Relationships: []
+			}
 			v_credit_balances: {
 				Row: {
 					player_id: string | null
@@ -1857,6 +1867,12 @@ export type Database = {
 				}
 				Returns: number
 			}
+			promote_waitlist_internal: {
+				Args: {
+					p_session: string
+				}
+				Returns: number
+			}
 			publish_waiver_version: {
 				Args: {
 					p_version: string
@@ -1908,6 +1924,13 @@ export type Database = {
 					p_content: string
 				}
 				Returns: undefined
+			}
+			waitlist_position: {
+				Args: {
+					p_session: string
+					p_player: string
+				}
+				Returns: number
 			}
 			waiver_content_hash: {
 				Args: {

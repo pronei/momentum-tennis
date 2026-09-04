@@ -30,9 +30,11 @@ vi.mock('$app/state', () => ({
 
 import { campSchema } from '$lib/server/domain/schedule/camps';
 import { classSchema, termSchema } from '$lib/server/domain/schedule/classes';
+import { grantSchema } from '$lib/server/domain/booking/credits';
 import { courtSchema, locationSchema } from '$lib/server/domain/schedule/locations';
 import { teamSchema, teamSessionSchema } from '$lib/server/domain/schedule/teams';
 import Availability from './availability/+page.svelte';
+import Credits from './credits/+page.svelte';
 import Camps from './camps/+page.svelte';
 import Classes from './classes/+page.svelte';
 import TeamDetail from './teams/[id]/+page.svelte';
@@ -165,5 +167,49 @@ describe('/admin/camps and /admin/teams', () => {
 		expect(html(TeamDetail, base)).toContain('NO PLAYERS ON THIS TEAM');
 		expect(html(TeamDetail, { ...base, query: 'zzz' })).toContain('NO PLAYERS MATCH');
 		expect(html(TeamDetail, base)).toContain('NOTHING SCHEDULED');
+	});
+});
+
+describe('/admin/credits', () => {
+	const data = async (over: Record<string, unknown> = {}) => ({
+		query: '',
+		candidates: [],
+		recent: [
+			{
+				id: 'l1',
+				player: 'Maya R.',
+				kind: 'Weekday classes',
+				delta: 10,
+				reason: 'Trial',
+				on: '2026-09-01'
+			}
+		],
+		loadError: null,
+		form: await superValidate(
+			{ token: '33333333-3333-3333-3333-333333333333' },
+			zod4(grantSchema),
+			{
+				errors: false
+			}
+		),
+		...over
+	});
+
+	it('carries the idempotency token in the markup, so a double submit grants once', async () => {
+		const out = html(Credits, await data());
+		expect(out).toMatch(/name="token"[^>]*value="33333333-3333-3333-3333-333333333333"/);
+	});
+
+	it('asks for a reason — the audit is the point', async () => {
+		expect(html(Credits, await data())).toContain('A reason is required');
+	});
+
+	it('lists recent grants and says when there are none', async () => {
+		expect(html(Credits, await data())).toContain('Maya R.');
+		expect(html(Credits, await data({ recent: [] }))).toContain('NO GRANTS YET');
+	});
+
+	it('a search that found nobody says so', async () => {
+		expect(html(Credits, await data({ query: 'zzz' }))).toContain('NO PLAYERS MATCH');
 	});
 });

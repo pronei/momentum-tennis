@@ -560,15 +560,22 @@ const zoeB = (
 	])
 ).rows[0].id;
 await q(`select cancel_booking('class', $1)`, [zoeB]);
-await asUser(ADMIN);
-const promoted = (await q(`select promote_waitlist($1) as n`, [tueW1])).rows[0].n;
+// 0008: the cancellation promotes on the spot — nobody waits behind a seat that just opened.
 const wls2 = (await q(`select status from class_bookings where id = $1`, [wl])).rows[0].status;
 leoBal = (await q(`select balance from v_credit_balances where player_id = $1`, [leo])).rows[0]
 	.balance;
-if (promoted === 1 && wls2 === 'booked' && leoBal === 0)
-	ok('promotion books Leo and consumes his credit');
+if (wls2 === 'booked' && leoBal === 0)
+	ok('cancelling books Leo off the waitlist and spends his credit');
 else {
-	console.log('  ✗ promote', promoted, wls2, leoBal);
+	console.log('  ✗ promote-on-cancel', wls2, leoBal);
+	failures++;
+}
+await asUser(ADMIN);
+const promoted = (await q(`select promote_waitlist($1) as n`, [tueW1])).rows[0].n;
+if (promoted === 0)
+	ok('an explicit promotion afterwards is a no-op — the queue is already drained');
+else {
+	console.log('  ✗ second promote', promoted);
 	failures++;
 }
 const cancelledN = (await q(`select cancel_session($1, 'rainout') as n`, [tueW1])).rows[0].n;
@@ -990,6 +997,141 @@ else {
 	console.log('  ✗ untagged level_keys', untagged);
 	failures++;
 }
+
+// 14. Booking (0008): a consent gate that fails closed, waitlist promotion on cancel, seat counts.
+// Fresh court, class, players and credits — sections 5-8 have already spent the shared fixtures'
+// weekly caps, and a test that reads them would be measuring leftovers.
+console.log('14. booking gate, waitlist promotion, seat counts (0008)');
+
+// (a) a required document with NOTHING published must refuse, not wave everyone through
+await asUser(ADMIN);
+const p4doc = (
+	await q(
+		`insert into waiver_documents (slug, title) values ('media','Media release') returning id`
+	)
+).rows[0].id;
+await expectErr(
+	'a required document with no published version refuses booking',
+	() => q(`select assert_waivers_signed($1)`, [maya]),
+	'waiver_required'
+);
+await q(`update waiver_documents set required_for_participation = false where id = $1`, [p4doc]);
+await expectOk('and stops refusing once the document is not required', () =>
+	q(`select assert_waivers_signed($1)`, [maya])
+);
+
+// (b) occupancy is readable as counts, with no booking row in sight
+const p4seats = (
+	await q(
+		`select capacity, booked, waitlisted, seats_left from v_class_session_seats where session_id = $1`,
+		[satW1]
+	)
+).rows[0];
+if (p4seats && p4seats.capacity === 2 && p4seats.seats_left === p4seats.capacity - p4seats.booked)
+	ok('v_class_session_seats reports capacity and occupancy without exposing bookings');
+else {
+	console.log('  ✗ seats', p4seats);
+	failures++;
+}
+
+// (c) a cancellation hands the seat to the next family, in the same transaction
+const p4court = (
+	await q(`insert into courts (location_id, name) values ($1,'MP-3') returning id`, [loc])
+).rows[0].id;
+await q(
+	`insert into court_availability (court_id, weekday, open_local, close_local, effective_from)
+	 values ($1, 4, '16:00', '20:00', $2)`,
+	[p4court, monday]
+);
+const p4class = (
+	await q(
+		`insert into classes (term_id, name, weekday, start_time_local, duration_minutes, capacity, default_court_id)
+		 values ($1,'P4 Thu',4,'16:00',90,1,$2) returning id`,
+		[term, p4court]
+	)
+).rows[0].id;
+await q(`select generate_class_sessions($1,$2,$3)`, [p4class, monday, D.next_sunday]);
+const p4sid = (
+	await q(
+		`select cs.session_id from class_sessions cs join sessions s on s.id = cs.session_id
+		 where cs.class_id = $1 order by s.starts_at limit 1`,
+		[p4class]
+	)
+).rows[0].session_id;
+
+await asUser(PARENT);
+const p4a = (await q(`select create_player('Ana W.', '2014-05-05', 'parent') as id`)).rows[0].id;
+await q(`select sign_waiver($1,$2,'Priya R.')`, [v2, p4a]);
+await asUser(PARENT2);
+const p4b = (await q(`select create_player('Ben W.', '2014-06-06', 'parent') as id`)).rows[0].id;
+await q(`select sign_waiver($1,$2,'Sam T.')`, [v2, p4b]);
+await asUser(ADMIN);
+await q(`select issue_credits($1,'class_weekday',1,'grant:p4a', null, null, null, 'phase 4')`, [
+	p4a
+]);
+await q(`select issue_credits($1,'class_weekday',1,'grant:p4b', null, null, null, 'phase 4')`, [
+	p4b
+]);
+
+await asUser(PARENT);
+const p4booking = (await q(`select book_class($1,$2) as id`, [p4a, p4sid])).rows[0].id;
+await asUser(PARENT2);
+const p4wait = (await q(`select book_class($1,$2) as id`, [p4b, p4sid])).rows[0].id;
+const p4before = (await q(`select status from class_bookings where id = $1`, [p4wait])).rows[0]
+	.status;
+await asUser(PARENT);
+const p4cancel = (await q(`select cancel_booking('class', $1) as r`, [p4booking])).rows[0].r;
+const p4after = (await q(`select status from class_bookings where id = $1`, [p4wait])).rows[0]
+	.status;
+if (p4before === 'waitlisted' && p4after === 'booked' && p4cancel.promoted === 1)
+	ok('cancelling promotes the next waitlisted player in the same transaction');
+else {
+	console.log('  ✗ waitlist', p4before, '→', p4after, p4cancel);
+	failures++;
+}
+const p4consume = (
+	await q(
+		`select count(*)::int as n from credit_ledger where booking_session_id = $1 and entry_type = 'consume'`,
+		[p4sid]
+	)
+).rows[0].n;
+const p4reverse = (
+	await q(
+		`select count(*)::int as n from credit_ledger where booking_session_id = $1 and entry_type = 'consume_reversal'`,
+		[p4sid]
+	)
+).rows[0].n;
+if (p4consume === 2 && p4reverse === 1)
+	ok('the promoted booking spent its own credit; the cancelled one was reversed');
+else {
+	console.log('  ✗ ledger consume/reverse', p4consume, p4reverse);
+	failures++;
+}
+
+// waitlist position: a rank, and nothing else, about a player the caller guards
+await asUser(PARENT2);
+const p4b2 = (await q(`select create_player('Cara W.', '2014-07-07', 'parent') as id`)).rows[0].id;
+await q(`select sign_waiver($1,$2,'Sam T.')`, [v2, p4b2]);
+await asUser(ADMIN);
+await q(`select issue_credits($1,'class_weekday',1,'grant:p4b2', null, null, null, 'phase 4')`, [
+	p4b2
+]);
+await asUser(PARENT2);
+await q(`select book_class($1,$2)`, [p4b2, p4sid]);
+const p4pos = (await q(`select waitlist_position($1,$2) as n`, [p4sid, p4b2])).rows[0].n;
+const p4none = (await q(`select waitlist_position($1,$2) as n`, [p4sid, p4b])).rows[0].n;
+if (p4pos === 1 && p4none === null)
+	ok('waitlist_position ranks a waiting player and is null for a booked one');
+else {
+	console.log('  ✗ position', p4pos, p4none);
+	failures++;
+}
+await asUser(PARENT);
+await expectErr(
+	'a guardian cannot ask after a player they do not guard',
+	() => q(`select waitlist_position($1,$2)`, [p4sid, p4b2]),
+	'not_authorized'
+);
 
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL CHECKS PASSED');
 process.exit(failures ? 1 : 0);
