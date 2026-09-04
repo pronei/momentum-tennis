@@ -7,6 +7,9 @@
 	const tabs = [
 		{ id: '/portal', label: 'Overview', href: '/portal' },
 		{ id: '/portal/schedule', label: 'Schedule', href: '/portal/schedule' },
+		{ id: '/portal/book', label: 'Book', href: '/portal/book' },
+		{ id: '/portal/bookings', label: 'Bookings', href: '/portal/bookings' },
+		{ id: '/portal/credits', label: 'Credits', href: '/portal/credits' },
 		{ id: '/portal/players', label: 'Players', href: '/portal/players' },
 		{ id: '/portal/waivers', label: 'Waivers', href: '/portal/waivers' },
 		{ id: '/portal/account', label: 'Account', href: '/portal/account' }

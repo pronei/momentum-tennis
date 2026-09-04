@@ -48,3 +48,20 @@ export function resendMailer(apiKey: string, from: string): Mailer {
 		}
 	};
 }
+
+/**
+ * Dev and preview: print the mail instead of sending it. Returned ids are prefixed `console:` so a
+ * notification_sends row can never be mistaken for a real provider receipt. Chosen when no Resend
+ * key is configured — an environment without a mail key must still be able to book.
+ */
+export function consoleMailer(): Mailer {
+	return {
+		async send(mail) {
+			const id = `console:${crypto.randomUUID()}`;
+			console.warn(
+				`[mail] ${id}\n  to: ${mail.to}\n  subject: ${mail.subject}\n${(mail.text ?? mail.html).replace(/^/gm, '  ')}`
+			);
+			return { id };
+		}
+	};
+}
