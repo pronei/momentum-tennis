@@ -1,5 +1,6 @@
-# Cloudflare Workers config for the SvelteKit app. Two projects deploy this same config from
-# their own branches (Workers Builds): momentum-tennis-dev ← deploy/dev, momentum-tennis ← deploy/live.
+# Cloudflare Workers config for the SvelteKit app. Two workers deploy this same config from their
+# own branches: momentum-tennis-dev ← deploy/dev (.github/workflows/deploy-dev.yml), and
+# momentum-tennis ← deploy/live, whose workflow lands when the production worker exists.
 # Secrets are set per project (wrangler secret put / dashboard), never here. See README.md.
 name = "momentum-tennis"
 main = ".svelte-kit/cloudflare/_worker.js"
@@ -19,7 +20,7 @@ name = "momentum-tennis-dev"
 # Public runtime values (not secrets). $env/dynamic/private reads the worker's vars, not the .env
 # file the build read, so anything the app demands at request time and is not PUBLIC_* lives here.
 [env.dev.vars]
-EMAIL_FROM = "Momentum Tennis (dev) <onboarding@resend.dev>"
+EMAIL_FROM = "pranayrs@hotmail.com"
 
 [env.live]
 name = "momentum-tennis"

@@ -27,7 +27,8 @@ cloudflare:
   access_protected: true # keep half-built booking flows off the public internet
 
 deploy:
-  # Workers Builds: build command / deploy command for the connected repo.
+  # What .github/workflows/deploy-dev.yml runs on a push to deploy/dev (and what a manual
+  # deploy should match). Cloudflare Workers Builds is deliberately not connected.
   build: pnpm build:dev
   command: npx wrangler deploy --env dev
   # The origin the deployed app believes it has (auth redirects, email links). Baked in at
@@ -52,5 +53,6 @@ secrets:
     needed_from: phase 7
 
 # GitHub repository secrets the migrate workflow reads for this environment.
-ci_secrets: # migrate.yml — `pnpm db:push dev` needs only the database password
-  - SUPABASE_DB_PASSWORD_DEV # also in .env.local for `pnpm db:push dev`
+ci_secrets: # GitHub repository secrets the workflows for this environment read
+  - SUPABASE_DB_PASSWORD_DEV # migrate.yml — `pnpm db:push dev`; also in .env.local
+  - CLOUDFLARE_API_TOKEN # deploy-dev.yml — the same token docs/OPERATIONS.md §3 specifies

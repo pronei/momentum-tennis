@@ -1,0 +1,47 @@
+name: Deploy dev
+
+# The dev worker deploys itself when `deploy/dev` moves. Cloudflare Workers Builds is
+# deliberately not used: this repo already builds green here on Node 22 + pnpm, the logs sit
+# beside CI, and the build image's toolchain is one less thing to keep in step with
+# package.json's `engines` and `packageManager`.
+#
+# The BUILD needs no secrets — `pnpm build:dev` reads .env.development and config/dev.yaml,
+# both committed and public by construction. Only the deploy is credentialed.
+#
+# `pnpm cf` is not used here on purpose: that wrapper strips CLOUDFLARE_API_TOKEN from the
+# environment and reads it only from .env.local, because a laptop may hold a token for another
+# Cloudflare account. CI has no .env.local, so it calls the repo's own pinned wrangler directly.
+
+on:
+  push:
+    branches: [deploy/dev]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false # never cancel a deploy already in flight
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build with the dev profile's public values
+        run: pnpm build:dev
+      - name: Account id comes from the profile, so there is never a second copy of it
+        run: |
+          id=$(node -e "import('./scripts/lib/env-file.mjs').then(m=>console.log(m.readProfile('dev').profile.cloudflare.account_id))")
+          echo "CLOUDFLARE_ACCOUNT_ID=$id" >> "$GITHUB_ENV"
+      - name: Deploy momentum-tennis-dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        # --env dev is what selects momentum-tennis-dev; without it wrangler.toml's top-level
+        # name would deploy the PRODUCTION worker from this branch.
+        run: pnpm exec wrangler deploy --env dev

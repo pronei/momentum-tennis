@@ -144,10 +144,10 @@ Never put real family data in dev.
 | `pnpm db:types` | regenerate `src/lib/server/db/database.types.ts` from `supabase/migrations` (CI verifies it is current) |
 | `pnpm db:push <profile>` | apply `supabase/migrations` to that environment's database directly — password from `.env.local`, project ref and pooler from `config/<profile>.yaml`; no `supabase login`. The Supabase GitHub integration applies them on push to `deploy/dev`; `migrate.yml` (manual) runs this command as the fallback |
 | `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` (bakes `.env.production`) |
-| `pnpm build:dev` / `pnpm build:live` | the same build with a profile's public values and `deploy.site_url` — what Workers Builds runs |
+| `pnpm build:dev` / `pnpm build:live` | the same build with a profile's public values and `deploy.site_url` — what `deploy-dev.yml` runs |
 | `pnpm cf …` | wrangler scoped to this repo's Cloudflare account: login state in `.wrangler/home` (gitignored), never the machine-wide login — `pnpm cf login`, `pnpm cf whoami`, `pnpm cf deploy --env dev` |
 | `pnpm test:e2e` | Playwright smoke against the built app (needs a reachable Supabase) |
-| `wrangler deploy --env dev\|live` | manual deploy; normally Workers Builds deploys from the branch |
+| `wrangler deploy --env dev\|live` | manual deploy; normally `.github/workflows/deploy-dev.yml` deploys on push to `deploy/dev` |
 
 Development loop: write the failing test, watch it fail, implement, watch it pass
 (`superpowers:test-driven-development`). Domain functions take the Supabase client as a

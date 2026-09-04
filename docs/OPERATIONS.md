@@ -39,6 +39,18 @@ Profiles: `config/dev.yaml`, `config/prod.yaml`. Flow: work → `main` → `depl
   | `SUPABASE_DB_PASSWORD_DEV` | dashboard → project → Settings → Database (reset it there if unknown) — **set** |
   | `SUPABASE_DB_PASSWORD_PROD` | when the production project exists |
 
+- **Deploys:** `.github/workflows/deploy-dev.yml` builds with the dev profile and runs
+  `wrangler deploy --env dev` on every push to `deploy/dev` (and on demand — Actions → Deploy dev
+  → Run workflow). It needs one repository secret:
+
+  | secret | where it comes from |
+  |---|---|
+  | `CLOUDFLARE_API_TOKEN` | the token specified in §3 — the same one `.env.local` holds |
+
+  The build itself is credential-free: `pnpm build:dev` reads only `.env.development` and
+  `config/dev.yaml`. The account id is read from the profile at run time, so it is never
+  duplicated in the workflow.
+
   Nothing else: the project ref and pooler host are public facts in `config/*.yaml`, and no
   personal access token is involved. (A `SUPABASE_PROJECT_REF_DEV` secret was set before the
   workflow was simplified; it is unused and can be deleted.)
@@ -150,7 +162,10 @@ created through the Workers endpoint, which issues the DNS records and certifica
 - **Client IP filtering:** empty (a laptop's address changes). **TTL:** set an end date about a
   year out and diary it; wrangler fails loudly when it expires.
 
-The secret is shown once and starts with `cfut_`; put it in `.env.local` as `CLOUDFLARE_API_TOKEN`.
+The secret is shown once and starts with `cfut_`; put it in `.env.local` as `CLOUDFLARE_API_TOKEN`,
+and add the same value as the `CLOUDFLARE_API_TOKEN` **repository secret** on GitHub so
+`deploy-dev.yml` can deploy. Cloudflare Workers Builds is deliberately not connected: this
+repo already builds green in Actions on Node 22 + pnpm, and one build environment is enough.
 `CLOUDFLARE_ACCOUNT_ID` is not needed — the wrapper supplies the profile's.
 
 ```bash
@@ -163,7 +178,6 @@ pnpm cf whoami                # must show the recorded account, and only it
 |---|---|---|
 | `workers.dev` subdomain | the dev worker's URL `https://momentum-tennis-dev.<subdomain>.workers.dev` — register it **before** the first deploy | Workers & Pages → Overview → Your subdomain |
 | Workers plan | Free is enough for dev; production needs **Workers Paid** (the Free plan's daily request cap is a hard stop) | Workers & Pages → Plans |
-| Workers Builds git connection | `deploy/dev` deploying itself; Cloudflare generates its own API token for builds — none of yours | Workers & Pages → the worker → Settings → Builds |
 | Zero Trust organisation | Access protection on the dev host (free tier) | Zero Trust → Access → Applications |
 | `momentum-tennis.com` zone | the production custom domain `app.momentum-tennis.com` — the zone must be on Cloudflare (nameservers at GoDaddy → Cloudflare; the root keeps pointing at the legacy site by DNS record, decision J) | Add a site |
 
