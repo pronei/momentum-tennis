@@ -11,6 +11,7 @@
 		{ id: '/admin/classes', label: 'Classes', href: '/admin/classes' },
 		{ id: '/admin/camps', label: 'Camps', href: '/admin/camps' },
 		{ id: '/admin/teams', label: 'Teams', href: '/admin/teams' },
+		{ id: '/admin/credits', label: 'Credits', href: '/admin/credits' },
 		{ id: '/admin/waivers', label: 'Waivers', href: '/admin/waivers' },
 		{ id: '/admin/staff', label: 'Staff', href: '/admin/staff' }
 	];
