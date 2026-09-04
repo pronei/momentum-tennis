@@ -246,7 +246,7 @@ Code gates never wait on these; the "deliverable on the dev deployment" half of 
 | before | needed | where |
 |---|---|---|
 | phase 3 | first admin on dev (SQL above); auth emails decided (confirm-email off in dev, or Resend SMTP); Cloudflare token or login for the recorded account → first deploy → `deploy.site_url` → redeploy; `<site>/auth/callback` in Supabase redirect URLs; Access protection on the dev host | §2, §3 |
-| phase 4 | nothing new — credits are admin-granted; a few test families signed up on dev | — |
+| phase 4 | **a published waiver version** — since migration 0008 the consent gate fails closed, so a required document with no published version refuses every booking. Publish v1 of the liability waiver at `/admin/waivers` with text from the academy's lawyer. Also: credits are admin-granted at `/admin/credits`, and a coach role on whoever takes private lessons (`book_private_lesson` requires role `coach` exactly) | §2, `/admin/waivers` |
 | phase 5 | Stripe **test** secret key and a webhook endpoint for `https://<dev site>/api/stripe/webhook` (its signing secret) as Cloudflare secrets; payment methods enabled in Stripe (ACH Direct Debit activation, Apple Pay domain registration, Cash App Pay, Link); refund wording and tax stance from Artur/accountant (decision E); production Supabase project on **Pro, standard Postgres** before anything goes live (decision J) | §3, Stripe dashboard |
 | phase 6 | nothing | — |
 | phase 7 | Resend account, verified sending domain (DNS at GoDaddy), API key → `RESEND_API_KEY`; `CRON_SHARED_SECRET` in the app and the cron worker; cron worker deployed; marketing/unsubscribe copy from legal | §3, §5 |

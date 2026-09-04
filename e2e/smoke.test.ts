@@ -72,3 +72,17 @@ test('the family schedule is guarded, like the rest of the portal', async ({ pag
 	await page.goto('/portal/schedule');
 	await expect(page).toHaveURL(/\/login\?next=%2Fportal%2Fschedule/);
 });
+
+test('booking, bookings and credits are guarded like the rest of the portal', async ({ page }) => {
+	for (const path of ['/portal/book', '/portal/bookings', '/portal/credits']) {
+		await page.goto(path);
+		await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}`));
+	}
+});
+
+test('coach tools and credit grants are refused, not hidden', async ({ page }) => {
+	for (const path of ['/coach/sessions', '/admin/credits']) {
+		const res = await page.goto(path);
+		expect(res?.url()).toMatch(/\/login/);
+	}
+});

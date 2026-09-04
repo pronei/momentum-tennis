@@ -5,12 +5,14 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phases 0–3 are built and merged to `main` (foundations, identity & profiles, waivers, schedule &
-availability); `deploy/dev` tracks `main`. Migrations 0001–0007 are applied to the dev Supabase
-project (0005 reference data, 0006 RLS safety net, 0007 schedule). The restricted minor login is
-deliberately NOT built — see open question O in `docs/PLAN.md`. Phase 4 (booking, credits &
-attendance) is next: `docs/HANDOFF-opus5.md` scopes phases 4–7 and the per-phase ritual; its brief
-is `docs/superpowers/plans/2026-09-03-phase-4-booking.brief.md` and must be expanded into a plan
+Phases 0–4 are built and merged to `main` (foundations, identity & profiles, waivers, schedule &
+availability, booking & credits & attendance); `deploy/dev` tracks `main` and deploys itself through
+`.github/workflows/deploy-dev.yml`. Migrations 0001–0008 are applied to the dev Supabase project
+(0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking). The restricted minor login
+is deliberately NOT built — see open question O in `docs/PLAN.md`. **Booking on any environment
+requires a published waiver version**: since 0008 the consent gate fails closed. Phase 5 (payments)
+is next: `docs/HANDOFF-opus5.md` scopes phases 5–7 and the per-phase ritual; its brief is
+`docs/superpowers/plans/2026-09-03-phase-5-payments.brief.md` and must be expanded into a plan
 before any code. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
 
@@ -82,7 +84,13 @@ before any code. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 - **Consent is versioned and append-only.** Publishing freezes a version and makes every
   earlier signature stop satisfying the gate; `v_player_waiver_status` and
   `assert_waivers_signed()` are the single truth the portal and booking both read. Version
-  numbers and `content_sha256` are produced in SQL (0004), never by the app.
+  numbers and `content_sha256` are produced in SQL (0004), never by the app. The gate **fails
+  closed** (0008): a required document with no published version refuses booking, because "not
+  published yet" means "not ready", not "nothing to sign".
+- **A freed seat goes to the waitlist immediately.** `cancel_booking` calls
+  `promote_waitlist_internal` in the same transaction, re-checking credits and the weekly cap per
+  decision K. Occupancy is readable by families through `v_class_session_seats` and a position
+  through `waitlist_position` — both expose counts, never identities.
 - **Guardians pay, players consume.** Purchases attach to accounts; credits,
   bookings, waiver coverage, and ratings attach to named players. An adult player
   is a `self` guardianship — same shape, not a special case. Minority is derived
@@ -159,16 +167,19 @@ render; the schema is tested behaviorally in PGlite.
   (`(portal)` needs a user, `/coach` staff, `/admin` admin).
 - `src/lib/server/config.ts` (pure, tested) + `config.runtime.ts` ($env wiring) — one
   validated config; secrets only via `$env/dynamic/private`.
-- `src/lib/server/db/` — `client.ts` (user-scoped), `admin.ts` (service role: webhooks,
-  cron only), `database.types.ts` (generated).
+- `src/lib/server/db/` — `client.ts` (user-scoped), `admin.ts` (service role: webhooks, cron,
+  and the transactional sends a user action triggers — `notification_sends` has no insert policy
+  for a family, so a booking confirmation cannot be written under the caller's RLS),
+  `database.types.ts` (generated).
 - `src/lib/server/domain/` — `result.ts` (Result/AppError + Postgres → code mapping +
   the only copy for refusals), `time.ts` (academy-tz rendering mirroring SQL),
   `settings.ts` (academy timezone, fails soft), `identity/` (staff roles + console,
   account profile, players, age mirroring `player_is_adult()`), `schedule/`
   (`common.ts` shared types and zod primitives, `locations`, `availability`, `classes`,
   `sessions`, `camps`, `teams`; `fakes.ts` is the test double they share),
-  `booking/` (RPC
-  wrappers), `waivers.ts` (documents, versions, status, signing), `cron.ts` (secret check
+  `booking/` (`index.ts` RPC wrappers, `classes`, `credits`, `lessons`, `attendance`, `waitlist` —
+  all asking the database's questions only to EXPLAIN them), `waivers.ts` (documents, versions,
+  status, signing), `cron.ts` (secret check
   + job dispatch), `payments/` (webhook idempotency
   port + Supabase store), `notify/` (transactional vs marketing send, insert-first
   idempotency).
@@ -176,7 +187,9 @@ render; the schema is tested behaviorally in PGlite.
   `ui_kits` references (`PlayerSwitcher`, `Card`), tested as SSR contracts.
 - `src/lib/ds/` — ported design system (`index.ts` barrel; `core/ forms/ feedback/
   admin/ schedule/ site/`); `FieldShell.svelte` is the shared form anatomy.
-  `/styleguide` renders everything. Admin lists sort and page through LINKS
+  `/styleguide` renders everything; `email/` holds ported email templates (the kit's inline hex is
+  the recorded tokens exception) and is deliberately not in the barrel. Admin lists sort and page
+  through LINKS
   (`sortHref`/`pageHref`) and `ResourceDayView` takes `sessionHref`: the console works
   with JavaScript off, and only a `Dialog` confirm needs it.
 - `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `schedule` (public,
@@ -185,7 +198,8 @@ render; the schema is tested behaviorally in PGlite.
   + `[versionId]` signing, account form: the superforms pattern), `admin` (guarded
   shell, `schedule/` day grid + `new` + `[id]`, `availability/` + `[courtId]`,
   `classes/` + `[id]`, `camps/` + `[id]`, `teams/` + `[id]`, `waivers/`, `staff/`),
-  `internal/cron`, `api/stripe/webhook`.
+  `internal/cron`, `api/stripe/webhook`. Phase 4 adds `(portal)/portal/{book,bookings,credits}`,
+  `coach/sessions` + `[id]` (the register), and `admin/credits` (grants).
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
 - `config/` — one profile per environment (`dev.yaml`, `prod.yaml`); `docs/OPERATIONS.md` is
   the operator runbook (accounts, secrets, one-time links).
