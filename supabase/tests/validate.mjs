@@ -1108,5 +1108,30 @@ else {
 	failures++;
 }
 
+// waitlist position: a rank, and nothing else, about a player the caller guards
+await asUser(PARENT2);
+const p4b2 = (await q(`select create_player('Cara W.', '2014-07-07', 'parent') as id`)).rows[0].id;
+await q(`select sign_waiver($1,$2,'Sam T.')`, [v2, p4b2]);
+await asUser(ADMIN);
+await q(`select issue_credits($1,'class_weekday',1,'grant:p4b2', null, null, null, 'phase 4')`, [
+	p4b2
+]);
+await asUser(PARENT2);
+await q(`select book_class($1,$2)`, [p4b2, p4sid]);
+const p4pos = (await q(`select waitlist_position($1,$2) as n`, [p4sid, p4b2])).rows[0].n;
+const p4none = (await q(`select waitlist_position($1,$2) as n`, [p4sid, p4b])).rows[0].n;
+if (p4pos === 1 && p4none === null)
+	ok('waitlist_position ranks a waiting player and is null for a booked one');
+else {
+	console.log('  ✗ position', p4pos, p4none);
+	failures++;
+}
+await asUser(PARENT);
+await expectErr(
+	'a guardian cannot ask after a player they do not guard',
+	() => q(`select waitlist_position($1,$2)`, [p4sid, p4b2]),
+	'not_authorized'
+);
+
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL CHECKS PASSED');
 process.exit(failures ? 1 : 0);

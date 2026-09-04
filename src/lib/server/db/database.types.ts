@@ -1925,6 +1925,13 @@ export type Database = {
 				}
 				Returns: undefined
 			}
+			waitlist_position: {
+				Args: {
+					p_session: string
+					p_player: string
+				}
+				Returns: number
+			}
 			waiver_content_hash: {
 				Args: {
 					p_content: string

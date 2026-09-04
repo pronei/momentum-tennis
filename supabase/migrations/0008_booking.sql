@@ -128,6 +128,25 @@ begin
   return jsonb_build_object('status', v_new, 'forgiven', v_forgiven, 'promoted', v_promoted);
 end $$;
 
+-- A family may see where they stand in the queue. Computing that means counting other families'
+-- waitlist rows, which read_class_bookings rightly forbids — so it is a definer function that
+-- returns one integer about a player the caller actually guards, and nothing else: no names, no
+-- ids, no count of who is ahead by whom.
+create function public.waitlist_position(p_session uuid, p_player uuid)
+returns int language plpgsql stable security definer set search_path = public as $$
+declare v_at timestamptz; v_n int;
+begin
+  if not (is_staff() or guards(p_player)) then raise exception 'not_authorized'; end if;
+  select created_at into v_at from class_bookings
+   where class_session_id = p_session and player_id = p_player and status = 'waitlisted';
+  if v_at is null then return null; end if;                 -- not waiting: there is no position
+  select count(*)::int + 1 into v_n from class_bookings
+   where class_session_id = p_session and status = 'waitlisted' and created_at < v_at;
+  return v_n;
+end $$;
+revoke execute on function public.waitlist_position(uuid, uuid) from public, anon;
+grant  execute on function public.waitlist_position(uuid, uuid) to authenticated;
+
 -- Occupancy WITHOUT identities. Deliberately NOT security_invoker, unlike every view in 0001: a
 -- guardian may read only their own class_bookings rows, so an invoker-rights view would report
 -- every session as empty. This one runs with the owner's rights and exposes four integers per

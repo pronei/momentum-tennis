@@ -64,7 +64,12 @@ describe('listBookable — what this player could actually take', () => {
 			alreadyBooked: false,
 			weekBlocked: false
 		});
-		expect(result.value[1]).toMatchObject({ id: S2, seatsLeft: 0, waitlisted: 2, scope: 'weekend' });
+		expect(result.value[1]).toMatchObject({
+			id: S2,
+			seatsLeft: 0,
+			waitlisted: 2,
+			scope: 'weekend'
+		});
 	});
 
 	it('applies the level rule the booking trigger applies, and no other', async () => {
@@ -109,7 +114,14 @@ describe('listBookable — what this player could actually take', () => {
 		const result = await listBookable(
 			db({
 				class_bookings: {
-					data: [{ class_session_id: 'other', status: 'booked', scope: 'weekday', week_start: '2026-09-14' }]
+					data: [
+						{
+							class_session_id: 'other',
+							status: 'booked',
+							scope: 'weekday',
+							week_start: '2026-09-14'
+						}
+					]
 				}
 			}),
 			{ playerId: PLAYER, levelKey: null, from: '2026-09-14', days: 14, tz: LA }
@@ -170,7 +182,12 @@ describe('listBookings and cancelClass', () => {
 							id: 'b1',
 							status: 'booked',
 							class_session_id: S1,
-							sessions: { id: S1, starts_at: '2099-01-01T00:00:00Z', ends_at: '2099-01-01T01:00:00Z', status: 'scheduled' },
+							sessions: {
+								id: S1,
+								starts_at: '2099-01-01T00:00:00Z',
+								ends_at: '2099-01-01T01:00:00Z',
+								status: 'scheduled'
+							},
 							class_sessions: null
 						}
 					]
@@ -186,7 +203,10 @@ describe('listBookings and cancelClass', () => {
 
 	it('cancelling reports the status, the forgiveness and who it promoted', async () => {
 		const calls: unknown[] = [];
-		const db = fakeDb({ calls, rpc: { data: { status: 'cancelled', forgiven: false, promoted: 1 } } });
+		const db = fakeDb({
+			calls,
+			rpc: { data: { status: 'cancelled', forgiven: false, promoted: 1 } }
+		});
 		const result = await cancelClass(db, 'b1');
 		expect(result).toEqual({
 			ok: true,
