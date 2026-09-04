@@ -36,7 +36,8 @@ test.describe('admin schedules a real week', () => {
 		await page.getByLabel('Opens').fill('09:00');
 		await page.getByLabel('Closes').fill('13:00');
 		await page.getByRole('button', { name: 'Declare window' }).click();
-		await expect(page.getByText('09:00–13:00')).toBeVisible();
+		// DataTable renders the table and the ≤760px cards, so each value appears twice
+		await expect(page.getByText('09:00–13:00').first()).toBeVisible();
 
 		// A term and a Saturday class on that court.
 		const termName = `E2E term ${stamp}`;
@@ -56,12 +57,12 @@ test.describe('admin schedules a real week', () => {
 		await page.getByLabel('Starts').last().fill('09:00');
 		await page.getByLabel('Length').selectOption('120');
 		await page.getByLabel('Seats').fill('6');
-		await page.getByLabel('Default court').selectOption({ label: new RegExp(courtName) });
+		await page.getByLabel('Default court').selectOption({ label: `${courtName} · Murdock Park` });
 		await page.getByRole('button', { name: 'Add class' }).click();
 		await expect(page.getByRole('cell', { name: className })).toBeVisible();
 
 		// Generate the term's occurrences. Dates whose court is not reserved are reported, not fatal.
-		await page.getByRole('link', { name: className }).click();
+		await page.getByRole('link', { name: className }).first().click();
 		await page.getByRole('button', { name: 'Generate' }).click();
 		await expect(page.getByText(/CREATED \d+/)).toBeVisible();
 
