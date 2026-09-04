@@ -26,6 +26,7 @@ const CODES = [
 	'class_full',
 	'slot_taken',
 	'slot_not_bookable',
+	'not_a_coach',
 	'court_unavailable',
 	'availability_in_use',
 	'camp_out_of_season',
@@ -34,6 +35,8 @@ const CODES = [
 	'not_cancellable',
 	'unknown_session',
 	'unknown_booking',
+	'unknown_kind',
+	'quantity_positive',
 	'conflict',
 	'unexpected'
 ] as const;
@@ -103,6 +106,7 @@ const COPY: Record<ErrorCode, string> = {
 	class_full: 'This class is full.',
 	slot_taken: 'That court or coach is already booked at this time.',
 	slot_not_bookable: 'Private lessons are not offered in that window.',
+	not_a_coach: 'That person does not coach private lessons.',
 	court_unavailable: 'The court is not reserved for that time.',
 	availability_in_use: 'Sessions are scheduled inside that window. Cancel or move them first.',
 	camp_out_of_season: 'Camps run only inside the configured summer window.',
@@ -111,6 +115,8 @@ const COPY: Record<ErrorCode, string> = {
 	not_cancellable: 'This booking can no longer be cancelled.',
 	unknown_session: 'That session does not exist.',
 	unknown_booking: 'That booking does not exist.',
+	unknown_kind: 'That booking type does not exist.',
+	quantity_positive: 'Grant at least one credit.',
 	conflict: 'Something changed while you were working. Reload and try again.',
 	unexpected: 'Something went wrong on our side. Nothing was charged or booked.'
 };

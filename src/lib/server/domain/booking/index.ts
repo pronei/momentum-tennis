@@ -2,8 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/server/db/database.types';
 import { err, fromPostgres, ok, type Result } from '$lib/server/domain/result';
 
-/** The only surface this module needs — injected, so it is testable without a database. */
-export type BookingDb = Pick<SupabaseClient<Database>, 'rpc'>;
+/** The only surface these modules need — injected, so they are testable without a database. */
+export type BookingDb = Pick<SupabaseClient<Database>, 'from' | 'rpc'>;
 
 export type BookingStatus = Database['public']['Enums']['booking_status'];
 
