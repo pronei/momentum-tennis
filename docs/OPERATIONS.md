@@ -178,7 +178,7 @@ pnpm cf whoami                # must show the recorded account, and only it
 |---|---|---|
 | `workers.dev` subdomain | the dev worker's URL `https://momentum-tennis-dev.<subdomain>.workers.dev` — register it **before** the first deploy | Workers & Pages → Overview → Your subdomain |
 | Workers plan | Free is enough for dev; production needs **Workers Paid** (the Free plan's daily request cap is a hard stop) | Workers & Pages → Plans |
-| Zero Trust organisation | Access protection on the dev host (free tier) | Zero Trust → Access → Applications |
+| Zero Trust organisation | Access protection — **blocked until dev has a custom domain**: Access cannot attach to a `*.workers.dev` hostname (§3) | Zero Trust → Access → Applications |
 | `momentum-tennis.com` zone | the production custom domain `app.momentum-tennis.com` — the zone must be on Cloudflare (nameservers at GoDaddy → Cloudflare; the root keeps pointing at the legacy site by DNS record, decision J) | Add a site |
 
 **First deploy, by hand** (creates the worker):
@@ -194,19 +194,29 @@ Take that URL and:
    once more so the app knows its own origin (auth redirects and email links depend on it);
 2. add `<url>/auth/callback` to Supabase's redirect URLs (step 2).
 
-**Connect the repository** so `deploy/dev` deploys itself — dashboard: Workers & Pages →
-`momentum-tennis-dev` → Settings → Builds → connect `pronei/momentum-tennis`:
+**Deploys are automatic** from GitHub Actions, not Cloudflare Workers Builds: pushing `deploy/dev`
+runs `.github/workflows/deploy-dev.yml`, which builds with the dev profile and runs
+`wrangler deploy --env dev`. The Workers Builds git connection was removed on 2026-09-04 — it had
+never produced a deployment (its build token was rolled) and two pipelines deploying one worker is
+worse than one. See §1 for the single repository secret it needs.
 
-| setting | value |
-|---|---|
-| Production branch | `deploy/dev` |
-| Build command | `pnpm build:dev` |
-| Deploy command | `npx wrangler deploy --env dev` |
+**Access protection — not applied, and not possible on this URL.** An Access application attaches to
+a hostname in a zone on your account, and `momentum-tennis-dev.proneidev.workers.dev` lives in
+Cloudflare's own `workers.dev` zone. Protecting dev therefore means giving it a hostname you own
+first:
 
-(Cloudflare's build environment authenticates itself; the wrapper is only for your machine.)
+1. add `momentum-tennis.com` to Cloudflare (nameservers at GoDaddy → Cloudflare);
+2. attach `dev.momentum-tennis.com` to the `momentum-tennis-dev` worker as a Custom Domain, and set
+   `workers_dev = false` in `wrangler.toml` so the old URL stops answering;
+3. update `config/dev.yaml`'s `deploy.site_url` and Supabase's redirect URLs, and redeploy;
+4. Zero Trust → Access → Applications → Add → Self-hosted → that hostname → policy Allow, include
+   your email. Free tier covers 50 users.
 
-**Protect it** — Zero Trust → Access → Applications → Self-hosted → the workers.dev hostname,
-allow your email(s). Half-built booking flows should not be on the public internet.
+Until then dev is public. What that does and does not mean, verified 2026-09-04: every guarded route
+answers `303 → /login`, and as an anonymous caller `class_bookings`, `credit_ledger` and `players`
+all return `200 []` because RLS yields no rows. The public schedule and the per-session seat *counts*
+are readable by design. There is no known hole; what is missing is defence in depth and staying out
+of search results. Worth closing before real families are invited to test.
 
 **Secrets** (each only when its phase lands — the app runs without them; the endpoints that
 need one answer 503 until it is set):
@@ -245,7 +255,7 @@ Code gates never wait on these; the "deliverable on the dev deployment" half of 
 
 | before | needed | where |
 |---|---|---|
-| phase 3 | first admin on dev (SQL above); auth emails decided (confirm-email off in dev, or Resend SMTP); Cloudflare token or login for the recorded account → first deploy → `deploy.site_url` → redeploy; `<site>/auth/callback` in Supabase redirect URLs; Access protection on the dev host | §2, §3 |
+| phase 3 | first admin on dev (SQL above); auth emails decided (confirm-email off in dev, or Resend SMTP); Cloudflare token or login for the recorded account → first deploy → `deploy.site_url` → redeploy; `<site>/auth/callback` in Supabase redirect URLs | §2, §3 |
 | phase 4 | **a published waiver version** — since migration 0008 the consent gate fails closed, so a required document with no published version refuses every booking. Publish v1 of the liability waiver at `/admin/waivers` with text from the academy's lawyer. Also: credits are admin-granted at `/admin/credits`, and a coach role on whoever takes private lessons (`book_private_lesson` requires role `coach` exactly) | §2, `/admin/waivers` |
 | phase 5 | Stripe **test** secret key and a webhook endpoint for `https://<dev site>/api/stripe/webhook` (its signing secret) as Cloudflare secrets; payment methods enabled in Stripe (ACH Direct Debit activation, Apple Pay domain registration, Cash App Pay, Link); refund wording and tax stance from Artur/accountant (decision E); production Supabase project on **Pro, standard Postgres** before anything goes live (decision J) | §3, Stripe dashboard |
 | phase 6 | nothing | — |

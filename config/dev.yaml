@@ -24,7 +24,11 @@ cloudflare:
   worker: momentum-tennis-dev
   cron_worker: momentum-tennis-cron-dev
   deploy_branch: deploy/dev
-  access_protected: true # keep half-built booking flows off the public internet
+  access_protected:
+    false # NOT protected, and not currently possible: an Access application
+    # attaches to a hostname in a zone on this account, and *.workers.dev is Cloudflare's zone,
+    # not ours. Protecting dev means giving it a custom domain first — docs/OPERATIONS.md §3.
+    # Every guarded route still redirects to /login and RLS returns no rows to anon.
 
 deploy:
   # What .github/workflows/deploy-dev.yml runs on a push to deploy/dev (and what a manual
