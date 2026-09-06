@@ -23,6 +23,7 @@ localized.
 | 5 | Payments | Stripe Checkout (ACH-first + cards, Apple Pay, Google Pay, Cash App Pay, Link), idempotent webhooks → ledger issuance, receipts, purchases dashboard + ledger drill-in, refunds/reversals | 4 | test-mode purchase → credits → booking → refund, fully audited; Payment Links interim retired |
 | 6 | Ratings & coach tools | rating dimensions admin, coach entry UI, CourtMeter/RatingMeter surfaces, history | 1 | court placement drives the portal meter with accessible text values |
 | 7 | Notifications & lifecycle | workers/cron + shared-secret endpoint, class reminders, low-credit nudges, credit expiry rows, re-consent campaigns, newsletter + unsubscribe + preference center | 4 (5 for nudges) | overlapping cron runs cannot double-send; marketing/transactional fully separated |
+| 8 | Public site (added 2026-09-05; **runs right after 5**) | site group ports (SiteNav, ProgramCard, PhotoFrame, StrobeArc, Wordmark), home from the homepage template, `/coaches`, sponsors strip, gallery with PhotoSwipe (docs/decisions/2026-09-05-lightbox-library.md); brief: docs/superpowers/plans/2026-09-05-phase-8-public-site.brief.md | none (5 for the store entry) | home, coaches and photos render anonymously in the design system; no photo of a minor without a signed media release |
 
 Deferred (from design-system PRODUCT.md, schema-compatible, unscheduled):
 grip-sensor stats ingestion, leaderboard, hero film admin.
@@ -104,6 +105,18 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-09-05 — Phase 5 planned (`docs/superpowers/plans/2026-09-05-phase-5-payments.md`);
+  answered with the user: catalogue = two class packs seeded by 0009 (Weekday $500, Weekend
+  $700, 10 credits, `credit_validity_days` 84 + decision L's 7, one forgiven skip, no member
+  price yet); Stripe scaffolded behind a gateway port with a simulated adapter selected by
+  `PAYMENTS_GATEWAY=fake` (dev only; `pnpm env:check` refuses it for prod) — keys, ACH and the
+  bank-pay discount follow once Stripe is wired; refunds in phase 5 reverse only a pack nobody
+  has drawn on, credits following Stripe's `charge.refunded`; camp/team-fee purchase deferred;
+  payment methods dashboard-managed until ACH. Refund wording and Stripe Tax stay with
+  Artur/accountant (E).
+- 2026-09-05 — Public site becomes phase 8, briefed from the current momentum-tennis.com
+  (coaches, sponsors, gallery); lightbox spike proposes PhotoSwipe 5 over GLightbox
+  (`docs/decisions/2026-09-05-lightbox-library.md`) — nothing installed until that phase.
 - 2026-09-04 — Phase 4 built (branch `phase-4/booking`): migration 0008. Reading 0001 for this phase
   found the consent gate opening when nothing was published (`v_player_waiver_status` inner-joins the
   current-version view, so a required document with no version produced no unsatisfied rows — and dev

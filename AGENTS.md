@@ -11,9 +11,11 @@ availability, booking & credits & attendance); `deploy/dev` tracks `main` and de
 (0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking). The restricted minor login
 is deliberately NOT built — see open question O in `docs/PLAN.md`. **Booking on any environment
 requires a published waiver version**: since 0008 the consent gate fails closed. Phase 5 (payments)
-is next: `docs/HANDOFF-opus5.md` scopes phases 5–7 and the per-phase ritual; its brief is
-`docs/superpowers/plans/2026-09-03-phase-5-payments.brief.md` and must be expanded into a plan
-before any code. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
+is planned and waits for the go: `docs/superpowers/plans/2026-09-05-phase-5-payments.md` (questions
+answered 2026-09-05 — two seeded class packs, a simulated gateway selected by `PAYMENTS_GATEWAY`
+until Stripe keys exist, refunds of untouched packs only). Phase 8 (public site: coaches, sponsors,
+gallery) is briefed in `2026-09-05-phase-8-public-site.brief.md` and runs right after 5.
+`docs/HANDOFF-opus5.md` scopes phases 5–7 and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
 
 ## Prime directives
