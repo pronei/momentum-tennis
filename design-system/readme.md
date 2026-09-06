@@ -50,6 +50,7 @@ Voice: **plain, earned, disciplined.** Progress comes from honest self-observati
 
 - `styles.css` → imports `tokens/` (fonts, colors, typography, spacing, base)
 - `assets/photos/` — 14 curated archive photos, slot-named (`*-l` landscape, `*-p` portrait); `assets/logo*.svg` (master mark + variants); `assets/wordmark*.png`
+- `assets/sponsors/` — Babolat, UTR, Dunlop, USTA as the current momentum-tennis.com homepage serves them (rasters, two thumbnail-sized): **placeholders** until each sponsor's brand kit supplies the vector. `assets/coaches/` — the five portraits from momentum-tennis.com/our-staff, named by coach; publish none of a minor without a signed media release. Both pulled 2026-09-05; see docs/superpowers/plans/2026-09-05-phase-8-public-site.brief.md.
 - `components/brand/` — `Wordmark`, `StrobeArc`, `FrameTicks`
 - `components/core/` — `Button`, `Eyebrow`, `TextField` (ball-caret input)
 - `components/media/` — `PhotoFrame`
