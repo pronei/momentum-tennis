@@ -21,6 +21,7 @@ name = "momentum-tennis-dev"
 # file the build read, so anything the app demands at request time and is not PUBLIC_* lives here.
 [env.dev.vars]
 EMAIL_FROM = "pranayrs@hotmail.com"
+PAYMENTS_GATEWAY = "fake" # simulated checkout; never set on live (default: stripe)
 
 [env.live]
 name = "momentum-tennis"

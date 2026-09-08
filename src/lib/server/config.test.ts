@@ -56,6 +56,17 @@ describe('parseEnv — the core is strict, the integrations are lazy', () => {
 		);
 	});
 
+	it('selects the Stripe gateway unless the environment says otherwise', () => {
+		expect(parseEnv(core).paymentsGateway).toBe('stripe');
+		expect(parseEnv({ ...core, PAYMENTS_GATEWAY: 'fake' }).paymentsGateway).toBe('fake');
+	});
+
+	it('refuses a gateway it does not know — a typo must not silently mean Stripe', () => {
+		expect(() => parseEnv({ ...core, PAYMENTS_GATEWAY: 'sandbox' })).toThrowError(
+			/PAYMENTS_GATEWAY/
+		);
+	});
+
 	it('rejects a site URL that is not an absolute http(s) origin', () => {
 		expect(() => parseEnv({ ...core, PUBLIC_SITE_URL: 'momentum-tennis.com' })).toThrowError(
 			/PUBLIC_SITE_URL/

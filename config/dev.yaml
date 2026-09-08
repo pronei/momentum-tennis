@@ -42,6 +42,9 @@ deploy:
 stripe:
   mode: test
 
+payments:
+  gateway: fake # simulated checkout at /portal/checkout/[order]; settlement runs through the service role — docs/OPERATIONS.md §3
+
 # Names only. `wrangler secret put <NAME> --env dev` when deployed. Each is demanded only by
 # the code that uses it (requireSecret), so the app runs before every phase's key exists.
 secrets:

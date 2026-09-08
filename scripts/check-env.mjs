@@ -49,6 +49,22 @@ for (const name of names) {
 		}
 	}
 
+	// The simulated payment gateway is a dev convenience with a blast radius: it issues credits
+	// without money. The profile must declare the gateway the env file selects, and production
+	// may never select the fake one — not even by a copied env file.
+	const gateway = env.PAYMENTS_GATEWAY || 'stripe';
+	const declared = profile.payments?.gateway ?? 'stripe';
+	if (gateway !== declared) {
+		console.error(
+			`  ✗ ${profile.env_file} selects PAYMENTS_GATEWAY=${gateway} but the profile declares ${declared}`
+		);
+		errors++;
+	}
+	if (name === 'prod' && gateway === 'fake') {
+		console.error('  ✗ production cannot run the simulated payment gateway');
+		errors++;
+	}
+
 	// The env file must point at the project this profile names.
 	const ref = profile.supabase?.project_ref;
 	const url = env.PUBLIC_SUPABASE_URL;
@@ -82,7 +98,7 @@ for (const name of names) {
 		`  · build: ${profile.deploy?.build ?? '?'} · deploy: ${profile.deploy?.command ?? '?'}`
 	);
 	console.log(
-		`  · stripe ${profile.stripe?.mode} · ${(profile.secrets ?? []).length} secrets by name`
+		`  · stripe ${profile.stripe?.mode} · gateway ${gateway} · ${(profile.secrets ?? []).length} secrets by name`
 	);
 }
 

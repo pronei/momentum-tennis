@@ -32,6 +32,9 @@ deploy:
 stripe:
   mode: live
 
+payments:
+  gateway: stripe # the only value production may carry; pnpm env:check refuses fake
+
 secrets:
   - name: SUPABASE_SECRET_KEY
     needed_from: phase 5 (webhooks) and 7 (cron)

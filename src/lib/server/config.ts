@@ -17,6 +17,11 @@ const optionalSecret = z
 	.transform((v) => v || undefined)
 	.optional();
 
+/** 'fake' renders a simulated checkout and settles through the service role. Never in production:
+ *  scripts/check-env.mjs refuses it for the prod profile. */
+export const GATEWAYS = ['stripe', 'fake'] as const;
+export type GatewayKind = (typeof GATEWAYS)[number];
+
 export const SECRET_NAMES = [
 	'SUPABASE_SECRET_KEY',
 	'STRIPE_SECRET_KEY',
@@ -31,6 +36,7 @@ const schema = z.object({
 	PUBLIC_SUPABASE_PUBLISHABLE_KEY: nonEmpty,
 	PUBLIC_SITE_URL: origin,
 	EMAIL_FROM: nonEmpty,
+	PAYMENTS_GATEWAY: z.enum(GATEWAYS).default('stripe'),
 	SUPABASE_SECRET_KEY: optionalSecret,
 	STRIPE_SECRET_KEY: optionalSecret,
 	STRIPE_WEBHOOK_SECRET: optionalSecret,
@@ -46,6 +52,8 @@ export type Config = Readonly<{
 	supabasePublishableKey: string;
 	siteUrl: string;
 	emailFrom: string;
+	/** Which payment gateway this environment runs — see GATEWAYS. */
+	paymentsGateway: GatewayKind;
 	/** Only the secrets that are actually set. Read them through requireSecret(). */
 	secrets: Readonly<Partial<Record<SecretName, string>>>;
 }>;
@@ -64,6 +72,7 @@ export function parseEnv(source: Record<string, string | undefined>): Config {
 		supabasePublishableKey: v.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 		siteUrl: v.PUBLIC_SITE_URL,
 		emailFrom: v.EMAIL_FROM,
+		paymentsGateway: v.PAYMENTS_GATEWAY,
 		secrets
 	};
 }
