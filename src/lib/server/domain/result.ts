@@ -37,6 +37,13 @@ const CODES = [
 	'unknown_booking',
 	'unknown_kind',
 	'quantity_positive',
+	'unknown_product',
+	'product_inactive',
+	'unsupported_product',
+	'unknown_order',
+	'order_not_pending',
+	'order_not_paid',
+	'credits_already_used',
 	'conflict',
 	'unexpected'
 ] as const;
@@ -117,6 +124,14 @@ const COPY: Record<ErrorCode, string> = {
 	unknown_booking: 'That booking does not exist.',
 	unknown_kind: 'That booking type does not exist.',
 	quantity_positive: 'Grant at least one credit.',
+	unknown_product: 'That package does not exist.',
+	product_inactive: 'That package is no longer on sale.',
+	unsupported_product: 'That item cannot be bought online yet. Contact the academy.',
+	unknown_order: 'That order does not exist.',
+	order_not_pending: 'That order has already been settled or cancelled.',
+	order_not_paid: 'Only a paid order can be refunded.',
+	credits_already_used:
+		'Credits from this order have been used or have expired, so it cannot be refunded here. Adjust the ledger and refund in Stripe by hand.',
 	conflict: 'Something changed while you were working. Reload and try again.',
 	unexpected: 'Something went wrong on our side. Nothing was charged or booked.'
 };

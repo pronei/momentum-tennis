@@ -110,3 +110,21 @@ describe('booking refusals map to codes, not to unexpected', () => {
 		expect(fromPostgres({ message: 'quantity_positive' }).code).toBe('quantity_positive');
 	});
 });
+
+describe('payment refusals map to codes, not to unexpected', () => {
+	it('maps the tokens the order RPCs raise', () => {
+		for (const code of [
+			'unknown_product',
+			'product_inactive',
+			'unsupported_product',
+			'unknown_order',
+			'order_not_pending',
+			'order_not_paid',
+			'credits_already_used'
+		] as const) {
+			expect(fromPostgres({ message: code }).code).toBe(code);
+			expect(describeError(code)).not.toMatch(/!/);
+		}
+		expect(describeError('credits_already_used')).toMatch(/by hand/);
+	});
+});
