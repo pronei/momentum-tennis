@@ -6,14 +6,14 @@
 
 | task | what | commit |
 |---|---|---|
-| 1 | `PAYMENTS_GATEWAY` in config (+ tests), `check-env` refuses `fake` on prod and any profile/env mismatch (both proven), profiles, `.env.development`, `.env.example`, `wrangler.toml` dev var | `0db1d2a` |
-| 2 | `0009_payments.sql` (catalogue seed, `create_order`, `settle_order`, `cancel_order`, `refund_order`, grants), harness §15 (139 checks total), types regenerated | `acc9457` |
-| 3 | seven payment error codes and copy | `4b38d94` |
-| 4 | `webhook.ts`: a handler may answer `'skipped'` | `7142ec1` |
-| 5 | `payments/gateway.ts` (port, `stripeGateway`, `fakeGateway`) + `gateway.runtime.ts` (`selectGateway`) | `4b8746e` |
-| 6 | `payments/products.ts` (reads, `productSchema`, `saveProduct`, `formatMoney`, `toCents`, `packFacts`) | `0f9e2a6` |
+| 1 | `PAYMENTS_GATEWAY` in config (+ tests), `check-env` refuses `fake` on prod and any profile/env mismatch (both proven), profiles, `.env.development`, `.env.example`, `wrangler.toml` dev var | `9b2052b` |
+| 2 | `0009_payments.sql` (catalogue seed, `create_order`, `settle_order`, `cancel_order`, `refund_order`, grants), harness §15 (139 checks total), types regenerated | `9da35c2` |
+| 3 | seven payment error codes and copy | `5f4994c` |
+| 4 | `webhook.ts`: a handler may answer `'skipped'` | `ca93f7a` |
+| 5 | `payments/gateway.ts` (port, `stripeGateway`, `fakeGateway`) + `gateway.runtime.ts` (`selectGateway`) | `315a199` |
+| 6 | `payments/products.ts` (reads, `productSchema`, `saveProduct`, `formatMoney`, `toCents`, `packFacts`) | `2179b6d` |
 
-Gates at `0f9e2a6`: `pnpm env:check` · `pnpm check` 0/0 · `pnpm lint` · `pnpm test` 337 · `pnpm db:test` 139 · `pnpm db:types` no diff · `pnpm build:dev`.
+Gates at `2179b6d`: `pnpm env:check` · `pnpm check` 0/0 · `pnpm lint` · `pnpm test` 337 · `pnpm db:test` 139 · `pnpm db:types` no diff · `pnpm build:dev`.
 
 ## Next — Task 7 onwards, in the plan's order
 
