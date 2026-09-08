@@ -46,6 +46,15 @@ describe('handleStripeEvent — idempotent on event id; webhooks duplicate and a
 		expect(runs).toBe(1);
 	});
 
+	it('a handler may answer skipped — a Payment Link sale carries no order and must not retry', async () => {
+		const { store, seen } = memoryStore();
+		const out = await handleStripeEvent(store, evt('evt_5', 'checkout.session.completed'), {
+			'checkout.session.completed': async () => 'skipped'
+		});
+		expect(out).toBe('skipped');
+		expect(seen.get('evt_5')?.status).toBe('skipped');
+	});
+
 	it('types without a handler are recorded and skipped', async () => {
 		const { store, seen } = memoryStore();
 		expect(await handleStripeEvent(store, evt('evt_3', 'charge.updated'), {})).toBe('skipped');

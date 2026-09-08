@@ -3,7 +3,9 @@
 // The store is a port (EventStore) so this logic is tested without a database.
 
 export type StripeEventLike = { id: string; type: string; data: { object: unknown } };
-export type StripeHandler = (event: StripeEventLike) => Promise<void>;
+/** A handler answers 'skipped' for an event that is not ours to act on (a Payment Link sale with no
+ *  order id): recorded as skipped, never retried. Throwing means "retry", so it is reserved for faults. */
+export type StripeHandler = (event: StripeEventLike) => Promise<void | 'skipped'>;
 export type StripeHandlers = Record<string, StripeHandler>;
 export type EventOutcome = 'processed' | 'duplicate' | 'skipped';
 
@@ -24,12 +26,17 @@ export async function handleStripeEvent(
 		await store.settle(event.id, 'skipped');
 		return 'skipped';
 	}
+	let outcome: void | 'skipped';
 	try {
-		await handler(event);
+		outcome = await handler(event);
 	} catch (e) {
 		// Recorded as error and rethrown: Stripe retries, and the claim is not consumed silently.
 		await store.settle(event.id, 'error', e instanceof Error ? e.message : String(e));
 		throw e;
+	}
+	if (outcome === 'skipped') {
+		await store.settle(event.id, 'skipped');
+		return 'skipped';
 	}
 	await store.settle(event.id, 'processed');
 	return 'processed';
