@@ -1133,5 +1133,313 @@ await expectErr(
 	'not_authorized'
 );
 
+console.log('15. payments — catalogue, orders, settlement, refunds (0009)');
+
+// (a) the catalogue Artur specified is present, once, with the numbers the store will show
+const WEEKDAY_PACK = '00000000-0000-4000-8000-000000000501';
+const WEEKEND_PACK = '00000000-0000-4000-8000-000000000502';
+const p5cat = (
+	await q(
+		`select name, price_public_cents, price_member_cents, credit_kind, credit_quantity,
+		        credit_validity_days, forgiven_skips, active
+		   from products where id in ($1, $2) order by price_public_cents`,
+		[WEEKDAY_PACK, WEEKEND_PACK]
+	)
+).rows;
+if (
+	p5cat.length === 2 &&
+	p5cat[0].name === 'Weekday classes' &&
+	p5cat[0].price_public_cents === 50000 &&
+	p5cat[0].credit_kind === 'class_weekday' &&
+	p5cat[1].name === 'Weekend classes' &&
+	p5cat[1].price_public_cents === 70000 &&
+	p5cat[1].credit_kind === 'class_weekend' &&
+	p5cat.every(
+		(p) =>
+			p.credit_quantity === 10 &&
+			p.credit_validity_days === 84 &&
+			p.forgiven_skips === 1 &&
+			p.price_member_cents === null &&
+			p.active
+	)
+)
+	ok('the two class packs are seeded with their prices, credits, validity and forgiveness');
+else {
+	console.log('  ✗ catalogue', p5cat);
+	failures++;
+}
+
+// (b) an order is priced by the database from the catalogue, for a player the caller guards
+await asUser(PARENT);
+const p5player = (await q(`select create_player('Eli W.', '2015-03-03', 'parent') as id`)).rows[0]
+	.id;
+await q(`select sign_waiver($1,$2,'Priya R.')`, [v2, p5player]);
+const p5order = (await q(`select create_order($1,$2) as id`, [WEEKDAY_PACK, p5player])).rows[0].id;
+const p5row = (
+	await q(
+		`select o.status, o.amount_total_cents, o.currency, i.unit_amount_cents, i.quantity, i.player_id
+		   from orders o join order_items i on i.order_id = o.id where o.id = $1`,
+		[p5order]
+	)
+).rows[0];
+if (
+	p5row.status === 'pending' &&
+	p5row.amount_total_cents === 50000 &&
+	p5row.unit_amount_cents === 50000 &&
+	p5row.quantity === 1 &&
+	p5row.player_id === p5player &&
+	p5row.currency === 'usd'
+)
+	ok(
+		'create_order: a pending order at the catalogue price, one item, quantity one, the named player'
+	);
+else {
+	console.log('  ✗ order', p5row);
+	failures++;
+}
+await asUser(PARENT2);
+await expectErr(
+	'a guardian cannot buy for a player they do not guard',
+	() => q(`select create_order($1,$2)`, [WEEKDAY_PACK, p5player]),
+	'not_authorized'
+);
+await db.exec('set role authenticated');
+const p5hidden = (await q(`select count(*)::int as n from orders where id = $1`, [p5order])).rows[0]
+	.n;
+await db.exec('reset role');
+if (p5hidden === 0) ok('RLS: another family cannot see the order');
+else {
+	console.log('  ✗ order visible across families', p5hidden);
+	failures++;
+}
+await asUser(null);
+await expectErr(
+	'anonymous cannot order',
+	() => q(`select create_order($1,$2)`, [WEEKDAY_PACK, p5player]),
+	'not_authenticated'
+);
+await asUser(ADMIN);
+await q(`update products set active = false where id = $1`, [WEEKEND_PACK]);
+const p5camp = (
+	await q(
+		`insert into products (kind, name, price_public_cents) values ('camp', 'P5 camp week', 100) returning id`
+	)
+).rows[0].id;
+await asUser(PARENT);
+await expectErr(
+	'an inactive product cannot be ordered',
+	() => q(`select create_order($1,$2)`, [WEEKEND_PACK, p5player]),
+	'product_inactive'
+);
+await expectErr(
+	'a camp is not sold online in this phase',
+	() => q(`select create_order($1,$2)`, [p5camp, p5player]),
+	'unsupported_product'
+);
+await asUser(ADMIN);
+await q(`update products set active = true where id = $1`, [WEEKEND_PACK]);
+
+// (c) settlement: money confirmed → credits, exactly once
+await asUser(PARENT);
+await expectErr(
+	'a family cannot settle its own order',
+	() => q(`select settle_order($1)`, [p5order]),
+	'admin_only'
+);
+await asUser(null); // the webhook: service role, no user
+const p5settle = (await q(`select settle_order($1,'pi_test_1','cs_test_1') as r`, [p5order]))
+	.rows[0].r;
+const p5lot = (
+	await q(
+		`select delta, forgiven_skips, stripe_payment_intent_id, idempotency_key,
+		        round(extract(epoch from (expires_at - now())) / 86400)::int as days
+		   from credit_ledger
+		  where order_item_id = (select id from order_items where order_id = $1)`,
+		[p5order]
+	)
+).rows;
+const p5paid = (
+	await q(
+		`select status, paid_at, stripe_payment_intent_id, stripe_checkout_session_id from orders where id = $1`,
+		[p5order]
+	)
+).rows[0];
+if (
+	p5settle.status === 'paid' &&
+	p5settle.issued === 1 &&
+	p5lot.length === 1 &&
+	p5lot[0].delta === 10 &&
+	p5lot[0].days === 91 &&
+	p5lot[0].forgiven_skips === 1 &&
+	p5lot[0].stripe_payment_intent_id === 'pi_test_1' &&
+	p5paid.status === 'paid' &&
+	p5paid.paid_at &&
+	p5paid.stripe_payment_intent_id === 'pi_test_1' &&
+	p5paid.stripe_checkout_session_id === 'cs_test_1'
+)
+	ok('settle_order: paid with its Stripe refs, ten credits issued once, expiring 84 + 7 days out');
+else {
+	console.log('  ✗ settle', p5settle, p5lot, p5paid);
+	failures++;
+}
+const p5again = (await q(`select settle_order($1,'pi_test_1') as r`, [p5order])).rows[0].r;
+const p5purchases = (
+	await q(
+		`select count(*)::int as n from credit_ledger
+		  where entry_type = 'purchase' and order_item_id in (select id from order_items where order_id = $1)`,
+		[p5order]
+	)
+).rows[0].n;
+if (p5again.status === 'paid' && p5again.issued === 0 && p5purchases === 1)
+	ok('a replayed settlement issues nothing: keyed on the order item');
+else {
+	console.log('  ✗ replay', p5again, p5purchases);
+	failures++;
+}
+const p5bal = (
+	await q(
+		`select balance from v_credit_balances where player_id = $1 and credit_kind = 'class_weekday'`,
+		[p5player]
+	)
+).rows[0]?.balance;
+if (p5bal === 10) ok('the family balance reads ten weekday credits');
+else {
+	console.log('  ✗ balance', p5bal);
+	failures++;
+}
+
+// (d) refunds follow the policy: only a pack nobody has drawn on
+await asUser(ADMIN);
+const p5court = (
+	await q(`insert into courts (location_id, name) values ($1,'MP-5') returning id`, [loc])
+).rows[0].id;
+await q(
+	`insert into court_availability (court_id, weekday, open_local, close_local, effective_from)
+	 values ($1, 2, '16:00', '20:00', $2)`,
+	[p5court, monday]
+);
+const p5class = (
+	await q(
+		`insert into classes (term_id, name, weekday, start_time_local, duration_minutes, capacity, default_court_id)
+		 values ($1,'P5 Tue',2,'16:00',90,3,$2) returning id`,
+		[term, p5court]
+	)
+).rows[0].id;
+await q(`select generate_class_sessions($1,$2,$3)`, [p5class, monday, D.next_sunday]);
+const p5sid = (
+	await q(
+		`select cs.session_id from class_sessions cs join sessions s on s.id = cs.session_id
+		  where cs.class_id = $1 and s.starts_at > now() order by s.starts_at limit 1`,
+		[p5class]
+	)
+).rows[0].session_id;
+await asUser(PARENT);
+const p5booking = (await q(`select book_class($1,$2) as id`, [p5player, p5sid])).rows[0].id;
+await asUser(null);
+await expectErr(
+	'a pack with a consumed credit is not refunded here',
+	() => q(`select refund_order($1)`, [p5order]),
+	'credits_already_used'
+);
+await asUser(PARENT);
+await q(`select cancel_booking('class', $1)`, [p5booking]); // ≥ notice → reversal; the pack is whole again
+await expectErr(
+	'a family cannot refund itself',
+	() => q(`select refund_order($1)`, [p5order]),
+	'admin_only'
+);
+await asUser(null);
+const p5refund = (await q(`select refund_order($1, 'test refund') as r`, [p5order])).rows[0].r;
+const p5after = (
+	await q(
+		`select coalesce(sum(delta),0)::int as n from credit_ledger where player_id = $1 and credit_kind = 'class_weekday'`,
+		[p5player]
+	)
+).rows[0].n;
+const p5refundRow = (
+	await q(
+		`select entry_type, delta, idempotency_key from credit_ledger where entry_type = 'refund' and player_id = $1`,
+		[p5player]
+	)
+).rows;
+const p5status = (await q(`select status from orders where id = $1`, [p5order])).rows[0].status;
+if (
+	p5refund.status === 'refunded' &&
+	p5refund.reversed === 1 &&
+	p5after === 0 &&
+	p5status === 'refunded' &&
+	p5refundRow.length === 1 &&
+	p5refundRow[0].delta === -10 &&
+	p5refundRow[0].idempotency_key.startsWith('refund:lot:')
+)
+	ok(
+		'refund_order: an untouched pack reverses in full as a refund row and the order reads refunded'
+	);
+else {
+	console.log('  ✗ refund', p5refund, p5after, p5status, p5refundRow);
+	failures++;
+}
+const p5refund2 = (await q(`select refund_order($1) as r`, [p5order])).rows[0].r;
+if (p5refund2.status === 'refunded' && p5refund2.reversed === 0)
+	ok('a replayed refund reverses nothing');
+else {
+	console.log('  ✗ refund replay', p5refund2);
+	failures++;
+}
+await expectErr(
+	'the ledger stays append-only for refund rows',
+	() =>
+		q(`update credit_ledger set delta = -1 where entry_type = 'refund' and player_id = $1`, [
+			p5player
+		]),
+	'append-only'
+);
+
+// (e) an abandoned checkout is cancelled by its buyer; settled orders are not
+await asUser(PARENT);
+const p5o2 = (await q(`select create_order($1,$2) as id`, [WEEKDAY_PACK, p5player])).rows[0].id;
+await asUser(PARENT2);
+await expectErr(
+	'another family cannot cancel it',
+	() => q(`select cancel_order($1)`, [p5o2]),
+	'not_authorized'
+);
+await asUser(PARENT);
+await q(`select cancel_order($1)`, [p5o2]);
+await q(`select cancel_order($1)`, [p5o2]);
+const p5o2s = (await q(`select status from orders where id = $1`, [p5o2])).rows[0].status;
+if (p5o2s === 'cancelled')
+	ok('cancel_order: the buyer abandons a pending order; a second cancel is a no-op');
+else {
+	console.log('  ✗ cancel', p5o2s);
+	failures++;
+}
+await asUser(null);
+await expectErr(
+	'a cancelled order cannot be settled',
+	() => q(`select settle_order($1)`, [p5o2]),
+	'order_not_pending'
+);
+await expectErr(
+	'a settled order cannot be cancelled',
+	() => q(`select cancel_order($1)`, [p5order]),
+	'order_not_pending'
+);
+await expectErr(
+	'only a paid order can be refunded',
+	() => q(`select refund_order($1)`, [p5o2]),
+	'order_not_paid'
+);
+
+// (f) every step left an audit row: insert, paid, refunded
+const p5audit = (
+	await q(`select count(*)::int as n from audit_log where entity_id = $1`, [p5order])
+).rows[0].n;
+if (p5audit >= 3) ok('orders are audited through their whole life');
+else {
+	console.log('  ✗ audit rows', p5audit);
+	failures++;
+}
+
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL CHECKS PASSED');
 process.exit(failures ? 1 : 0);

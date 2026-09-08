@@ -1770,6 +1770,12 @@ export type Database = {
 				}
 				Returns: Json
 			}
+			cancel_order: {
+				Args: {
+					p_order: string
+				}
+				Returns: undefined
+			}
 			cancel_session: {
 				Args: {
 					p_session: string
@@ -1785,6 +1791,13 @@ export type Database = {
 					p_for_lessons?: boolean
 				}
 				Returns: boolean
+			}
+			create_order: {
+				Args: {
+					p_product: string
+					p_player: string
+				}
+				Returns: string
 			}
 			create_player: {
 				Args: {
@@ -1879,6 +1892,13 @@ export type Database = {
 				}
 				Returns: undefined
 			}
+			refund_order: {
+				Args: {
+					p_order: string
+					p_reason?: string
+				}
+				Returns: Json
+			}
 			set_class_levels: {
 				Args: {
 					p_class: string
@@ -1899,6 +1919,14 @@ export type Database = {
 					p_level_keys: string[]
 				}
 				Returns: number
+			}
+			settle_order: {
+				Args: {
+					p_order: string
+					p_payment_intent?: string
+					p_checkout_session?: string
+				}
+				Returns: Json
 			}
 			sign_waiver: {
 				Args: {
