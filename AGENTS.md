@@ -13,8 +13,11 @@ is deliberately NOT built — see open question O in `docs/PLAN.md`. **Booking o
 requires a published waiver version**: since 0008 the consent gate fails closed. Phase 5 (payments)
 is planned and waits for the go: `docs/superpowers/plans/2026-09-05-phase-5-payments.md` (questions
 answered 2026-09-05 — two seeded class packs, a simulated gateway selected by `PAYMENTS_GATEWAY`
-until Stripe keys exist, refunds of untouched packs only). Phase 8 (public site: coaches, sponsors,
-gallery) is briefed in `2026-09-05-phase-8-public-site.brief.md` and runs right after 5.
+until Stripe keys exist, refunds of untouched packs only). Phases 6, 7 and 8 are planned too
+(`2026-09-08-phase-6-ratings.md`, `2026-09-08-phase-7-notifications.md`,
+`2026-09-08-phase-8-public-site.md`; phase 8 — coaches, sponsors, gallery — runs right after 5). Each
+plan opens with its questions and recommended defaults; the defaults stand until the user says
+otherwise.
 `docs/HANDOFF-opus5.md` scopes phases 5–7 and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
 
