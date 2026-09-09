@@ -12,6 +12,7 @@ import {
 
 const orderRow = {
 	id: 'o1',
+	account_id: 'acc1',
 	status: 'paid',
 	amount_total_cents: 50000,
 	currency: 'usd',
@@ -67,6 +68,7 @@ describe('listOrders / getOrder — one embedded read, RLS decides whose', () =>
 		expect(out.ok && out.value).toEqual([
 			{
 				id: 'o1',
+				accountId: 'acc1',
 				status: 'paid',
 				amountCents: 50000,
 				currency: 'usd',
@@ -89,6 +91,7 @@ describe('listOrders / getOrder — one embedded read, RLS decides whose', () =>
 			}
 		]);
 		const select = calls.find((c) => Array.isArray(c) && c[0] === 'select') as string[];
+		expect(select[1]).toContain('account_id');
 		expect(select[1]).toContain('accounts ( email )');
 		expect(select[1]).toContain('order_items (');
 		expect(called(calls, 'order', 'created_at', { ascending: false })).toBe(true);

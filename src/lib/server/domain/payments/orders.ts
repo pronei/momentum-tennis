@@ -25,6 +25,8 @@ export type OrderItem = {
 };
 export type OrderSummary = {
 	id: string;
+	/** the buying account — the receipt's recipient, and who a family's RLS scopes to */
+	accountId: string;
 	status: OrderStatus;
 	amountCents: number;
 	currency: string;
@@ -56,6 +58,7 @@ type ItemRow = {
 };
 type OrderRow = {
 	id: string;
+	account_id: string;
 	status: OrderStatus;
 	amount_total_cents: number;
 	currency: string;
@@ -75,10 +78,11 @@ type LotRow = {
 };
 
 const SELECT =
-	'id, status, amount_total_cents, currency, created_at, paid_at, stripe_payment_intent_id, stripe_checkout_session_id, accounts ( email ), order_items ( id, product_id, quantity, unit_amount_cents, player_id, products ( name ), players ( full_name ) )';
+	'id, account_id, status, amount_total_cents, currency, created_at, paid_at, stripe_payment_intent_id, stripe_checkout_session_id, accounts ( email ), order_items ( id, product_id, quantity, unit_amount_cents, player_id, products ( name ), players ( full_name ) )';
 
 const fromRow = (r: OrderRow): OrderSummary => ({
 	id: r.id,
+	accountId: r.account_id,
 	status: r.status,
 	amountCents: r.amount_total_cents,
 	currency: r.currency,

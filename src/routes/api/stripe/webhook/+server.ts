@@ -1,8 +1,9 @@
 import { error, json } from '@sveltejs/kit';
 import Stripe from 'stripe';
-import { secretOr503 } from '$lib/server/config.runtime';
+import { getConfig, secretOr503 } from '$lib/server/config.runtime';
 import { createAdminSupabase } from '$lib/server/db/admin';
 import { paymentHandlers } from '$lib/server/domain/payments/handlers';
+import { sendReceipt } from '$lib/server/domain/payments/receipt';
 import { supabaseEventStore } from '$lib/server/domain/payments/store';
 import { handleStripeEvent } from '$lib/server/domain/payments/webhook';
 import type { RequestHandler } from './$types';
@@ -38,8 +39,8 @@ export const POST: RequestHandler = async ({ request }) => {
 	const admin = createAdminSupabase();
 	const handlers = paymentHandlers({
 		db: admin,
-		// the receipt arrives in task 9; settlement is already whole without it
-		onSettled: async () => {}
+		// only when settlement actually issued credits — a replay must not send a second receipt
+		onSettled: (orderId) => sendReceipt(admin, getConfig(), orderId).then(() => undefined)
 	});
 	const status = await handleStripeEvent(supabaseEventStore(admin), event, handlers);
 	return json({ received: true, status });
