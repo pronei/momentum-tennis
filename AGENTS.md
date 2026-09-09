@@ -7,9 +7,9 @@ and every policy here.
 ## Status
 Phases 0–5 are built (foundations, identity & profiles, waivers, schedule & availability, booking &
 credits & attendance, payments); `deploy/dev` tracks `main` and deploys itself through
-`.github/workflows/deploy-dev.yml`. Migrations 0001–0008 are applied to the dev Supabase project
-(0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking); **0009 (payments) lands
-there when `deploy/dev` fast-forwards** — the Supabase GitHub integration applies migrations on push. The restricted minor login is deliberately NOT built —
+`.github/workflows/deploy-dev.yml`. Migrations 0001–0009 are applied to the dev Supabase project
+(0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking, 0009 payments); the Supabase
+GitHub integration applies them on push to `deploy/dev`. The restricted minor login is deliberately NOT built —
 see open question O in `docs/PLAN.md`. **Booking on any environment requires a published waiver
 version**: since 0008 the consent gate fails closed. **Payments run the simulated gateway on dev**
 (`PAYMENTS_GATEWAY=fake`): the store, settlement, the receipt and refunds all work without a Stripe

@@ -1,6 +1,6 @@
 # Phase 5 — Payments — Checklist
 
-**Branch:** `phase-5/payments`. **Plan:** `2026-09-05-phase-5-payments.md` — the plan is the spec; every task below refers to it. **State on 2026-09-08:** all fourteen tasks built and green; what remains is the merge, the migration reaching dev, and the credentialed walk-through.
+**Branch:** `phase-5/payments`. **Plan:** `2026-09-05-phase-5-payments.md` — the plan is the spec; every task below refers to it. **State on 2026-09-08:** all fourteen tasks built, merged to `main`, 0009 applied to dev; what remains is the credentialed walk-through and two operator steps.
 
 ## Done
 
@@ -23,15 +23,17 @@
 
 Gates at the tip: `pnpm env:check` · `pnpm check` 0/0 · `pnpm lint` · `pnpm test` 379 · `pnpm db:test` 139 · `pnpm db:types` no diff · `pnpm build:dev`.
 
-## Not done — and what it waits on
+## Merged, and what is left
 
-- **0009 is not on the dev project.** It lands when the branch merges and `deploy/dev` fast-forwards
-  (the Supabase GitHub integration applies migrations on push; `pnpm db:push dev` is the fallback).
-- **Two e2e specs depend on that.** The anonymous store spec in `smoke.test.ts` asserts the seeded
-  catalogue (`Weekday classes` / `$500.00`), and `family-purchase.test.ts` walks the whole exit
-  criterion. Both were left asserting the real thing rather than weakened to pass early. Everything
-  else in the e2e suite is green, including the two new guarded portal paths and the two new refused
-  admin paths.
+Merged to `main` and `deploy/dev` on 2026-09-08. **0009 is applied to the dev project** — the two
+packs read back at their seeded numbers ($500 / $700, 10 credits, 84 days, one forgiven skip). All
+four workflow runs succeeded (CI on `main`, `deploy/dev` and the branch; Deploy dev). `pnpm test:e2e`
+against dev: **14 passed, 3 skipped** — the store spec now finds the catalogue it asserts.
+
+- **The exit criterion's browser walk is not yet run.** `e2e/family-purchase.test.ts` skips without
+  `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`. With them (and a published waiver) it walks buy → credits
+  → book → refund-refused → cancel → refund-reverses. Until someone runs it, the lifecycle is proven
+  by harness §15 in PGlite and by the domain units, not by a browser.
 - **`SUPABASE_SECRET_KEY` is not a dev worker secret** (`pnpm cf secret list --env dev` was empty on
   2026-09-08). Settlement and the receipt run through the service role, so the deployed simulated
   checkout answers 503 without it — and booking confirmations have been silently not sending for the
