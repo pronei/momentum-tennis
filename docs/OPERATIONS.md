@@ -223,11 +223,50 @@ need one answer 503 until it is set):
 
 ```bash
 pnpm cf secret put SUPABASE_SECRET_KEY --env dev       # phase 5/7 — the sb_secret_… key
-pnpm cf secret put STRIPE_SECRET_KEY --env dev         # phase 5 (sk_test_…)
-pnpm cf secret put STRIPE_WEBHOOK_SECRET --env dev     # phase 5 (from the Stripe webhook endpoint you create for this URL)
+pnpm cf secret put STRIPE_SECRET_KEY --env dev         # phase 5 go-live only — see §3a (dev runs the simulated gateway)
+pnpm cf secret put STRIPE_WEBHOOK_SECRET --env dev     # phase 5 go-live only — see §3a
 pnpm cf secret put RESEND_API_KEY --env dev            # phase 4/7
 pnpm cf secret put CRON_SHARED_SECRET --env dev        # phase 7 — generate: openssl rand -base64 32
 ```
+
+## 3a. Stripe — from the simulated gateway to real money
+
+Dev runs the **simulated** gateway: `PAYMENTS_GATEWAY=fake` in `.env.development` and in
+`wrangler.toml`'s `[env.dev.vars]`. `pnpm env:check` refuses `fake` for the `prod` profile and
+refuses a profile/env mismatch, so production cannot select it by accident of a copied env file.
+The simulated checkout is a page of ours (`/portal/checkout/[orderId]`) that raises the same
+Stripe-shaped events the webhook handles, through the service role. Nothing below is needed to
+exercise a purchase on dev.
+
+In order, when Artur has the account:
+
+1. **Test key.** Stripe dashboard (test mode) → Developers → API keys → secret key `sk_test_…` →
+   `pnpm cf secret put STRIPE_SECRET_KEY --env dev`.
+2. **Webhook endpoint.** Developers → Webhooks → Add endpoint → `https://<dev site>/api/stripe/webhook`,
+   subscribed to exactly these six events:
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+   `checkout.session.async_payment_failed`, `checkout.session.expired`,
+   `payment_intent.succeeded`, `charge.refunded`.
+   Its signing secret → `pnpm cf secret put STRIPE_WEBHOOK_SECRET --env dev`.
+3. **Switch the gateway.** Remove `PAYMENTS_GATEWAY` from the environment (the default is `stripe`)
+   — in `.env.development` for local work and from `[env.dev.vars]` in `wrangler.toml` for the
+   deployed worker, then redeploy. `/portal/checkout/[orderId]` becomes a 404, which is correct:
+   on a Stripe environment there is no simulated checkout.
+4. **Payment methods** are dashboard-managed — the Checkout Session names none, so Stripe offers
+   what is enabled. Cards, Apple/Google Pay and Link now; **ACH Direct Debit** needs activation,
+   and the ACH-first ordering the brief wanted becomes a one-line change once it exists. The
+   bank-pay discount waits on ACH and on Artur's number.
+5. **Prices, optionally.** `/admin/products` holds a `price_…` id per product; blank means the
+   amount is sent inline, which is correct until the catalogue lives in Stripe too.
+6. **Retire the interim Payment Links** the day the store opens. Until then they share this Stripe
+   account, and any event whose object carries no `order_id` is answered `skipped` — never an error,
+   never a settlement.
+7. **Before live:** decision E's refund wording and tax stance from Artur and the accountant;
+   decision J's production Supabase on Pro; live keys and a live webhook endpoint repeating steps
+   1–3 with `--env live`.
+
+Test cards (test mode only): `4242 4242 4242 4242` succeeds, `4000 0000 0000 9995` is declined —
+any future expiry, any CVC.
 
 ## 4. Cloudflare — live worker (later)
 
@@ -257,7 +296,8 @@ Code gates never wait on these; the "deliverable on the dev deployment" half of 
 |---|---|---|
 | phase 3 | first admin on dev (SQL above); auth emails decided (confirm-email off in dev, or Resend SMTP); Cloudflare token or login for the recorded account → first deploy → `deploy.site_url` → redeploy; `<site>/auth/callback` in Supabase redirect URLs | §2, §3 |
 | phase 4 | **a published waiver version** — since migration 0008 the consent gate fails closed, so a required document with no published version refuses every booking. Publish v1 of the liability waiver at `/admin/waivers` with text from the academy's lawyer. Also: credits are admin-granted at `/admin/credits`, and a coach role on whoever takes private lessons (`book_private_lesson` requires role `coach` exactly) | §2, `/admin/waivers` |
-| phase 5 | Stripe **test** secret key and a webhook endpoint for `https://<dev site>/api/stripe/webhook` (its signing secret) as Cloudflare secrets; payment methods enabled in Stripe (ACH Direct Debit activation, Apple Pay domain registration, Cash App Pay, Link); refund wording and tax stance from Artur/accountant (decision E); production Supabase project on **Pro, standard Postgres** before anything goes live (decision J) | §3, Stripe dashboard |
+| phase 5 — to exercise on dev now | **`SUPABASE_SECRET_KEY` as a dev worker secret** (`pnpm cf secret put SUPABASE_SECRET_KEY --env dev`): settlement and the receipt run through the service role, and without it the simulated checkout answers 503 — booking confirmations are silently not sending for the same reason. Plus the published waiver phase 4 already needs. Dev runs `PAYMENTS_GATEWAY=fake`, so **no Stripe key is needed to exercise the whole purchase → credits → booking → refund walk** | §3, §3a |
+| phase 5 — to go live with Stripe | everything in §3a: test then live secret key, the webhook endpoint and its signing secret, `PAYMENTS_GATEWAY` removed from the environment, payment methods enabled in the dashboard, the Payment Links retired, decision E's wording and tax stance, decision J's Pro plan | §3a, Stripe dashboard |
 | phase 6 | nothing | — |
 | phase 7 | Resend account, verified sending domain (DNS at GoDaddy), API key → `RESEND_API_KEY`; `CRON_SHARED_SECRET` in the app and the cron worker; cron worker deployed; marketing/unsubscribe copy from legal | §3, §5 |
 | launch | production Supabase (Pro, standard Postgres) with the GitHub integration on `deploy/live` and `SUPABASE_DB_PASSWORD_PROD` set; production worker + `app.momentum-tennis.com`; live Stripe keys and webhook; waiver text, privacy policy and terms from legal; Access removed from live | §4 |

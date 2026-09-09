@@ -5,21 +5,25 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phases 0–4 are built and merged to `main` (foundations, identity & profiles, waivers, schedule &
-availability, booking & credits & attendance); `deploy/dev` tracks `main` and deploys itself through
+Phases 0–5 are built (foundations, identity & profiles, waivers, schedule & availability, booking &
+credits & attendance, payments); `deploy/dev` tracks `main` and deploys itself through
 `.github/workflows/deploy-dev.yml`. Migrations 0001–0008 are applied to the dev Supabase project
-(0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking). The restricted minor login
-is deliberately NOT built — see open question O in `docs/PLAN.md`. **Booking on any environment
-requires a published waiver version**: since 0008 the consent gate fails closed. Phase 5 (payments)
-is **in progress on branch `phase-5/payments`** (tasks 1–7 of 14 done 2026-09-08; the checklist
-`docs/superpowers/plans/2026-09-05-phase-5-payments.checklist.md` says where to pick up, and `docs/HANDOFF-opus5.md` is the handoff for whoever continues): `docs/superpowers/plans/2026-09-05-phase-5-payments.md` (questions
-answered 2026-09-05 — two seeded class packs, a simulated gateway selected by `PAYMENTS_GATEWAY`
-until Stripe keys exist, refunds of untouched packs only). Phases 6, 7 and 8 are planned too
-(`2026-09-08-phase-6-ratings.md`, `2026-09-08-phase-7-notifications.md`,
+(0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking); **0009 (payments) lands
+there when `deploy/dev` fast-forwards** — the Supabase GitHub integration applies migrations on push. The restricted minor login is deliberately NOT built —
+see open question O in `docs/PLAN.md`. **Booking on any environment requires a published waiver
+version**: since 0008 the consent gate fails closed. **Payments run the simulated gateway on dev**
+(`PAYMENTS_GATEWAY=fake`): the store, settlement, the receipt and refunds all work without a Stripe
+key, and `pnpm env:check` refuses `fake` for the `prod` profile. Settlement and the receipt need
+`SUPABASE_SECRET_KEY` on the worker — without it the simulated checkout answers 503 by design.
+A pack refunds in full only while nobody has drawn on it (plan question 2); a drawn-on pack is an
+`adjust` row plus a dashboard refund until Artur states a rule. Still his: refund wording and the
+tax stance (decision E), the bank-pay discount and ACH-first ordering (both wait on ACH), and
+retiring the interim Payment Links — `docs/OPERATIONS.md` §3a is the go-live path. Phases 6, 7 and 8
+are planned (`2026-09-08-phase-6-ratings.md`, `2026-09-08-phase-7-notifications.md`,
 `2026-09-08-phase-8-public-site.md`; phase 8 — coaches, sponsors, gallery — runs right after 5). Each
 plan opens with its questions and recommended defaults; the defaults stand until the user says
 otherwise.
-`docs/HANDOFF-opus5.md` scopes phases 5–7 and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
+`docs/HANDOFF-opus5.md` scopes the remaining phases and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
 
 ## Prime directives
@@ -103,7 +107,14 @@ otherwise.
   from `birthdate` at the moment of the act, never stored as a flag.
 - **Idempotency wherever money or email moves:** Stripe webhooks keyed on event
   id via `stripe_events`; ledger rows carry structural idempotency keys;
-  notification sends dedupe on `trigger_key`.
+  notification sends dedupe on `trigger_key`. A receipt is keyed on the order, so a
+  redelivered event cannot send a second one — and `settle_order` only reports credits
+  *issued* by that call, which is what decides whether a receipt goes at all.
+- **Money is written by the database or the service role, never by a family's client.**
+  `settle_order` and `refund_order` refuse a non-admin caller; the webhook, the simulated
+  checkout and the admin refund all pass `createAdminSupabase()`. An event whose object carries
+  no order id is answered `'skipped'` — the interim Stripe Payment Links share the account,
+  and a sale that is not ours must never become an error Stripe retries forever.
 - **RLS-first:** every table has policies; money/consent writes go through
   SECURITY DEFINER RPCs only; `/admin` routes are additionally authorized
   server-side in hooks. Assume the client is hostile.
@@ -186,9 +197,11 @@ render; the schema is tested behaviorally in PGlite.
   `booking/` (`index.ts` RPC wrappers, `classes`, `credits`, `lessons`, `attendance`, `waitlist` —
   all asking the database's questions only to EXPLAIN them), `waivers.ts` (documents, versions,
   status, signing), `cron.ts` (secret check
-  + job dispatch), `payments/` (webhook idempotency
-  port + Supabase store), `notify/` (transactional vs marketing send, insert-first
-  idempotency).
+  + job dispatch), `payments/` (`webhook.ts` idempotency port + `store.ts` Supabase store,
+  `gateway.ts` port with the Stripe and simulated adapters + `gateway.runtime.ts` `selectGateway()`,
+  `products.ts` catalogue, `orders.ts` + `checkout.ts`, `handlers.ts` event → RPC,
+  `simulate.ts` synthetic events, `receipt.ts` which never throws), `notify/` (transactional vs
+  marketing send, insert-first idempotency).
 - `src/lib/components/` — app composites built from `$lib/ds` and the design system's
   `ui_kits` references (`PlayerSwitcher`, `Card`), tested as SSR contracts.
 - `src/lib/ds/` — ported design system (`index.ts` barrel; `core/ forms/ feedback/
@@ -204,8 +217,11 @@ render; the schema is tested behaviorally in PGlite.
   + `[versionId]` signing, account form: the superforms pattern), `admin` (guarded
   shell, `schedule/` day grid + `new` + `[id]`, `availability/` + `[courtId]`,
   `classes/` + `[id]`, `camps/` + `[id]`, `teams/` + `[id]`, `waivers/`, `staff/`),
-  `internal/cron`, `api/stripe/webhook`. Phase 4 adds `(portal)/portal/{book,bookings,credits}`,
-  `coach/sessions` + `[id]` (the register), and `admin/credits` (grants).
+  `internal/cron`, `api/stripe/webhook` (the handlers run on the service-role client). Phase 4 adds
+  `(portal)/portal/{book,bookings,credits}`, `coach/sessions` + `[id]` (the register), and
+  `admin/credits` (grants). Phase 5 adds public `store/`, `(portal)/portal/purchases` + `[id]`
+  (the receipt) and `(portal)/portal/checkout/[orderId]` (the simulated gateway's page — a 404
+  wherever `PAYMENTS_GATEWAY` is not `fake`), `admin/products` + `[id]`, `admin/orders` + `[id]`.
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
 - `config/` — one profile per environment (`dev.yaml`, `prod.yaml`); `docs/OPERATIONS.md` is
   the operator runbook (accounts, secrets, one-time links).

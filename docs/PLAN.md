@@ -20,7 +20,7 @@ localized.
 | 2 | Waivers — **built 2026-09-02** (`phase-2/waivers`) | document/version admin (draft → publish freeze), signing ceremony with capacity resolved server-side, re-consent detection and banner, status surfaces; migration 0004 (authoring RPCs, hash computed in SQL) | 1 | met: publishing a new version makes every earlier signature stop satisfying the gate, proven in the harness (section 11); `assert_waivers_signed()` and `v_player_waiver_status` are what phase 4 will call, and the portal reads the same view |
 | 3 | Schedule & availability — **built 2026-09-03** (`phase-3/schedule`) | locations/courts/availability rules + exceptions, terms/classes/camps/teams CRUD, occurrence generation, ResourceDayView admin editor, public + portal read-only calendars; migration 0007 (atomic level tagging, `v_schedule_sessions`) | 1 (2 for gating copy) | met in code: the whole schedule is enterable through `/admin`, and one read model renders it in academy time for admin, families and the public. 246 unit/contract tests, 109 schema checks. The dev walk-through waits on the first admin account (operator step) |
 | 4 | Booking, credits & attendance — **built 2026-09-04** (`phase-4/booking`) | scoped class booking with weekly cap, private-lesson booking, cancellation/reversal policy, capacity + waitlist, attendance marking (coach + admin), admin credit grants, booking-confirmation email; migration 0008 (fail-closed consent gate, waitlist promotion on cancel, seat counts, waitlist position) | 2, 3 | met in code: the cap, capacity, the level tags and the waiver gate are all refused by the database and shown in its own words; cancelling returns the credit and promotes the next family in the same transaction. 315 unit/contract tests, 117 schema checks. The dev walk-through needs a **published waiver version** — the gate now fails closed |
-| 5 | Payments | Stripe Checkout (ACH-first + cards, Apple Pay, Google Pay, Cash App Pay, Link), idempotent webhooks → ledger issuance, receipts, purchases dashboard + ledger drill-in, refunds/reversals | 4 | test-mode purchase → credits → booking → refund, fully audited; Payment Links interim retired |
+| 5 | Payments — **built 2026-09-08** (`phase-5/payments`) | gateway port with a Stripe adapter and a simulated one chosen by `PAYMENTS_GATEWAY`; migration 0009 (catalogue seed, `create_order`, `settle_order`, `cancel_order`, `refund_order`); Stripe-shaped handlers over those RPCs, receipt email, public `/store`, portal checkout/purchases/receipts, `/admin/products` and `/admin/orders` with refund and cancel | 4 | met in code: a purchase issues credits through `issue_credits`, books a class and refunds an untouched pack, every movement an audited row. 379 unit/contract tests, 139 schema checks. Real Stripe (keys, ACH-first ordering, the bank-pay discount) and retiring the Payment Links are operator steps in `docs/OPERATIONS.md` §3a |
 | 6 | Ratings & coach tools | rating dimensions admin, coach entry UI, CourtMeter/RatingMeter surfaces, history | 1 | court placement drives the portal meter with accessible text values |
 | 7 | Notifications & lifecycle | workers/cron + shared-secret endpoint, class reminders, low-credit nudges, credit expiry rows, re-consent campaigns, newsletter + unsubscribe + preference center | 4 (5 for nudges) | overlapping cron runs cannot double-send; marketing/transactional fully separated |
 | 8 | Public site (added 2026-09-05; **runs right after 5**) | site group ports (SiteNav, ProgramCard, PhotoFrame, StrobeArc, Wordmark), home from the homepage template, `/coaches`, sponsors strip, gallery with PhotoSwipe (docs/decisions/2026-09-05-lightbox-library.md); plan: docs/superpowers/plans/2026-09-08-phase-8-public-site.md | none (5 for the store entry) | home, coaches and photos render anonymously in the design system; no photo of a minor without a signed media release |
@@ -105,6 +105,19 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-09-08 — Phase 5 built (branch `phase-5/payments`): migration 0009. The plan's eleven opening
+  questions all stand as answered — 1–4 confirmed with the user on 2026-09-05, 5–11 as their stated
+  defaults: member price = public price for now, camp and team-fee purchase deferred
+  (`create_order` refuses them with `unsupported_product`), the bank-pay discount deferred with ACH,
+  payment methods dashboard-managed, Stripe-hosted Checkout rather than the Payment Element, one
+  pack per order, and the receipt to the buying account's email alone keyed `receipt:order:{id}`.
+  Decided while building: an order carries its `account_id` into the domain, because the receipt's
+  recipient is the buying account and nothing else knew it; `getAcademySettings` now exposes
+  `default_credit_validity_days` and `default_forgiven_skips`, which the store quotes for a product
+  that names neither; any Stripe event whose object carries no order id is answered `skipped`,
+  because the interim Payment Links share the account; and settlement, the receipt and the
+  simulated refund all run on the service-role client, since `settle_order` and `refund_order`
+  refuse a non-admin caller and that refusal is the guarantee no client settles its own order.
 - 2026-09-05 — Phase 5 planned (`docs/superpowers/plans/2026-09-05-phase-5-payments.md`);
   answered with the user: catalogue = two class packs seeded by 0009 (Weekday $500, Weekend
   $700, 10 credits, `credit_validity_days` 84 + decision L's 7, one forgiven skip, no member
