@@ -21,6 +21,9 @@ export type AcademySettings = {
 	bookingHorizonDays: number;
 	cancelNoticeHours: number;
 	lowCreditThreshold: number;
+	/** what a pack is worth when the product itself names no validity or forgiveness */
+	defaultCreditValidityDays: number;
+	defaultForgivenSkips: number;
 };
 
 /** The column defaults in 0001, repeated here only for the fails-soft path. */
@@ -28,7 +31,9 @@ export const DEFAULT_SETTINGS: AcademySettings = {
 	timezone: DEFAULT_TIMEZONE,
 	bookingHorizonDays: 70,
 	cancelNoticeHours: 24,
-	lowCreditThreshold: 2
+	lowCreditThreshold: 2,
+	defaultCreditValidityDays: 70,
+	defaultForgivenSkips: 1
 };
 
 /**
@@ -39,13 +44,18 @@ export const DEFAULT_SETTINGS: AcademySettings = {
 export async function getAcademySettings(db: SettingsDb): Promise<AcademySettings> {
 	const { data } = await db
 		.from('academy_settings')
-		.select('timezone, booking_horizon_days, cancel_notice_hours, low_credit_threshold')
+		.select(
+			'timezone, booking_horizon_days, cancel_notice_hours, low_credit_threshold, default_credit_validity_days, default_forgiven_skips'
+		)
 		.maybeSingle();
 	if (!data) return DEFAULT_SETTINGS;
 	return {
 		timezone: data.timezone ?? DEFAULT_SETTINGS.timezone,
 		bookingHorizonDays: data.booking_horizon_days ?? DEFAULT_SETTINGS.bookingHorizonDays,
 		cancelNoticeHours: data.cancel_notice_hours ?? DEFAULT_SETTINGS.cancelNoticeHours,
-		lowCreditThreshold: data.low_credit_threshold ?? DEFAULT_SETTINGS.lowCreditThreshold
+		lowCreditThreshold: data.low_credit_threshold ?? DEFAULT_SETTINGS.lowCreditThreshold,
+		defaultCreditValidityDays:
+			data.default_credit_validity_days ?? DEFAULT_SETTINGS.defaultCreditValidityDays,
+		defaultForgivenSkips: data.default_forgiven_skips ?? DEFAULT_SETTINGS.defaultForgivenSkips
 	};
 }

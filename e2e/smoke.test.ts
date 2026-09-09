@@ -86,3 +86,17 @@ test('coach tools and credit grants are refused, not hidden', async ({ page }) =
 		expect(res?.url()).toMatch(/\/login/);
 	}
 });
+
+test('the store is readable without an account, and asks anonymous visitors to log in', async ({
+	page
+}) => {
+	await page.goto('/store');
+	await expect(page.getByRole('heading', { name: 'Store', level: 1 })).toBeVisible();
+	await expect(page.getByText('Weekday classes')).toBeVisible();
+	await expect(page.getByText('Weekend classes')).toBeVisible();
+	await expect(page.getByText('$500.00')).toBeVisible();
+	await expect(page.getByText('$700.00')).toBeVisible();
+	const action = page.getByRole('link', { name: 'Log in to buy' });
+	await expect(action).toBeVisible();
+	await expect(action).toHaveAttribute('href', '/login?next=/store');
+});

@@ -37,15 +37,24 @@ describe('getAcademySettings — the numbers booking asks about before it asks t
 				timezone: 'America/Los_Angeles',
 				booking_horizon_days: 42,
 				cancel_notice_hours: 12,
-				low_credit_threshold: 3
+				low_credit_threshold: 3,
+				default_credit_validity_days: 84,
+				default_forgiven_skips: 2
 			}
 		});
 		expect(await getAcademySettings(db)).toEqual({
 			timezone: 'America/Los_Angeles',
 			bookingHorizonDays: 42,
 			cancelNoticeHours: 12,
-			lowCreditThreshold: 3
+			lowCreditThreshold: 3,
+			defaultCreditValidityDays: 84,
+			defaultForgivenSkips: 2
 		});
+	});
+
+	it('carries the pack defaults the store quotes for a product that names none', async () => {
+		expect(DEFAULT_SETTINGS.defaultCreditValidityDays).toBe(70);
+		expect(DEFAULT_SETTINGS.defaultForgivenSkips).toBe(1);
 	});
 
 	it('fails soft — a missing row must not stop a family seeing their schedule', async () => {
