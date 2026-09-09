@@ -87,7 +87,7 @@ test('booking, bookings and credits are guarded like the rest of the portal', as
 });
 
 test('coach tools and credit grants are refused, not hidden', async ({ page }) => {
-	for (const path of ['/coach/sessions', '/admin/credits']) {
+	for (const path of ['/coach/sessions', '/admin/credits', '/admin/products', '/admin/orders']) {
 		const res = await page.goto(path);
 		expect(res?.url()).toMatch(/\/login/);
 	}
