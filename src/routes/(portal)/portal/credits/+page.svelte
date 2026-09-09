@@ -36,8 +36,8 @@
 
 		{#if data.balances.every((b) => b.balance === 0)}
 			<Banner>
-				No credits yet. The academy grants them; buying a package arrives with the next phase.
-				{#snippet action()}<Button size="sm" variant="ghost" href="/portal/book">See classes</Button
+				No credits yet.
+				{#snippet action()}<Button size="sm" variant="ghost" href="/store">Buy a pack</Button
 					>{/snippet}
 			</Banner>
 		{/if}

@@ -74,7 +74,13 @@ test('the family schedule is guarded, like the rest of the portal', async ({ pag
 });
 
 test('booking, bookings and credits are guarded like the rest of the portal', async ({ page }) => {
-	for (const path of ['/portal/book', '/portal/bookings', '/portal/credits']) {
+	for (const path of [
+		'/portal/book',
+		'/portal/bookings',
+		'/portal/credits',
+		'/portal/purchases',
+		'/portal/checkout/00000000-0000-4000-8000-000000000000'
+	]) {
 		await page.goto(path);
 		await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}`));
 	}

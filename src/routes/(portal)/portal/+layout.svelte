@@ -10,6 +10,8 @@
 		{ id: '/portal/book', label: 'Book', href: '/portal/book' },
 		{ id: '/portal/bookings', label: 'Bookings', href: '/portal/bookings' },
 		{ id: '/portal/credits', label: 'Credits', href: '/portal/credits' },
+		{ id: '/store', label: 'Store', href: '/store' },
+		{ id: '/portal/purchases', label: 'Purchases', href: '/portal/purchases' },
 		{ id: '/portal/players', label: 'Players', href: '/portal/players' },
 		{ id: '/portal/waivers', label: 'Waivers', href: '/portal/waivers' },
 		{ id: '/portal/account', label: 'Account', href: '/portal/account' }
