@@ -45,6 +45,10 @@ blender/
 momentum-racquet-spec-v3.md
 design-b-worksheet.md
 
+# ── the TennisLink automation project nested in this directory
+#    (its own git repo; ignored so git, format and lint leave it alone) ─
+tennislink-automation/
+
 # ── sveltekit / vite ─────────────────────────────────────────
 .output
 vite.config.js.timestamp-*

@@ -48,6 +48,7 @@ export default ts.config(
 			'dist/',
 			'node_modules/',
 			'design-system/',
+			'tennislink-automation/',
 			'workers/**/node_modules/',
 			'src/lib/server/db/database.types.ts'
 		]
