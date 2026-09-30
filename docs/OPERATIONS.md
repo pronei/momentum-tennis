@@ -57,9 +57,26 @@ Profiles: `config/dev.yaml`, `config/prod.yaml`. Flow: work → `main` → `depl
 
 ## 2. Supabase — dev project
 
-The Supabase MCP in this workspace belongs to a different account, so use the scripts, the CLI,
-or the dashboard. No `supabase login` or `supabase link` is needed anywhere: the scripts connect
-to the database directly with its password.
+The Supabase MCP in this workspace belongs to a different account, and so does the machine-wide
+Supabase CLI login, so use the scripts, `pnpm sb`, or the dashboard. No `supabase login` or
+`supabase link` is needed anywhere: the scripts connect to the database directly with its password.
+
+**The CLI for this repo's account** is `pnpm sb <supabase args…>`. Plain `supabase` keeps using the
+machine-wide login for other work. Once:
+
+1. sign in to the dashboard as this repo's Supabase account (check the avatar menu — the browser
+   may still be signed in to the other one);
+2. Account → Access Tokens → Generate new token, named `momentum-tennis-cli-<machine>`;
+3. put it in `.env.local` as `SUPABASE_ACCESS_TOKEN=sbp_…`;
+4. `pnpm sb projects list` — it must list `rjiagjfvsaaxezsxfuzq`. If it lists the other account's
+   projects instead, the token was made in the wrong account: revoke it there and repeat.
+   It also prints `Cannot find project ref. Have you run supabase link?` — expected. The repo stays
+   unlinked on purpose: linked, the CLI's own `db push` would default to dev and become a third
+   migration writer beside the GitHub integration and `pnpm db:push`. Pass `--project-ref` instead.
+
+`pnpm sb` refuses to run without that token, because the CLI would otherwise fall back to the
+machine-wide login without saying so. It also refuses `login` and `logout`: both write that
+machine-wide login whatever token is set, so `logout` would sign the other repo out.
 
 **Apply the schema** (`.env.local` holds `SUPABASE_DB_PASSWORD_DEV`; the ref and pooler are in
 `config/dev.yaml`):

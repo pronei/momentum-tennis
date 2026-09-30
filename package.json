@@ -24,7 +24,8 @@
 		"env:check": "node scripts/check-env.mjs",
 		"build:dev": "node scripts/build-env.mjs dev",
 		"build:live": "node scripts/build-env.mjs prod",
-		"cf": "node scripts/cf.mjs"
+		"cf": "node scripts/cf.mjs",
+		"sb": "node scripts/sb.mjs"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^5.20260901.1",

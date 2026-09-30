@@ -171,6 +171,7 @@ Never put real family data in dev.
 | `pnpm build` | adapter-cloudflare build into `.svelte-kit/cloudflare` (bakes `.env.production`) |
 | `pnpm build:dev` / `pnpm build:live` | the same build with a profile's public values and `deploy.site_url` — what `deploy-dev.yml` runs |
 | `pnpm cf …` | wrangler scoped to this repo's Cloudflare account: login state in `.wrangler/home` (gitignored), never the machine-wide login — `pnpm cf login`, `pnpm cf whoami`, `pnpm cf deploy --env dev` |
+| `pnpm sb …` | the Supabase CLI scoped to this repo's Supabase account: the token is `SUPABASE_ACCESS_TOKEN` in `.env.local` and no `SUPABASE_*` setting is inherited from the shell. It refuses to run without that token (the CLI would fall back to the machine-wide login, another account's) and refuses `login`/`logout` (they write that login) — `pnpm sb projects list` |
 | `pnpm test:e2e` | Playwright smoke against the built app (needs a reachable Supabase) |
 | `wrangler deploy --env dev\|live` | manual deploy; normally `.github/workflows/deploy-dev.yml` deploys on push to `deploy/dev` |
 
