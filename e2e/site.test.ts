@@ -58,3 +58,35 @@ test('under reduced motion the lightbox opens without animating', async ({ page 
 		)
 	).toBe('0ms');
 });
+
+test('the public walk: home → coaches → photos → store → calendar → book a trial', async ({
+	page
+}) => {
+	await page.goto('/');
+	const footer = page.getByRole('contentinfo');
+	await footer.getByRole('link', { name: 'Coaches' }).click();
+	await expect(page).toHaveURL(/\/coaches$/);
+	await page.getByRole('contentinfo').getByRole('link', { name: 'Photos' }).click();
+	await expect(page).toHaveURL(/\/photos$/);
+
+	const nav = page.getByRole('navigation', { name: 'Primary' });
+	await nav.getByRole('link', { name: 'Store' }).click();
+	await expect(page).toHaveURL(/\/store$/);
+	await expect(nav.getByRole('link', { name: 'Store' })).toHaveAttribute('aria-current', 'page');
+	await nav.getByRole('link', { name: 'Calendar' }).click();
+	await expect(page).toHaveURL(/\/schedule$/);
+
+	await page.getByRole('banner').getByRole('link', { name: 'Book a trial' }).click();
+	await expect(page).toHaveURL(/\/login\?next=\/portal\/book$/);
+});
+
+test('on a phone the menu button opens the sheet, with the Book pill last', async ({ page }) => {
+	await page.setViewportSize({ width: 375, height: 812 });
+	await page.goto('/');
+	await page.getByRole('button', { name: 'Open menu' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Site menu' });
+	await expect(sheet).toBeVisible();
+	await expect(sheet.getByRole('link').last()).toHaveText('Book a free trial class');
+	await page.keyboard.press('Escape');
+	await expect(sheet).toBeHidden();
+});
