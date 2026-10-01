@@ -1,6 +1,6 @@
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
-import Portal from '../(portal)/portal/schedule/+page.svelte';
+import Portal from '../../(portal)/portal/schedule/+page.svelte';
 import Public from './+page.svelte';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

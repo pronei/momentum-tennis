@@ -1,9 +1,29 @@
 import { expect, test } from '@playwright/test';
 
-test('home renders the brand and the one primary action', async ({ page }) => {
+test('home is the homepage kit inside the site shell, one amber action above the fold', async ({
+	page
+}) => {
 	await page.goto('/');
-	await expect(page.getByRole('heading', { level: 1 })).toContainText('Building players');
-	await expect(page.getByRole('link', { name: 'Book a free trial class' })).toBeVisible();
+	await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('Learn to see');
+	await expect(page.locator('#programs article')).toHaveCount(3);
+	await expect(page.getByText(/^(ENROLLING NOW|RETURNS \d{4}|DATES COMING) · /)).toBeVisible();
+	await expect(page.getByText('155', { exact: true })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Partners' })).toBeVisible();
+	await expect(page.getByText(/students aren’t improving/)).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Book a free trial class.' })).toBeVisible();
+	await expect(page.getByRole('contentinfo')).toBeVisible();
+	const amberInView = await page.locator('.mt-btn--primary').evaluateAll((els) =>
+		els
+			.filter((e) => {
+				const r = e.getBoundingClientRect();
+				return r.width > 0 && r.bottom > 0 && r.top < window.innerHeight;
+			})
+			.map((e) => e.textContent?.trim())
+	);
+	expect(amberInView).toEqual(['Book a free trial class']);
+	// the styleguide stays reachable at its own URL, but the home page no longer points at it
+	await expect(page.locator('a[href="/styleguide"]')).toHaveCount(0);
 });
 
 test('styleguide renders every ported component group', async ({ page }) => {
