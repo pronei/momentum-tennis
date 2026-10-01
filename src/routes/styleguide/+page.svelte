@@ -13,16 +13,19 @@
 		FormSection,
 		FrameTicks,
 		Pagination,
+		PhotoFrame,
 		ResourceDayView,
 		SegmentedControl,
 		Select,
 		SessionForm,
 		StatusChip,
+		StrobeArc,
 		Tabs,
 		TextArea,
 		TextField,
 		TimeField,
-		Toast
+		Toast,
+		Wordmark
 	} from '$lib/ds';
 
 	let dialogOpen = $state(false);
@@ -220,6 +223,39 @@
 				courts={sgCourts}
 				coaches={[{ id: 'a1', label: 'Artur W.' }]}
 				conflict="COURT MP-1 BOOKED 09:00–11:00 — PICK ANOTHER SLOT"
+			/>
+		</div>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Brand &amp; media</Eyebrow>
+		<div class="sg__row">
+			<Wordmark />
+			<Wordmark variant="word" height={19} />
+			<Wordmark variant="mark" height={40} />
+		</div>
+		<div class="sg__row sg__row--field">
+			<Wordmark onField />
+		</div>
+		<div class="sg__stack"><StrobeArc annotate height={150} /></div>
+		<div class="sg__grid">
+			<PhotoFrame
+				src="/photos/net-rally-l.webp"
+				alt="Juniors rallying at the net on a blue hard court"
+				ratio="4:3"
+				treatment="slice"
+				focal="50% 45%"
+				tag="MURDOCK PARK"
+				caption="Rallies & games — green ball"
+				captionRight="THU · t0 →"
+			/>
+			<PhotoFrame
+				src="/photos/net-rally-l.webp"
+				alt="The same rally in the court-blue wash"
+				ratio="4:3"
+				treatment="wash"
+				focal="50% 45%"
+				caption="Wash treatment"
 			/>
 		</div>
 	</section>

@@ -17,15 +17,18 @@ import {
 	FormSection,
 	FrameTicks,
 	Pagination,
+	PhotoFrame,
 	ResourceDayView,
 	SegmentedControl,
 	Select,
 	SessionForm,
 	StatusChip,
+	StrobeArc,
 	Tabs,
 	TextArea,
 	TextField,
-	Toast
+	Toast,
+	Wordmark
 } from '$lib/ds';
 
 const text = (s: string) => createRawSnippet(() => ({ render: () => `<span>${s}</span>` }));
@@ -345,5 +348,127 @@ describe('the site timelines', () => {
 		expect(out).toContain('08:30');
 		expect(out).toContain('Warm-up');
 		expect(out).not.toContain('Chess');
+	});
+});
+
+describe('Wordmark — MOMENTUM, and a ball settling into the present frame', () => {
+	it('the lockup sets MOMENTUM over a justified TENNIS line and names itself once', () => {
+		const out = html(Wordmark, {});
+		expect(out).toContain('MOMENTUM');
+		expect(out).toMatch(/<span>T<\/span><span>E<\/span><span>N<\/span>/);
+		expect(out).toContain('Momentum Tennis');
+		expect(out).toContain('font-size: 44px');
+	});
+
+	it('word sets the whole name on one line, as the site header uses it', () => {
+		const out = html(Wordmark, { variant: 'word', height: 19 });
+		expect(out).toContain('MOMENTUM\u00a0TENNIS');
+		expect(out).not.toMatch(/<span>T<\/span><span>E<\/span>/);
+		expect(out).toContain('font-size: 19px');
+	});
+
+	it('mark is the three-ball settle alone, as an image', () => {
+		const out = html(Wordmark, { variant: 'mark', height: 40 });
+		expect(out).toContain('role="img"');
+		expect(out).toContain('aria-label="Momentum Tennis"');
+		expect(out).not.toContain('MOMENTUM');
+		expect(out.match(/mt-wm-mark__ball--\d/g)).toHaveLength(3);
+	});
+
+	it('the ghost frames hide below 30px and only the present ball remains', () => {
+		expect(html(Wordmark, { height: 44 })).toContain('mt-wm__ball--ghost');
+		const small = html(Wordmark, { variant: 'word', height: 16 });
+		expect(small).not.toContain('mt-wm__ball--ghost');
+		expect(small).toContain('mt-wm__ball--now');
+	});
+
+	it('onField switches to line white', () => {
+		expect(html(Wordmark, { onField: true })).toContain('mt-wm--field');
+		expect(html(Wordmark, {})).not.toContain('mt-wm--field');
+	});
+});
+
+describe('StrobeArc — the signature', () => {
+	const label = 'Ball trajectory rendered as a stroboscopic sequence';
+
+	it('draws one ball per frame, the last one amber and larger', () => {
+		const out = html(StrobeArc, {});
+		const balls = out.match(/<circle[^>]*>/g) ?? [];
+		expect(balls).toHaveLength(8);
+		expect(balls[7]).toContain('fill: var(--now)');
+		expect(balls[7]).toContain('r="8"');
+		expect(balls.slice(0, 7).join('')).not.toContain('var(--now)');
+		expect(html(StrobeArc, { frames: 5 }).match(/<circle/g)).toHaveLength(5);
+	});
+
+	it('names itself as an image', () => {
+		const out = html(StrobeArc, {});
+		expect(out).toContain('role="img"');
+		expect(out).toContain(label);
+	});
+
+	it('the dashed trajectory and ground line come and go with showPath', () => {
+		expect(html(StrobeArc, {})).toContain('<polyline');
+		const bare = html(StrobeArc, { showPath: false });
+		expect(bare).not.toContain('<polyline');
+		expect(bare).not.toContain('<line');
+	});
+
+	it('annotate labels the frames t−7 … t0 in mono', () => {
+		const out = html(StrobeArc, { annotate: true });
+		expect(out).toContain('t\u22127');
+		expect(out).toContain('>t0<');
+		expect(html(StrobeArc, {})).not.toContain('>t0<');
+	});
+});
+
+describe('PhotoFrame — every photograph passes through it', () => {
+	const src = '/photos/net-rally.webp';
+
+	it('frames the image with a hairline, crops to the ratio and holds the focal point', () => {
+		const out = html(PhotoFrame, { src, alt: 'Juniors at the net' });
+		expect(out).toContain('<figure');
+		expect(out).toContain('mt-photo--framed');
+		expect(out).toContain('aspect-ratio: 3 / 2');
+		expect(out).toContain('object-position: 50% 38%');
+		expect(out).toContain('alt="Juniors at the net"');
+		expect(html(PhotoFrame, { src, ratio: '3:4', focal: '50% 20%' })).toContain(
+			'aspect-ratio: 3 / 4'
+		);
+		expect(html(PhotoFrame, { src, frame: false })).not.toContain('mt-photo--framed');
+	});
+
+	it('an empty alt stays empty, for decorative use', () => {
+		expect(html(PhotoFrame, { src })).toContain('alt=""');
+	});
+
+	it('overlays the mono tag and closes with the caption bar', () => {
+		const out = html(PhotoFrame, {
+			src,
+			tag: 'MURDOCK PARK',
+			caption: 'Rallies & games',
+			captionRight: 'THU · t0 →'
+		});
+		expect(out).toContain('mt-photo__tag');
+		expect(out).toContain('MURDOCK PARK');
+		expect(out).toContain('<figcaption');
+		expect(out).toContain('THU · t0 →');
+		expect(html(PhotoFrame, { src })).not.toContain('<figcaption');
+	});
+
+	it('wash lays the court-blue duotone over the grayscale image', () => {
+		const out = html(PhotoFrame, { src, treatment: 'wash' });
+		expect(out).toContain('mt-photo__img--wash');
+		expect(out).toContain('mt-photo__wash');
+		expect(html(PhotoFrame, { src })).not.toContain('mt-photo__wash');
+	});
+
+	it('slice cuts one still into frames, the lead edge amber', () => {
+		const out = html(PhotoFrame, { src, alt: 'Rally', treatment: 'slice' });
+		const frames = (markup: string) => markup.match(/class="mt-photo__slice[\s"]/g) ?? [];
+		expect(frames(out)).toHaveLength(5);
+		expect(out.match(/mt-photo__slice--lead/g)).toHaveLength(1);
+		expect(out).toContain('aria-label="Rally"');
+		expect(frames(html(PhotoFrame, { src, treatment: 'slice', slices: 7 }))).toHaveLength(7);
 	});
 });

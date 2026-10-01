@@ -17,6 +17,9 @@ test('styleguide renders every ported component group', async ({ page }) => {
 	await expect(page.getByRole('radiogroup', { name: 'Type' })).toBeVisible();
 	await expect(page.getByText('Technical skill training')).toBeVisible();
 	await expect(page.getByText('Chess & mental development')).toBeVisible();
+	// phase 8: the brand and media ports
+	await expect(page.getByRole('img', { name: /stroboscopic/i })).toBeVisible();
+	await expect(page.getByText('Rallies & games — green ball')).toBeVisible();
 });
 
 test('the portal is guarded at the server: anonymous users land on login with next', async ({

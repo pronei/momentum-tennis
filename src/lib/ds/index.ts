@@ -3,6 +3,9 @@
 // contracts: design-system/components/**/*.{jsx,d.ts}. Port values verbatim.
 export { BREAKPOINT, MOBILE_QUERY } from './breakpoint';
 
+export { default as StrobeArc } from './brand/StrobeArc.svelte';
+export { default as Wordmark } from './brand/Wordmark.svelte';
+
 export { default as Button } from './core/Button.svelte';
 export { default as Eyebrow } from './core/Eyebrow.svelte';
 export { default as FrameTicks } from './core/FrameTicks.svelte';
@@ -23,6 +26,8 @@ export { default as Pagination } from './feedback/Pagination.svelte';
 export { default as StatusChip } from './feedback/StatusChip.svelte';
 export { default as Tabs } from './feedback/Tabs.svelte';
 export { default as Toast } from './feedback/Toast.svelte';
+
+export { default as PhotoFrame } from './media/PhotoFrame.svelte';
 
 export { default as DataTable } from './admin/DataTable.svelte';
 
