@@ -18,10 +18,13 @@ import {
 	FrameTicks,
 	Pagination,
 	PhotoFrame,
+	ProgramCard,
 	ResourceDayView,
 	SegmentedControl,
 	Select,
 	SessionForm,
+	SiteNav,
+	SponsorStrip,
 	StatusChip,
 	StrobeArc,
 	Tabs,
@@ -470,5 +473,137 @@ describe('PhotoFrame — every photograph passes through it', () => {
 		expect(out.match(/mt-photo__slice--lead/g)).toHaveLength(1);
 		expect(out).toContain('aria-label="Rally"');
 		expect(frames(html(PhotoFrame, { src, treatment: 'slice', slices: 7 }))).toHaveLength(7);
+	});
+});
+
+describe('SiteNav — concise and hierarchical', () => {
+	const links = {
+		home: '/',
+		juniors: '/#programs',
+		camps: '/#camps',
+		adults: '/#programs',
+		jtt: '/#programs',
+		calendar: '/schedule',
+		store: '/store',
+		login: '/login',
+		book: '/login?next=/portal/book',
+		logoSrc: '/logo-mark.svg'
+	};
+	const nav = (props: Record<string, unknown> = {}) => html(SiteNav, { links, ...props });
+
+	it('is a header with the primary navigation and a home link', () => {
+		const out = nav();
+		expect(out).toContain('<header');
+		expect(out).toContain('aria-label="Primary"');
+		expect(out).toContain('aria-label="Momentum Tennis home"');
+		expect(out).toContain('src="/logo-mark.svg"');
+	});
+
+	it('Programs is a disclosure that opens without JavaScript and holds the four programs', () => {
+		const out = nav();
+		expect(out).toContain('<details');
+		expect(out).toContain('<summary');
+		for (const label of ['Classes', 'Team tennis', 'Private lessons', 'Summer camps'])
+			expect(out).toContain(label);
+		expect(out).toContain('href="/#camps"');
+	});
+
+	it('Calendar and Store are first-class, and the current one is marked', () => {
+		const out = nav({ active: 'store' });
+		expect(out).toMatch(/<a[^>]*href="\/store"[^>]*aria-current="page"/);
+		expect(out).not.toMatch(/<a[^>]*href="\/schedule"[^>]*aria-current="page"/);
+		expect(out).toContain('>Calendar<');
+	});
+
+	it('says Log in to a visitor and Account to a member', () => {
+		expect(nav()).toContain('Log in');
+		expect(nav()).not.toContain('>Account<');
+		expect(nav({ loggedIn: true })).toContain('Account');
+	});
+
+	it('carries the one book action, and the camp note under Summer camps', () => {
+		const out = nav({ campNote: 'RETURNS 2027' });
+		expect(out).toContain('Book a trial');
+		expect(out).toContain('href="/login?next=/portal/book"');
+		expect(out).toContain('RETURNS 2027');
+	});
+
+	it('ships the mobile sheet: the tri-colour button, the same links, the Book pill last', () => {
+		const out = nav();
+		expect(out).toMatch(/<button[^>]*aria-expanded="false"/);
+		expect(out).toContain('aria-label="Open menu"');
+		const sheet = out.slice(out.indexOf('role="dialog"'));
+		expect(sheet).toContain('aria-label="Site menu"');
+		for (const label of ['Classes', 'Calendar', 'Store', 'Log in']) expect(sheet).toContain(label);
+		expect(sheet.lastIndexOf('Book a free trial class')).toBeGreaterThan(
+			sheet.lastIndexOf('Log in')
+		);
+	});
+});
+
+describe('ProgramCard — the repeating unit of the programs', () => {
+	const card = {
+		eyebrow: 'Weekly',
+		title: 'Classes',
+		level: 'Orange → Yellow ball',
+		location: 'De Anza · Murdock Park',
+		schedule: [
+			{ days: 'Sat & Sun', time: '2h classes', detail: 'De Anza' },
+			{ days: 'Mon · Tue · Thu', time: '1.5h classes' }
+		],
+		note: 'Groups by ball level.',
+		ctaLabel: 'See class times',
+		ctaHref: '/schedule'
+	};
+
+	it('sets eyebrow, title, level and place in mono, the schedule rows and the note', () => {
+		const out = html(ProgramCard, card);
+		expect(out).toContain('<article');
+		expect(out).toContain('Weekly');
+		expect(out).toContain('Classes');
+		expect(out).toContain('LEVEL — Orange → Yellow ball');
+		expect(out).toContain('AT — De Anza · Murdock Park');
+		expect(out).toContain('Mon · Tue · Thu');
+		expect(out).toContain('1.5h classes');
+		expect(out).toContain('Groups by ball level.');
+	});
+
+	it('the action is secondary unless the card carries the view’s one primary', () => {
+		expect(html(ProgramCard, card)).toContain('mt-btn--secondary');
+		expect(html(ProgramCard, card)).toContain('href="/schedule"');
+		expect(html(ProgramCard, { ...card, primaryCta: true })).toContain('mt-btn--primary');
+	});
+
+	it('a photo header arrives washed by default', () => {
+		expect(html(ProgramCard, card)).not.toContain('<figure');
+		const out = html(ProgramCard, {
+			...card,
+			photo: '/photos/racquets-up-l.webp',
+			photoAlt: 'Racquets up'
+		});
+		expect(out).toContain('<figure');
+		expect(out).toContain('mt-photo__img--wash');
+		expect(out).toContain('alt="Racquets up"');
+	});
+});
+
+describe('SponsorStrip — the partners, quietly', () => {
+	const sponsors = [
+		{ name: 'USTA', src: '/sponsors/usta.svg' },
+		{ name: 'Babolat', src: '/sponsors/babolat.svg', href: 'https://www.babolat.com' }
+	];
+
+	it('is a labelled section with one named logo per partner', () => {
+		const out = html(SponsorStrip, { sponsors });
+		expect(out).toContain('aria-label="Partners"');
+		expect(out).toContain('Partners');
+		expect(out).toContain('alt="USTA"');
+		expect(out).toContain('alt="Babolat"');
+	});
+
+	it('links a partner only when given an address', () => {
+		const out = html(SponsorStrip, { sponsors });
+		expect(out.match(/<a /g)).toHaveLength(1);
+		expect(out).toContain('href="https://www.babolat.com"');
 	});
 });

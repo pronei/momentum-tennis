@@ -14,10 +14,13 @@
 		FrameTicks,
 		Pagination,
 		PhotoFrame,
+		ProgramCard,
 		ResourceDayView,
 		SegmentedControl,
 		Select,
 		SessionForm,
+		SiteNav,
+		SponsorStrip,
 		StatusChip,
 		StrobeArc,
 		Tabs,
@@ -258,6 +261,51 @@
 				caption="Wash treatment"
 			/>
 		</div>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Site — navigation, program card, partners</Eyebrow>
+		<SiteNav
+			active="store"
+			campNote="RETURNS 2027"
+			links={{
+				home: '/',
+				juniors: '/#programs',
+				camps: '/#camps',
+				adults: '/#programs',
+				jtt: '/#programs',
+				calendar: '/schedule',
+				store: '/store',
+				login: '/login',
+				book: '/login?next=/portal/book'
+			}}
+		/>
+		<div class="sg__grid">
+			<ProgramCard
+				eyebrow="Weekly"
+				title="Classes"
+				level="Orange → Yellow ball"
+				location="De Anza · Murdock Park"
+				photo="/photos/net-rally-l.webp"
+				photoAlt="Juniors rallying at the net"
+				photoFocal="50% 45%"
+				schedule={[
+					{ days: 'Sat & Sun', time: '2h classes', detail: 'De Anza' },
+					{ days: 'Mon · Tue · Thu', time: '1.5h classes', detail: 'Murdock' }
+				]}
+				note="Groups by ball level, juniors and adults."
+				ctaLabel="See class times"
+				ctaHref="/schedule"
+			/>
+		</div>
+		<SponsorStrip
+			sponsors={[
+				{ name: 'USTA', src: '/sponsors/usta.svg' },
+				{ name: 'Babolat', src: '/sponsors/babolat.svg' },
+				{ name: 'Dunlop', src: '/sponsors/dunlop.svg' },
+				{ name: 'UTR', src: '/sponsors/utr.webp' }
+			]}
+		/>
 	</section>
 
 	<section class="sg__block">

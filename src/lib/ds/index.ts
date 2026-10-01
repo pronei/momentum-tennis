@@ -36,3 +36,6 @@ export { default as SessionForm } from './schedule/SessionForm.svelte';
 
 export { default as CampTimeline } from './site/CampTimeline.svelte';
 export { default as ClassTimeline } from './site/ClassTimeline.svelte';
+export { default as ProgramCard } from './site/ProgramCard.svelte';
+export { default as SiteNav } from './site/SiteNav.svelte';
+export { default as SponsorStrip } from './site/SponsorStrip.svelte';
