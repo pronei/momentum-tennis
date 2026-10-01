@@ -14,6 +14,20 @@
 
 ## Opening questions (recommended default first)
 
+**Answered 2026-09-30 by the user.** 4, 6, 7, 8 and 9 as recommended. The rest, and what they change below:
+
+- **1 — roster:** Artur, Vishal, Tom and the others on the current staff page — Surya, Zach and Matthew. Elsio is dropped.
+- **2 — releases:** signed media releases exist for the minors, so the coaches' portraits and the photos on the current site may be published. Every content entry is `consented: true`; the field and the `published…()` filters stay, so withdrawing one is a one-word change.
+- **3 — sponsors:** vector logos where the sponsor publishes one; the current rasters otherwise.
+- **5 — copy:** edited for grammar and flow (typos, the mixed pronouns in Tom's bio, the exclamation points the design system bans), no new claims; still listed for Artur's review.
+
+Found while preparing the assets, and applied in Task 3:
+
+- The 2026-09-05 asset pull misnamed one portrait. On the staff page `1U0A3846` sits in the card holding **Zach's** bio (the site mis-titles that card "Coach Matthew: College Coach"), so `design-system/assets/coaches/surya.jpg` is Zach. Surya's portrait is a PNG (`blob-87f3858.png`) the pull skipped. All six coaches have portraits.
+- Eight of the photos carry GPS coordinates in their EXIF, Matthew's portrait among them. Everything published is re-encoded as WebP with no metadata (`cwebp` keeps none by default; every source is orientation 1), downscaled to 1600px on the long edge — the originals run to 11 MB.
+- The current site's own photographs (team, match and medal shots, 23 after removing duplicates) join the archive on `/photos`. Left out: Getty and GoDaddy stock images (licensed to that site only), the two AI-generated graphics, a Babolat studio advertisement, and one camps-page image of unknown origin.
+- `SiteNav` keeps the reference's `aria-label="Primary"`; the tests and e2e locate it by that name. The reference picks the desktop or mobile tree in JavaScript, which server rendering cannot do — the port renders both and lets CSS choose at 760px, as `DataTable` does. The Programs disclosure is a `<details>` (works without JavaScript); the mobile sheet needs JavaScript, as the reference's does.
+
 1. **Roster and titles.** From the current site: Artur Westergren (founder & director), Vishal (lead instructor), Tom Anderson (junior tennis expert), Surya, Zach, Matthew (college coach). Artur confirms; the website kit's *Elsio* line is dropped unless he says otherwise.
 2. **Minors on the coaches page.** No photo, name or bio of a coach under 18 ships without a signed media release and guardian consent; each entry carries `consented: boolean` and renders only when true. Non-negotiable.
 3. **Sponsor logos.** The four rasters in `design-system/assets/sponsors/` ship as placeholders in an ink/grayscale strip; vectors replace them when the sponsors' brand kits arrive (Artur asks). Yes.
