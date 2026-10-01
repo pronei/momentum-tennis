@@ -23,7 +23,7 @@ localized.
 | 5 | Payments — **built 2026-09-08** (`phase-5/payments`) | gateway port with a Stripe adapter and a simulated one chosen by `PAYMENTS_GATEWAY`; migration 0009 (catalogue seed, `create_order`, `settle_order`, `cancel_order`, `refund_order`); Stripe-shaped handlers over those RPCs, receipt email, public `/store`, portal checkout/purchases/receipts, `/admin/products` and `/admin/orders` with refund and cancel | 4 | met in code: a purchase issues credits through `issue_credits`, books a class and refunds an untouched pack, every movement an audited row. 379 unit/contract tests, 139 schema checks. Real Stripe (keys, ACH-first ordering, the bank-pay discount) and retiring the Payment Links are operator steps in `docs/OPERATIONS.md` §3a |
 | 6 | Ratings & coach tools | rating dimensions admin, coach entry UI, CourtMeter/RatingMeter surfaces, history | 1 | court placement drives the portal meter with accessible text values |
 | 7 | Notifications & lifecycle | workers/cron + shared-secret endpoint, class reminders, low-credit nudges, credit expiry rows, re-consent campaigns, newsletter + unsubscribe + preference center | 4 (5 for nudges) | overlapping cron runs cannot double-send; marketing/transactional fully separated |
-| 8 | Public site (added 2026-09-05; **runs right after 5**) | site group ports (SiteNav, ProgramCard, PhotoFrame, StrobeArc, Wordmark), home from the homepage template, `/coaches`, sponsors strip, gallery with PhotoSwipe (docs/decisions/2026-09-05-lightbox-library.md); plan: docs/superpowers/plans/2026-09-08-phase-8-public-site.md | none (5 for the store entry) | home, coaches and photos render anonymously in the design system; no photo of a minor without a signed media release |
+| 8 | Public site — **built 2026-09-30** (`phase-8/public-site`) | site group ports (`SiteNav`, `ProgramCard`, `PhotoFrame`, `StrobeArc`, `Wordmark`) plus `SponsorStrip` and `Lightbox`; the `(site)` group with home from the homepage template, `/coaches`, `/photos` (PhotoSwipe 5.4.4, pinned) and the moved `/schedule` and `/store`; content modules in `src/lib/content`; the camp banner reading phase-3 camp rows; no migration | none (5 for the store entry) | met in code: home, coaches and photos render anonymously in the design system; every person on the site passes a `consented` filter, and releases exist for the minors pictured (2026-09-30). 427 unit/contract tests, 20 e2e |
 
 Deferred (from design-system PRODUCT.md, schema-compatible, unscheduled):
 grip-sensor stats ingestion, leaderboard, hero film admin.
@@ -105,6 +105,23 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-09-30 — Phase 8 built (branch `phase-8/public-site`), no migration. The opening questions as
+  the user answered them: 1 the roster is the current staff page — Artur, Vishal, Tom, Surya, Zach,
+  Matthew; Elsio dropped. 2 signed media releases exist for the minors, so the coaches' portraits and
+  the site's photos publish; the `consented` flag and the `published…()` filters stay so that a
+  withdrawal is one word. 3 sponsor logos are each sponsor's own vector where one is published
+  (Babolat, Dunlop, USTA); UTR's current mark exists only as a raster, so the academy's UTR image
+  stays. 4, 6, 7, 8 and 9 as recommended. 5 copy edited for grammar and flow with no new claims —
+  typos, the exclamation points the system bans, and Tom's bio, which switched between "they" and
+  "he" and now uses neither. Found while building: the first asset pull misnamed a portrait (the staff
+  page's Zach photo was saved as `surya.jpg`; Surya's own portrait had been skipped); the photo
+  sources, and ten of the images the live site serves, carry GPS coordinates — every published copy
+  is re-encoded without metadata; the reference `SiteNav` shut its mobile sheet inside the 64px bar
+  (a `backdrop-filter` makes the header the containing block for fixed children) and could not fit
+  its phone bar at 375px — the port moves the blur behind the header and keeps the phone bar to
+  logo, Book pill and menu button, as PRODUCT.md §11 specifies; the camp banner reads camp rows as
+  seasons (one summer = every row of a year), since phase 3 stores weeks. PhotoSwipe adopted after
+  its gate passed; results in `docs/decisions/2026-09-05-lightbox-library.md`.
 - 2026-09-08 — Phase 5 built (branch `phase-5/payments`): migration 0009. The plan's eleven opening
   questions all stand as answered — 1–4 confirmed with the user on 2026-09-05, 5–11 as their stated
   defaults: member price = public price for now, camp and team-fee purchase deferred

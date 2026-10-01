@@ -5,8 +5,8 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phases 0–5 are built (foundations, identity & profiles, waivers, schedule & availability, booking &
-credits & attendance, payments); `deploy/dev` tracks `main` and deploys itself through
+Phases 0–5 and 8 are built (foundations, identity & profiles, waivers, schedule & availability,
+booking & credits & attendance, payments, public site); `deploy/dev` tracks `main` and deploys itself through
 `.github/workflows/deploy-dev.yml`. Migrations 0001–0009 are applied to the dev Supabase project
 (0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking, 0009 payments); the Supabase
 GitHub integration applies them on push to `deploy/dev`. The restricted minor login is deliberately NOT built —
@@ -18,11 +18,12 @@ key, and `pnpm env:check` refuses `fake` for the `prod` profile. Settlement and 
 A pack refunds in full only while nobody has drawn on it (plan question 2); a drawn-on pack is an
 `adjust` row plus a dashboard refund until Artur states a rule. Still his: refund wording and the
 tax stance (decision E), the bank-pay discount and ACH-first ordering (both wait on ACH), and
-retiring the interim Payment Links — `docs/OPERATIONS.md` §3a is the go-live path. Phases 6, 7 and 8
-are planned (`2026-09-08-phase-6-ratings.md`, `2026-09-08-phase-7-notifications.md`,
-`2026-09-08-phase-8-public-site.md`; phase 8 — coaches, sponsors, gallery — runs right after 5). Each
-plan opens with its questions and recommended defaults; the defaults stand until the user says
-otherwise.
+retiring the interim Payment Links — `docs/OPERATIONS.md` §3a is the go-live path. **The public site**
+(phase 8) is the `(site)` group: home from the homepage template, `/coaches`, `/photos`, `/schedule`,
+`/store`. PhotoSwipe 5.4.4, pinned exactly, is the one UI dependency the design system admits
+(`docs/decisions/2026-09-05-lightbox-library.md`). Phases 6 and 7 are planned
+(`2026-09-08-phase-6-ratings.md`, `2026-09-08-phase-7-notifications.md`); 6 is next. Each plan opens
+with its questions and recommended defaults; the defaults stand until the user says otherwise.
 `docs/HANDOFF-opus5.md` scopes the remaining phases and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
 
@@ -101,6 +102,12 @@ otherwise.
   `promote_waitlist_internal` in the same transaction, re-checking credits and the weekly cap per
   decision K. Occupancy is readable by families through `v_class_session_seats` and a position
   through `waitlist_position` — both expose counts, never identities.
+- **No photo or bio of a minor without a signed release.** People reach the public site only through
+  `src/lib/content` (`coaches.ts`, `photos.ts`), where every entry carries `consented`; pages read
+  `publishedCoaches()` / `publishedPhotos()` alone, so withdrawing consent is a one-word change and an
+  unconsented entry never reaches a page's payload. Releases exist for the minors pictured (the user,
+  2026-09-30). Every published image is re-encoded as WebP with no metadata — the archive's sources
+  carry GPS coordinates.
 - **Guardians pay, players consume.** Purchases attach to accounts; credits,
   bookings, waiver coverage, and ratings attach to named players. An adult player
   is a `self` guardianship — same shape, not a special case. Minority is derived
@@ -205,22 +212,27 @@ render; the schema is tested behaviorally in PGlite.
   marketing send, insert-first idempotency).
 - `src/lib/components/` — app composites built from `$lib/ds` and the design system's
   `ui_kits` references (`PlayerSwitcher`, `Card`), tested as SSR contracts.
-- `src/lib/ds/` — ported design system (`index.ts` barrel; `core/ forms/ feedback/
-  admin/ schedule/ site/`); `FieldShell.svelte` is the shared form anatomy.
+- `src/lib/ds/` — ported design system (`index.ts` barrel; `brand/ core/ forms/ feedback/
+  admin/ media/ schedule/ site/`); `FieldShell.svelte` is the shared form anatomy. `media/Lightbox`
+  loads PhotoSwipe and its stylesheet on mount, never statically — it is in the barrel.
   `/styleguide` renders everything; `email/` holds ported email templates (the kit's inline hex is
   the recorded tokens exception) and is deliberately not in the barrel. Admin lists sort and page
   through LINKS
   (`sortHref`/`pageHref`) and `ResourceDayView` takes `sessionHref`: the console works
   with JavaScript off, and only a `Dialog` confirm needs it.
-- `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `schedule` (public,
-  read-only), `(portal)/portal` (shell carrying the `?player=` context, overview,
+- `src/lib/content/` — what an admin console will own one day (PRODUCT.md §12): `site.ts` (stats,
+  contact), `coaches.ts`, `photos.ts`, `sponsors.ts`, `camps.ts` (`campWindow` over the phase-3 camp
+  rows). Its tests check every file it names exists under `static/` (`photos/`, `coaches/`,
+  `sponsors/`).
+- `src/routes/` — `(auth)` login/signup, `auth/callback`, `logout`, `(site)` (the public shell:
+  `SiteNav` + footer around home, `schedule/`, `store/`, `coaches/`, `photos/`), `(portal)/portal` (shell carrying the `?player=` context, overview,
   `schedule/` the family fortnight, `players/` roster + new + `[id]`, `waivers/` status
   + `[versionId]` signing, account form: the superforms pattern), `admin` (guarded
   shell, `schedule/` day grid + `new` + `[id]`, `availability/` + `[courtId]`,
   `classes/` + `[id]`, `camps/` + `[id]`, `teams/` + `[id]`, `waivers/`, `staff/`),
   `internal/cron`, `api/stripe/webhook` (the handlers run on the service-role client). Phase 4 adds
   `(portal)/portal/{book,bookings,credits}`, `coach/sessions` + `[id]` (the register), and
-  `admin/credits` (grants). Phase 5 adds public `store/`, `(portal)/portal/purchases` + `[id]`
+  `admin/credits` (grants). Phase 5 adds `(site)/store/`, `(portal)/portal/purchases` + `[id]`
   (the receipt) and `(portal)/portal/checkout/[orderId]` (the simulated gateway's page — a 404
   wherever `PAYMENTS_GATEWAY` is not `fake`), `admin/products` + `[id]`, `admin/orders` + `[id]`.
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
