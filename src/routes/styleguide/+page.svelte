@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { asset } from '$app/paths';
 	import {
 		Banner,
 		Button,
@@ -12,6 +13,7 @@
 		Eyebrow,
 		FormSection,
 		FrameTicks,
+		Lightbox,
 		Pagination,
 		PhotoFrame,
 		ProgramCard,
@@ -261,6 +263,35 @@
 				caption="Wash treatment"
 			/>
 		</div>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Media — lightbox</Eyebrow>
+		<p class="sg__note">Open a photo: text controls, no icons; Escape closes and focus returns.</p>
+		<Lightbox>
+			<div class="sg__grid">
+				<a
+					href={asset('/photos/racquets-up-l.webp')}
+					data-pswp-width="1600"
+					data-pswp-height="1200"
+				>
+					<PhotoFrame
+						src="/photos/racquets-up-l.webp"
+						alt="Juniors raising their racquets on court"
+						ratio="4:3"
+						caption="Lightbox specimen"
+					/>
+				</a>
+				<a href={asset('/photos/team-sky-p.webp')} data-pswp-width="1200" data-pswp-height="1600">
+					<PhotoFrame
+						src="/photos/team-sky-p.webp"
+						alt="A junior team lined up on court under a cloudy sky"
+						ratio="4:3"
+						focal="50% 60%"
+					/>
+				</a>
+			</div>
+		</Lightbox>
 	</section>
 
 	<section class="sg__block">

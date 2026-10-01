@@ -27,6 +27,7 @@ export { default as StatusChip } from './feedback/StatusChip.svelte';
 export { default as Tabs } from './feedback/Tabs.svelte';
 export { default as Toast } from './feedback/Toast.svelte';
 
+export { default as Lightbox } from './media/Lightbox.svelte';
 export { default as PhotoFrame } from './media/PhotoFrame.svelte';
 
 export { default as DataTable } from './admin/DataTable.svelte';

@@ -170,6 +170,7 @@
 			<div class="wrap">
 				<div class="photos__head">
 					<Eyebrow ticks><span id="photos-head">On court</span></Eyebrow>
+					<a class="photos__more" href={resolve('/(site)/photos')}>More photos →</a>
 				</div>
 				<ul class="photos__row">
 					{#each row as p (p.src)}
@@ -517,6 +518,23 @@
 		gap: var(--space-4);
 		margin-bottom: var(--space-5);
 	}
+	.photos__more {
+		display: inline-flex;
+		align-items: center;
+		min-height: var(--size-action);
+		font-family: var(--font-sans);
+		font-size: var(--size-label);
+		font-weight: var(--weight-bold);
+		letter-spacing: var(--track-label);
+		text-transform: uppercase;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.photos__more:hover {
+		text-decoration: underline;
+		text-underline-offset: var(--space-2);
+		text-decoration-color: var(--court-500);
+	}
 	.photos__row {
 		list-style: none;
 		margin: 0;
@@ -808,6 +826,23 @@
 		}
 		.photos {
 			padding-top: var(--space-8);
+		}
+		.photos__more {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--size-action);
+			font-family: var(--font-sans);
+			font-size: var(--size-label);
+			font-weight: var(--weight-bold);
+			letter-spacing: var(--track-label);
+			text-transform: uppercase;
+			color: var(--ink);
+			text-decoration: none;
+		}
+		.photos__more:hover {
+			text-decoration: underline;
+			text-underline-offset: var(--space-2);
+			text-decoration-color: var(--court-500);
 		}
 		.photos__row {
 			grid-template-columns: repeat(3, 1fr);

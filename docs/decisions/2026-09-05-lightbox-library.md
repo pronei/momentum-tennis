@@ -1,6 +1,6 @@
 # Lightbox for site photos — PhotoSwipe, pending confirmation
 
-**Status:** proposed 2026-09-05 — nothing is installed in the repo. Adoption happens in the public-site phase, behind the gate at the end of this note.
+**Status:** adopted 2026-09-30 in the public-site phase (phase 8), after the gate at the end of this note passed — results below. Proposed 2026-09-05.
 
 **Question.** The public site will show photos (coaches, courts, the archive) in a lightbox. Candidates named: PhotoSwipe and GLightbox. The design system's laws that a third-party UI must obey (design-system/readme.md): tokens only; one radius (the 48px action pill), everything else square; flat, no shadows; Chivo / IBM Plex Sans / IBM Plex Mono only; **no icons**; `prefers-reduced-motion` honoured; 44px targets; meaning never in colour alone.
 
@@ -22,3 +22,8 @@
 **Cost accepted.** One override for the error message's text-shadow; the text controls registered by us (with 44px hit areas); the dynamic import so the public bundle pays nothing until a photo is opened.
 
 **Gate before adoption (in the phase that ships the gallery).** (1) A `/styleguide` specimen opens a PhotoFrame in the lightbox with mono text controls and no default icons. (2) The override stylesheet lives under `src/lib/ds` and `scripts/check-adherence.mjs` passes. (3) `prefers-reduced-motion: reduce` opens with `showHideAnimationType: 'none'` and `--pswp-transition-duration: 0ms`. (4) Keyboard: Esc closes, arrows move, focus returns to the opener. (5) The dependency is recorded in design-system/readme.md next to the icon rule, as the calendar decision required.
+
+**Gate results (2026-09-30, photoswipe 5.4.4 pinned exactly).**
+(1) `/styleguide` has a "Media — lightbox" specimen; the gallery opens with PREV, NEXT and CLOSE as text buttons and no `<svg>` in any control (`e2e/site.test.ts`). (2) `src/lib/ds/media/lightbox.css` holds the overrides; `scripts/check-adherence.mjs` passes. (3) Under `prefers-reduced-motion: reduce` the viewer opens with `showHideAnimationType: 'none'` and `--pswp-transition-duration: 0ms`, asserted in e2e. (4) ArrowRight moves to the next photo and Escape closes; opened from the keyboard, focus moves into the viewer and returns to the photo on close (e2e). (5) Recorded in design-system/readme.md beside the icon rule.
+
+Corrections to the survey above, found while building: the one `text-shadow` the 5.4.4 sheet ships is on the counter, not the error message; the root has `role="dialog"` but no `aria-modal` and no name, so the wrapper adds both on `uiRegister`; the loading indicator is an SVG spinner and is hidden in CSS (the `preloader` option exists at runtime but not in the types); PhotoSwipe binds its keys only when the opening animation ends, and after a mouse open it leaves focus where it was and so has none to return — the keyboard path, which is the one that needs it, moves and returns focus.

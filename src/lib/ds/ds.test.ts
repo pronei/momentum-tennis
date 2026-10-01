@@ -16,6 +16,7 @@ import {
 	Eyebrow,
 	FormSection,
 	FrameTicks,
+	Lightbox,
 	Pagination,
 	PhotoFrame,
 	ProgramCard,
@@ -605,5 +606,18 @@ describe('SponsorStrip — the partners, quietly', () => {
 		const out = html(SponsorStrip, { sponsors });
 		expect(out.match(/<a /g)).toHaveLength(1);
 		expect(out).toContain('href="https://www.babolat.com"');
+	});
+});
+
+describe('Lightbox — a gallery of PhotoFrame anchors, PhotoSwipe only once opened', () => {
+	it('renders its children and nothing of PhotoSwipe on the server', () => {
+		const children = createRawSnippet(() => ({
+			render: () => '<a href="/photos/a.webp" data-pswp-width="1600" data-pswp-height="1200">A</a>'
+		}));
+		const out = html(Lightbox, { children });
+		expect(out).toContain('data-pswp-width="1600"');
+		expect(out).toContain('mt-lightbox');
+		expect(out).not.toContain('pswp__');
+		expect(out).not.toContain('role="dialog"');
 	});
 });
