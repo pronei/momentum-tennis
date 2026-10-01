@@ -129,3 +129,12 @@ test('the store is readable without an account, and asks anonymous visitors to l
 	await expect(action).toBeVisible();
 	await expect(action).toHaveAttribute('href', '/login?next=/store');
 });
+
+test('the coaches page is public: six profiles, the founder first', async ({ page }) => {
+	await page.goto('/coaches');
+	await expect(page.getByRole('heading', { name: 'Coaches', level: 1 })).toBeVisible();
+	const names = page.getByRole('article').getByRole('heading', { level: 2 });
+	await expect(names).toHaveCount(6);
+	await expect(names.first()).toHaveText('Artur Westergren');
+	await expect(page.getByRole('img', { name: 'Portrait of Coach Artur Westergren' })).toBeVisible();
+});

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import {
 		Button,
 		ClassTimeline,
@@ -234,10 +235,10 @@
 				</div>
 			</div>
 			<div class="coaches-line">
-				<span class="coaches-line__text"
+				<a class="coaches-line__text" href={resolve('/(site)/coaches')}
 					>COACHES — {coaches
 						.map((c) => `${c.name.toUpperCase()} (${c.role.toUpperCase()})`)
-						.join(' · ')}</span
+						.join(' · ')} →</a
 				>
 				<Button variant="secondary" size="sm" href="/schedule">JTT match schedule</Button>
 			</div>
@@ -678,6 +679,10 @@
 		color: var(--text-secondary);
 		text-decoration: none;
 		flex: 1 1 30rem;
+	}
+	.coaches-line__text:hover {
+		color: var(--link);
+		text-decoration: underline;
 	}
 	.partners {
 		margin-top: var(--space-7);

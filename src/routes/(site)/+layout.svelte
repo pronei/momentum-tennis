@@ -37,6 +37,7 @@
 			<a href="{resolve('/(site)')}#programs">Classes</a>
 			<a href="{resolve('/(site)')}#programs">Team tennis</a>
 			<a href="{resolve('/(site)')}#camps">Camps</a>
+			<a href={resolve('/(site)/coaches')}>Coaches</a>
 			<a href="{resolve('/(site)')}#performance">Performance</a>
 			<a href="{resolve('/(site)')}#book">Contact</a>
 		</nav>
