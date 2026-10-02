@@ -24,6 +24,7 @@ localized.
 | 6 | Ratings & coach tools | rating dimensions admin, coach entry UI, CourtMeter/RatingMeter surfaces, history | 1 | court placement drives the portal meter with accessible text values |
 | 7 | Notifications & lifecycle | workers/cron + shared-secret endpoint, class reminders, low-credit nudges, credit expiry rows, re-consent campaigns, newsletter + unsubscribe + preference center | 4 (5 for nudges) | overlapping cron runs cannot double-send; marketing/transactional fully separated |
 | 8 | Public site — **built 2026-09-30** (`phase-8/public-site`) | site group ports (`SiteNav`, `ProgramCard`, `PhotoFrame`, `StrobeArc`, `Wordmark`) plus `SponsorStrip` and `Lightbox`; the `(site)` group with home from the homepage template, `/coaches`, `/photos` (PhotoSwipe 5.4.4, pinned) and the moved `/schedule` and `/store`; content modules in `src/lib/content`; the camp banner reading phase-3 camp rows; no migration | none (5 for the store entry) | met in code: home, coaches and photos render anonymously in the design system; every person on the site passes a `consented` filter, and releases exist for the minors pictured (2026-09-30). 427 unit/contract tests, 20 e2e |
+| 9 | Sign in with Google — planned 2026-10-01, runs before 6 (`2026-10-01-phase-9-google-sign-in.md`) | "Continue with Google" on login and signup through Supabase Auth, started by a server-side form post (PKCE); migration 0010 — a new account takes the name its sign-up knows, Google's or the one typed at email sign-up; the login page explains a failed link or an unfinished Google sign-in; Google's button artwork as a recorded design-system exception | 1 | on dev a family signs up and logs in with Google and the account starts with their name; email sign-up keeps working; the flow needs no JavaScript |
 
 Deferred (from design-system PRODUCT.md, schema-compatible, unscheduled):
 grip-sensor stats ingestion, leaderboard, hero film admin.
@@ -105,6 +106,17 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-10-01 — Phase 9 planned (`docs/superpowers/plans/2026-10-01-phase-9-google-sign-in.md`): sign
+  up and log in with Google, run before phases 6 and 7, whose plans now name harness sections 17 and
+  18. Answered with the user: Google only — Apple adds a $99 yearly fee, a client secret to renew
+  every six months and private relay addresses, and can follow if families ask; Google's official
+  button artwork, the one third-party mark the design system admits in an action, because Google's
+  rules require its G and lettering; built now, because it needs no email. Defaults standing: email
+  and password stay; Supabase links identities by verified email; default scopes only; the dev
+  consent screen stays in Google's Testing status, and the custom auth domain and brand verification
+  (privacy policy from legal) wait for launch; no new path for minors (question O stays open). Found
+  while planning: 0001's trigger copies only the email, so every account — email sign-ups included —
+  begins nameless; 0010 gives new accounts the name their sign-up knows.
 - 2026-09-30 — Phase 8 built (branch `phase-8/public-site`), no migration. The opening questions as
   the user answered them: 1 the roster is the current staff page — Artur, Vishal, Tom, Surya, Zach,
   Matthew; Elsio dropped. 2 signed media releases exist for the minors, so the coaches' portraits and

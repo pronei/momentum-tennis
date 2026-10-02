@@ -21,8 +21,9 @@ tax stance (decision E), the bank-pay discount and ACH-first ordering (both wait
 retiring the interim Payment Links — `docs/OPERATIONS.md` §3a is the go-live path. **The public site**
 (phase 8) is the `(site)` group: home from the homepage template, `/coaches`, `/photos`, `/schedule`,
 `/store`. PhotoSwipe 5.4.4, pinned exactly, is the one UI dependency the design system admits
-(`docs/decisions/2026-09-05-lightbox-library.md`). Phases 6 and 7 are planned
-(`2026-09-08-phase-6-ratings.md`, `2026-09-08-phase-7-notifications.md`); 6 is next. Each plan opens
+(`docs/decisions/2026-09-05-lightbox-library.md`). Phases 9, 6 and 7 are planned, in that order
+(`2026-10-01-phase-9-google-sign-in.md`, `2026-09-08-phase-6-ratings.md`,
+`2026-09-08-phase-7-notifications.md`); 9 — Sign in with Google — is next. Each plan opens
 with its questions and recommended defaults; the defaults stand until the user says otherwise.
 `docs/HANDOFF-opus5.md` scopes the remaining phases and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.

@@ -8,7 +8,7 @@
 
 **Tech Stack:** No new dependencies (`resend@6` is installed). SvelteKit 2 / Svelte 5, zod4, Supabase, PGlite harness, vitest, Playwright.
 
-**Branch:** `phase-7/notifications` from `main`. **Migration:** `0011_notifications.sql`. **Harness:** section 17.
+**Branch:** `phase-7/notifications` from `main`. **Migration:** `0011_notifications.sql`. **Harness:** section 18.
 
 ---
 
@@ -27,7 +27,7 @@
 
 ## File structure
 
-**Migration & harness** — create `supabase/migrations/0011_notifications.sql`; modify `supabase/tests/validate.mjs` (section 17); regenerate types.
+**Migration & harness** — create `supabase/migrations/0011_notifications.sql`; modify `supabase/tests/validate.mjs` (section 18); regenerate types.
 
 **Config** — modify `src/lib/server/config.ts` (+ test): `MAILING_ADDRESS` optional non-secret; `wrangler.toml` vars; `.env.example`; `config/*.yaml`; `scripts/check-env.mjs` reports it as "not configured yet" when blank.
 
@@ -41,14 +41,14 @@
 
 ---
 
-### Task 1: Migration 0011 and harness §17
+### Task 1: Migration 0011 and harness §18
 
 **Files:** Create `supabase/migrations/0011_notifications.sql`; modify `supabase/tests/validate.mjs`.
 
 - [ ] **Step 1: Failing harness section** (RED until the migration exists; `PARENT`, `PARENT2`, `ADMIN`, `v2`, `term`, `loc`, `monday`, `D` in scope):
 
 ```js
-console.log('17. notifications — read models, dedupe, consent (0011)');
+console.log('18. notifications — read models, dedupe, consent (0011)');
 
 // (a) a booked class within 24 hours appears once per guardian; a cancelled booking does not
 await asUser(ADMIN);
@@ -140,7 +140,7 @@ await expectOk('an admin can', () => q(`insert into newsletter_issues (subject, 
 await db.exec('reset role');
 ```
 
-- [ ] **Step 2: Run** `pnpm db:test` → section 17 fails on the first missing view.
+- [ ] **Step 2: Run** `pnpm db:test` → section 18 fails on the first missing view.
 - [ ] **Step 3: Write the migration.**
 
 ```sql
@@ -240,7 +240,7 @@ grant  execute on function public.unsubscribe_by_token(uuid) to anon, authentica
 ```
 
   Check the column names of `v_player_waiver_status` in 0001/0004 before writing (c) — the names above (`document_id`, `title`, `current_version_id`, `current_version`, `published_at`, `required_for_participation`, `satisfied`) must match what the view exposes; adjust the select, never the view. `audit_row` must tolerate this table (it keys `entity_id` on `id`).
-- [ ] **Step 4: Run** `pnpm db:test` → `ALL CHECKS PASSED` (section 17, about 14 checks). **Step 5:** `pnpm db:types`, commit — `git commit -m "feat(db): 0011 notifications — reminder, low-credit, re-consent and marketing read models; unsubscribe token; newsletter issues; harness §17"`
+- [ ] **Step 4: Run** `pnpm db:test` → `ALL CHECKS PASSED` (section 18, about 14 checks). **Step 5:** `pnpm db:types`, commit — `git commit -m "feat(db): 0011 notifications — reminder, low-credit, re-consent and marketing read models; unsubscribe token; newsletter issues; harness §18"`
 
 ### Task 2: Config — `MAILING_ADDRESS`; the mailer selector
 
@@ -306,7 +306,7 @@ grant  execute on function public.unsubscribe_by_token(uuid) to anon, authentica
 
 ## Self-review
 
-**Spec coverage.** Brief task 1 (0011 read models, harness §17) → Task 1, with two more read models the jobs need (`v_reconsent_needed`, `v_marketing_recipients`) and the token/RPC the unsubscribe page needs. Task 2 (jobs in `cron.ts`) → Task 4. Task 3 (Resend adapter, templates) → Tasks 2–3 (the adapter exists; the selector is new). Task 4 (preferences, unsubscribe) → Task 5, plus the admin newsletter the PLAN row requires → Task 6. Task 5 (deploy the cron worker) → Task 7. PLAN exit "overlapping cron runs cannot double-send" is §17 (d) plus every job test's second-run assertion; "marketing and transactional fully separated" is `send.ts`'s types plus `v_marketing_recipients` being the only source of newsletter addresses.
+**Spec coverage.** Brief task 1 (0011 read models, harness §18) → Task 1, with two more read models the jobs need (`v_reconsent_needed`, `v_marketing_recipients`) and the token/RPC the unsubscribe page needs. Task 2 (jobs in `cron.ts`) → Task 4. Task 3 (Resend adapter, templates) → Tasks 2–3 (the adapter exists; the selector is new). Task 4 (preferences, unsubscribe) → Task 5, plus the admin newsletter the PLAN row requires → Task 6. Task 5 (deploy the cron worker) → Task 7. PLAN exit "overlapping cron runs cannot double-send" is §18 (d) plus every job test's second-run assertion; "marketing and transactional fully separated" is `send.ts`'s types plus `v_marketing_recipients` being the only source of newsletter addresses.
 
 **Placeholders.** The legal copy is a marked placeholder by rule, not by omission; `v_player_waiver_status` column names are flagged for verification against 0001/0004 rather than guessed silently.
 

@@ -122,10 +122,17 @@ the barrel, `resolve('/(site)')` and `asset()` for links.
 
 ## 3. The remaining phases, in order
 
-1. **Phase 6 — ratings** (`2026-09-08-phase-6-ratings.md`): no migration; harness §16 pins the 0001
+1. **Phase 9 — Sign in with Google** (`2026-10-01-phase-9-google-sign-in.md`), first because it
+   needs no email: 0010 gives a new account the name its sign-up already knows (harness §16);
+   `/auth/google` starts Supabase's Google flow from a form, so it works without JavaScript; the login
+   page explains a failed link or an unfinished Google sign-in; Google's button artwork is the
+   recorded design-system exception. Operator: a Google Cloud OAuth client, the Google provider
+   enabled in Supabase with its id and secret, `<site>/auth/callback**` in the redirect URLs — before
+   the merge, or the button meets Supabase's "provider is not enabled".
+2. **Phase 6 — ratings** (`2026-09-08-phase-6-ratings.md`): no migration; harness §17 pins the 0001
    policies; `ratings.ts`; RatingMeter and CourtMeter ports; coach entry, admin dimensions, the
    portal meter with its 30-day pin. Operator: nothing.
-2. **Phase 7 — notifications** (`2026-09-08-phase-7-notifications.md`): 0011 read models, the
+3. **Phase 7 — notifications** (`2026-09-08-phase-7-notifications.md`): 0011 read models, the
    unsubscribe token and RPC, `newsletter_issues`; the job registry; four email ports; preferences,
    unsubscribe, admin newsletter; the cron worker deployed. Operator: Resend domain and key,
    `CRON_SHARED_SECRET` on both sides, `MAILING_ADDRESS`, legal copy for consent and unsubscribe.
