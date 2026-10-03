@@ -3,7 +3,8 @@
 
 	/* Internal: the shared form anatomy — tracked-caps label, mono help, dual-channel error
 	   (--state-error + mono ERROR: line, role=alert) — with aria-describedby wiring handed to
-	   the control via the snippet parameter. Not exported from the barrel. */
+	   the control via the snippet parameter. Exported from the barrel for app composites
+	   (src/lib/components) that add a control the system lacks. */
 	let {
 		id,
 		label,

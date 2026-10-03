@@ -14,6 +14,8 @@
 		href?: string;
 		disabled?: boolean;
 		type?: 'button' | 'submit';
+		/** Submit to another action than the form's (a second submit in the same form) */
+		formaction?: string;
 		children: Snippet;
 	} & HTMLAttributes<HTMLElement>;
 

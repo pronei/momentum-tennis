@@ -48,6 +48,8 @@ test('the portal is guarded at the server: anonymous users land on login with ne
 	await page.goto('/portal/account');
 	await expect(page).toHaveURL(/\/login\?next=%2Fportal%2Faccount/);
 	await expect(page.getByLabel('Email')).toBeVisible();
+	// phase 10: the scorecard composites
+	await expect(page.getByLabel('Momentum player')).toBeVisible();
 });
 
 test('admin is refused, not hidden, for anonymous users', async ({ page }) => {

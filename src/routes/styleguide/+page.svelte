@@ -32,6 +32,8 @@
 		Toast,
 		Wordmark
 	} from '$lib/ds';
+	import NameField from '$lib/components/NameField.svelte';
+	import ScoreField from '$lib/components/ScoreField.svelte';
 
 	let dialogOpen = $state(false);
 	let toastOpen = $state(false);
@@ -347,6 +349,20 @@
 	<section class="sg__block">
 		<Eyebrow>Site — camp day</Eyebrow>
 		<div class="sg__stack"><CampTimeline /></div>
+	</section>
+
+	<section class="sg__block">
+		<Eyebrow>Composites — scorecard fields</Eyebrow>
+		<div class="sg__grid">
+			<NameField
+				label="Momentum player"
+				name="demo_home1"
+				suggestions={['Ada Lovelace', 'Grace Hopper', 'Alan Turing']}
+				help="TYPE A NAME · THE ROSTER SUGGESTS"
+			/>
+			<ScoreField label="Home" name="demo_hg" value="6" />
+			<ScoreField label="Away" name="demo_ag" value="4" error="0 to 7" />
+		</div>
 	</section>
 </main>
 
