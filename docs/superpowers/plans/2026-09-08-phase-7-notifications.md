@@ -8,7 +8,7 @@
 
 **Tech Stack:** No new dependencies (`resend@6` is installed). SvelteKit 2 / Svelte 5, zod4, Supabase, PGlite harness, vitest, Playwright.
 
-**Branch:** `phase-7/notifications` from `main`. **Migration:** `0011_notifications.sql`. **Harness:** section 18.
+**Branch:** `phase-7/notifications` from `main`. **Migration:** `0012_notifications.sql`. **Harness:** section 19.
 
 ---
 
@@ -27,7 +27,7 @@
 
 ## File structure
 
-**Migration & harness** — create `supabase/migrations/0011_notifications.sql`; modify `supabase/tests/validate.mjs` (section 18); regenerate types.
+**Migration & harness** — create `supabase/migrations/0012_notifications.sql`; modify `supabase/tests/validate.mjs` (section 19); regenerate types.
 
 **Config** — modify `src/lib/server/config.ts` (+ test): `MAILING_ADDRESS` optional non-secret; `wrangler.toml` vars; `.env.example`; `config/*.yaml`; `scripts/check-env.mjs` reports it as "not configured yet" when blank.
 
@@ -41,14 +41,14 @@
 
 ---
 
-### Task 1: Migration 0011 and harness §18
+### Task 1: Migration 0012 and harness §19
 
-**Files:** Create `supabase/migrations/0011_notifications.sql`; modify `supabase/tests/validate.mjs`.
+**Files:** Create `supabase/migrations/0012_notifications.sql`; modify `supabase/tests/validate.mjs`.
 
 - [ ] **Step 1: Failing harness section** (RED until the migration exists; `PARENT`, `PARENT2`, `ADMIN`, `v2`, `term`, `loc`, `monday`, `D` in scope):
 
 ```js
-console.log('18. notifications — read models, dedupe, consent (0011)');
+console.log('19. notifications — read models, dedupe, consent (0012)');
 
 // (a) a booked class within 24 hours appears once per guardian; a cancelled booking does not
 await asUser(ADMIN);
@@ -140,12 +140,12 @@ await expectOk('an admin can', () => q(`insert into newsletter_issues (subject, 
 await db.exec('reset role');
 ```
 
-- [ ] **Step 2: Run** `pnpm db:test` → section 18 fails on the first missing view.
+- [ ] **Step 2: Run** `pnpm db:test` → section 19 fails on the first missing view.
 - [ ] **Step 3: Write the migration.**
 
 ```sql
 -- ═══════════════════════════════════════════════════════════════════════════
--- Momentum Tennis — 0011: notifications & lifecycle (phase 7)
+-- Momentum Tennis — 0012: notifications & lifecycle (phase 7)
 --
 -- 0001 holds the mechanism — notification_sends dedupes on trigger_key,
 -- marketing_consents is the consent fact, expire_credits and finalize_bookings
@@ -240,7 +240,7 @@ grant  execute on function public.unsubscribe_by_token(uuid) to anon, authentica
 ```
 
   Check the column names of `v_player_waiver_status` in 0001/0004 before writing (c) — the names above (`document_id`, `title`, `current_version_id`, `current_version`, `published_at`, `required_for_participation`, `satisfied`) must match what the view exposes; adjust the select, never the view. `audit_row` must tolerate this table (it keys `entity_id` on `id`).
-- [ ] **Step 4: Run** `pnpm db:test` → `ALL CHECKS PASSED` (section 18, about 14 checks). **Step 5:** `pnpm db:types`, commit — `git commit -m "feat(db): 0011 notifications — reminder, low-credit, re-consent and marketing read models; unsubscribe token; newsletter issues; harness §18"`
+- [ ] **Step 4: Run** `pnpm db:test` → `ALL CHECKS PASSED` (section 19, about 14 checks). **Step 5:** `pnpm db:types`, commit — `git commit -m "feat(db): 0012 notifications — reminder, low-credit, re-consent and marketing read models; unsubscribe token; newsletter issues; harness §19"`
 
 ### Task 2: Config — `MAILING_ADDRESS`; the mailer selector
 
@@ -300,13 +300,13 @@ grant  execute on function public.unsubscribe_by_token(uuid) to anon, authentica
 - [ ] **Step 1:** Credentialed spec: log in → `/portal/preferences` opt in → `/admin/newsletter` new issue → send → the console mailer on dev prints (assert the page's `SENT · n`) → `/unsubscribe/<token>` (the token read from the preferences page) → `UNSUBSCRIBED`.
 - [ ] **Step 2: Operator (documented, not run):** `pnpm cf secret put CRON_SHARED_SECRET --env dev` on the app **and** `--config workers/cron/wrangler.toml` on the worker; `pnpm cf deploy --env dev --config workers/cron/wrangler.toml`; `RESEND_API_KEY` after domain verification; `MAILING_ADDRESS` in `wrangler.toml` vars once Artur supplies it; the legal copy for consent/unsubscribe.
 - [ ] **Step 3: Gates** — `pnpm env:check` · `pnpm check` · `pnpm lint` · `pnpm test` · `pnpm db:test` · `pnpm db:types` no diff · `pnpm build:dev`.
-- [ ] **Step 4: Records and finish** — PLAN.md row and decisions (questions 1–8), AGENTS.md, OPERATIONS §5/§7, the checklist; merge, fast-forward `deploy/dev`, push, confirm 0011 on dev, report, **stop**.
+- [ ] **Step 4: Records and finish** — PLAN.md row and decisions (questions 1–8), AGENTS.md, OPERATIONS §5/§7, the checklist; merge, fast-forward `deploy/dev`, push, confirm 0012 on dev, report, **stop**.
 
 ---
 
 ## Self-review
 
-**Spec coverage.** Brief task 1 (0011 read models, harness §18) → Task 1, with two more read models the jobs need (`v_reconsent_needed`, `v_marketing_recipients`) and the token/RPC the unsubscribe page needs. Task 2 (jobs in `cron.ts`) → Task 4. Task 3 (Resend adapter, templates) → Tasks 2–3 (the adapter exists; the selector is new). Task 4 (preferences, unsubscribe) → Task 5, plus the admin newsletter the PLAN row requires → Task 6. Task 5 (deploy the cron worker) → Task 7. PLAN exit "overlapping cron runs cannot double-send" is §18 (d) plus every job test's second-run assertion; "marketing and transactional fully separated" is `send.ts`'s types plus `v_marketing_recipients` being the only source of newsletter addresses.
+**Spec coverage.** Brief task 1 (0012 read models, harness §19) → Task 1, with two more read models the jobs need (`v_reconsent_needed`, `v_marketing_recipients`) and the token/RPC the unsubscribe page needs. Task 2 (jobs in `cron.ts`) → Task 4. Task 3 (Resend adapter, templates) → Tasks 2–3 (the adapter exists; the selector is new). Task 4 (preferences, unsubscribe) → Task 5, plus the admin newsletter the PLAN row requires → Task 6. Task 5 (deploy the cron worker) → Task 7. PLAN exit "overlapping cron runs cannot double-send" is §19 (d) plus every job test's second-run assertion; "marketing and transactional fully separated" is `send.ts`'s types plus `v_marketing_recipients` being the only source of newsletter addresses.
 
 **Placeholders.** The legal copy is a marked placeholder by rule, not by omission; `v_player_waiver_status` column names are flagged for verification against 0001/0004 rather than guessed silently.
 

@@ -4,11 +4,11 @@
 
 **Goal:** A family creates an account or logs in with "Continue with Google" on the login and signup pages — without JavaScript — and the account starts with their name; email and password keep working.
 
-**Architecture:** Supabase Auth does the OAuth. The Google client id and secret live in the Supabase dashboard, so the app holds no new secret. A form POST to `/auth/google` asks Supabase for Google's consent URL on the server (`signInWithOAuth`); `@supabase/ssr` runs the PKCE flow and stores the code verifier in a cookie on that response, and the existing `/auth/callback` already exchanges the returned code for a session. Migration 0010 makes a new account take the name its sign-up already knows — Google's `full_name` / `name`, or the name typed at email sign-up, both of which 0001's trigger drops today. The button is Google's own artwork, a recorded design-system exception.
+**Architecture:** Supabase Auth does the OAuth. The Google client id and secret live in the Supabase dashboard, so the app holds no new secret. A form POST to `/auth/google` asks Supabase for Google's consent URL on the server (`signInWithOAuth`); `@supabase/ssr` runs the PKCE flow and stores the code verifier in a cookie on that response, and the existing `/auth/callback` already exchanges the returned code for a session. Migration 0011 makes a new account take the name its sign-up already knows — Google's `full_name` / `name`, or the name typed at email sign-up, both of which 0001's trigger drops today. The button is Google's own artwork, a recorded design-system exception.
 
 **Tech Stack:** No new dependencies. Supabase Auth (Google provider), `@supabase/ssr` PKCE, a SvelteKit `+server.ts` POST endpoint, vitest, the PGlite harness, Playwright.
 
-**Branch:** `phase-9/google-sign-in` from `main`. **Migration:** `0010_account_name.sql`. **Harness:** section 16. Phase 9 runs before phases 6 and 7, so their plans now say harness sections 17 and 18 (renumbered 2026-10-01).
+**Branch:** `phase-9/google-sign-in` from `main`. **Migration:** `0011_account_name.sql`. **Harness:** section 17. Phase 9 runs before phases 6 and 7, so their plans now say harness sections 18 and 19 (renumbered 2026-10-02, after phase 10 — scorecards — took 0011 and section 17).
 
 ---
 
@@ -35,8 +35,8 @@
 ## File structure
 
 **Migration & harness**
-- Create `supabase/migrations/0010_account_name.sql` — `handle_new_auth_user()` copies the name.
-- Modify `supabase/tests/validate.mjs` — the `auth.users` stub gains `raw_user_meta_data jsonb` (as Supabase's has); section 16.
+- Create `supabase/migrations/0011_account_name.sql` — `handle_new_auth_user()` copies the name.
+- Modify `supabase/tests/validate.mjs` — the `auth.users` stub gains `raw_user_meta_data jsonb` (as Supabase's has); section 17.
 - Modify `scripts/gen-db-types.mjs` — the same stub column, so the two stubs stay one shape.
 
 **Server**
@@ -58,9 +58,9 @@
 
 ---
 
-### Task 1: Migration 0010 and harness §16 — the account takes the name its sign-up knows
+### Task 1: Migration 0011 and harness §17 — the account takes the name its sign-up knows
 
-**Files:** Modify `supabase/tests/validate.mjs`, `scripts/gen-db-types.mjs`; create `supabase/migrations/0010_account_name.sql`.
+**Files:** Modify `supabase/tests/validate.mjs`, `scripts/gen-db-types.mjs`; create `supabase/migrations/0011_account_name.sql`.
 
 - [ ] **Step 1: Widen both auth stubs.** In `supabase/tests/validate.mjs` (the "Supabase-shaped harness" block) and `scripts/gen-db-types.mjs`, change
 
@@ -76,10 +76,10 @@ to
 
 The harness's own `insert into auth.users values ($1,$2)` keeps working: Postgres fills the trailing column with its default.
 
-- [ ] **Step 2: Failing section 16.** Append before the final summary line (`console.log(failures ? …`) of `validate.mjs`. Like section 15's `p5` names, this section's names carry `p9`; the role is already reset there, and the trigger is SECURITY DEFINER either way.
+- [ ] **Step 2: Failing section 17.** Append before the final summary line (`console.log(failures ? …`) of `validate.mjs`. Like section 15's `p5` names, this section's names carry `p9`; the role is already reset there, and the trigger is SECURITY DEFINER either way.
 
 ```js
-console.log('16. a new account takes the name its sign-up already knows (0010)');
+console.log('17. a new account takes the name its sign-up already knows (0011)');
 const [P9G, P9N, P9T, P9X, P9L] = [1, 2, 3, 4, 5].map(
 	(n) => `00000000-0000-4000-8000-00000000090${n}`
 );
@@ -118,10 +118,10 @@ else {
 ```
 
 - [ ] **Step 3: Run** `pnpm db:test` → FAIL: the names are all `''` (0001's trigger copies only the email).
-- [ ] **Step 4: Migration.** Create `supabase/migrations/0010_account_name.sql`:
+- [ ] **Step 4: Migration.** Create `supabase/migrations/0011_account_name.sql`:
 
 ```sql
--- 0010 — a new account takes the name its sign-up already knows.
+-- 0011 — a new account takes the name its sign-up already knows.
 -- Email sign-up puts the typed name in the user's metadata as full_name; Google supplies full_name
 -- and name. 0001's trigger copied only the email, so every account began nameless and the family
 -- typed their name twice. Trimmed, and cut to the 120 characters the account form accepts.
@@ -141,8 +141,8 @@ begin
 end $$;
 ```
 
-- [ ] **Step 5: Run** `pnpm db:test` → `ALL CHECKS PASSED`, section 16 included. `pnpm db:types` → no diff (the function's signature is unchanged).
-- [ ] **Step 6: Commit** — `git commit -m "feat(db): 0010 — a new account takes the name its sign-up already knows; harness §16"`
+- [ ] **Step 5: Run** `pnpm db:test` → `ALL CHECKS PASSED`, section 17 included. `pnpm db:types` → no diff (the function's signature is unchanged).
+- [ ] **Step 6: Commit** — `git commit -m "feat(db): 0011 — a new account takes the name its sign-up already knows; harness §17"`
 
 ### Task 2: `startGoogleSignIn`
 
@@ -481,7 +481,7 @@ test('an unfinished Google sign-in, or an expired link, lands on login with a pl
 - [ ] **Step 2: OPERATIONS §7** gains a phase-9 row: steps 1–4 to exercise it on dev; step 5 before launch.
 - [ ] **Step 3: Records.** `AGENTS.md` — status (phase 9), the repo map (`auth/google`, `src/lib/server/auth/{oauth,notices}.ts`, `GoogleButton`), and under Prime directive 6: the Google client secret lives in Supabase, not the app. `docs/PLAN.md` — the phase-9 row and the decision-log entry. `docs/HANDOFF-opus5.md` — phase 9 done; phase 6 next. The checklist file.
 - [ ] **Step 4: Gates** — `pnpm env:check` · `pnpm check` (0/0) · `pnpm lint` · `pnpm test` · `pnpm db:test` · `pnpm db:types` no diff · `pnpm build:dev` · `pnpm test:e2e`.
-- [ ] **Step 5: Finish** — the operator's steps 1–4 come before the merge: until Google is enabled on the project, the button leads to Supabase's raw "provider is not enabled" reply. Then ask before the outward step; merge to `main`, fast-forward `deploy/dev`, push, confirm 0010 on the dev project. Sign in with a listed Google test account on dev and confirm the account carries the Google name; sign up by email and confirm the typed name arrives too. Report, **stop**. The prod project gets the same steps, and step 5, before a release carries the button to `deploy/live` — Step 1's line in OPERATIONS §4.
+- [ ] **Step 5: Finish** — the operator's steps 1–4 come before the merge: until Google is enabled on the project, the button leads to Supabase's raw "provider is not enabled" reply. Then ask before the outward step; merge to `main`, fast-forward `deploy/dev`, push, confirm 0011 on the dev project. Sign in with a listed Google test account on dev and confirm the account carries the Google name; sign up by email and confirm the typed name arrives too. Report, **stop**. The prod project gets the same steps, and step 5, before a release carries the button to `deploy/live` — Step 1's line in OPERATIONS §4.
 
 ---
 

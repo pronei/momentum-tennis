@@ -8,7 +8,7 @@
 
 **Tech Stack:** No new dependencies. SvelteKit 2 / Svelte 5 runes, superforms + zod4, Supabase RLS client, PGlite harness, vitest, Playwright.
 
-**Branch:** `phase-6/ratings` from `main`. **Migration:** none. **Harness:** section 17 (behaviour already in 0001).
+**Branch:** `phase-6/ratings` from `main`. **Migration:** none. **Harness:** section 18 (behaviour already in 0001).
 
 ---
 
@@ -17,7 +17,7 @@
 1. **Who rates.** Coaches and admins — anyone in `staff_members` (`coach_rate` already says `is_staff()`). Yes.
 2. **Visibility default.** `guardian` (visible to the family), which is the column default; a coach flips a single rating to `internal` when it is a coaching note, not a placement. Yes.
 3. **What a family sees.** The current value and its date per guardian-visible dimension; the full history (every event, the coach, the note) is staff-only. Yes — a policy of the UI, since RLS already hides internal events.
-4. **Migration 0011 only if an RPC is preferred over a direct insert** (phase 9 took 0010; phase 7's would then become 0012). Recommended: **no migration.** The insert policy is exactly the rule (staff, as themselves), the trigger snapshots the scale, and the check constraint bounds the value; the UI offers only valid values, so the one refusal a coach can meet is `not_authorized`. An RPC would add a token for "dimension inactive" — the form lists only active dimensions, so nothing is lost.
+4. **Migration 0012 only if an RPC is preferred over a direct insert** (phases 10 and 9 took 0010 and 0011; phase 7's would then become 0013). Recommended: **no migration.** The insert policy is exactly the rule (staff, as themselves), the trigger snapshots the scale, and the check constraint bounds the value; the UI offers only valid values, so the one refusal a coach can meet is `not_authorized`. An RPC would add a token for "dimension inactive" — the form lists only active dimensions, so nothing is lost.
 5. **The placement meter pins to the top of the portal for 30 days after a change** (PRODUCT.md §11). Yes — pure date arithmetic on the current event's `rated_at`.
 6. **Rewards for promotions** (PRODUCT.md §3, "define reward rules with Artur"). Not built; the placement itself is the display. Yes.
 7. **Which dimension drives CourtMeter.** `court_placement` by key; other dimensions render as RatingMeter rows. Yes.
@@ -26,7 +26,7 @@
 
 ## File structure
 
-**Harness** — modify `supabase/tests/validate.mjs` (section 17).
+**Harness** — modify `supabase/tests/validate.mjs` (section 18).
 
 **Domain** — create `src/lib/server/domain/ratings.ts`, `ratings.test.ts`.
 
@@ -38,14 +38,14 @@
 
 ---
 
-### Task 1: Harness §17 — the policies phase 6 leans on
+### Task 1: Harness §18 — the policies phase 6 leans on
 
 **Files:** Modify `supabase/tests/validate.mjs`.
 
 - [ ] **Step 1: Write the section.** No migration precedes it: every check must be GREEN against 0001 as it stands, and its value is that a later migration cannot loosen these rules unnoticed. `maya` is PARENT's player; `ADMIN` is staff. Append before the final summary line:
 
 ```js
-console.log('17. ratings — staff write as themselves, families read only what is theirs (phase 6)');
+console.log('18. ratings — staff write as themselves, families read only what is theirs (phase 6)');
 const p6dim = (await q(`select id, scale_max from rating_dimensions where key = 'court_placement'`)).rows[0];
 await db.exec('set role authenticated');
 await asUser(PARENT);
@@ -114,8 +114,8 @@ await expectErr(
 );
 ```
 
-- [ ] **Step 2: Run** `pnpm db:test` → `ALL CHECKS PASSED` with section 17 (about 9 new checks). If `'check constraint'` does not match PGlite's message, read the message it prints and use the constraint's name (`rating_events_check`).
-- [ ] **Step 3: Commit** — `git commit -m "test(db): harness §17 pins the rating policies phase 6 relies on"`
+- [ ] **Step 2: Run** `pnpm db:test` → `ALL CHECKS PASSED` with section 18 (about 9 new checks). If `'check constraint'` does not match PGlite's message, read the message it prints and use the constraint's name (`rating_events_check`).
+- [ ] **Step 3: Commit** — `git commit -m "test(db): harness §18 pins the rating policies phase 6 relies on"`
 
 ### Task 2: `domain/ratings.ts`
 
@@ -195,7 +195,7 @@ await expectErr(
 
 ## Self-review
 
-**Spec coverage.** Brief task 1 (migration only if needed; harness §17) → Task 1 with the decision recorded in question 4. Task 2 (domain: dimensions CRUD, rate, current, history) → Task 2. Task 3 (ports) → Task 4. Task 4 (coach entry, admin dimensions) → Tasks 5–6. Task 5 (portal meter on the card and the player page) → Task 7. PLAN exit "court placement drives the portal meter with accessible text values" is the SSR assertion in Task 7 (`aria-valuenow` + `3 OF 5`).
+**Spec coverage.** Brief task 1 (migration only if needed; harness §18) → Task 1 with the decision recorded in question 4. Task 2 (domain: dimensions CRUD, rate, current, history) → Task 2. Task 3 (ports) → Task 4. Task 4 (coach entry, admin dimensions) → Tasks 5–6. Task 5 (portal meter on the card and the player page) → Task 7. PLAN exit "court placement drives the portal meter with accessible text values" is the SSR assertion in Task 7 (`aria-valuenow` + `3 OF 5`).
 
 **Placeholders.** None; the one open policy (rewards) is explicitly not built.
 

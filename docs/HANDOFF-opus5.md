@@ -39,7 +39,7 @@ Rules, non-negotiable:
 - TDD without exception: a failing test observed before every implementation — vitest with the narrow
   fakes in src/lib/server/domain/schedule/fakes.ts for domain code, a numbered section in
   supabase/tests/validate.mjs (PGlite) for schema behaviour, svelte/server SSR contract tests for
-  components. Migrations are append-only (0010 is next after 0009), one set per phase; run pnpm
+  components. Migrations are append-only (0011 is next after 0010), one set per phase; run pnpm
   db:types and commit the generated types.
 - The database is the authority: constraints, triggers and SECURITY DEFINER RPCs enforce the
   invariants; app code maps SQLSTATE and error tokens to ErrorCode in result.ts and never weakens a
@@ -73,7 +73,7 @@ start at its task 1.
   Workers Builds is deliberately disconnected). Remote `git@github.com:pronei/momentum-tennis.git`.
 - **Database.** Migrations 0001–0009 on the dev project `rjiagjfvsaaxezsxfuzq` (0009 applied when
   `deploy/dev` was pushed on 2026-09-08; the Supabase GitHub integration applies migrations on push,
-  with `migrate.yml` / `pnpm db:push dev` as the fallbacks). 0010 is next.
+  with `migrate.yml` / `pnpm db:push dev` as the fallbacks). 0011 is next.
 - **Gates on `main`.** `pnpm check` 0/0 · `pnpm lint` · 427 vitest · 139 harness checks ·
   types current · `pnpm build:dev` · 20 e2e passed, 3 skipped (the credentialed specs).
 - **Operator state.** Done: dev Supabase project + schema through 0009; GitHub Actions deploy from
@@ -123,16 +123,16 @@ the barrel, `resolve('/(site)')` and `asset()` for links.
 ## 3. The remaining phases, in order
 
 1. **Phase 9 — Sign in with Google** (`2026-10-01-phase-9-google-sign-in.md`), first because it
-   needs no email: 0010 gives a new account the name its sign-up already knows (harness §16);
+   needs no email: 0011 gives a new account the name its sign-up already knows (harness §17);
    `/auth/google` starts Supabase's Google flow from a form, so it works without JavaScript; the login
    page explains a failed link or an unfinished Google sign-in; Google's button artwork is the
    recorded design-system exception. Operator: a Google Cloud OAuth client, the Google provider
    enabled in Supabase with its id and secret, `<site>/auth/callback**` in the redirect URLs — before
    the merge, or the button meets Supabase's "provider is not enabled".
-2. **Phase 6 — ratings** (`2026-09-08-phase-6-ratings.md`): no migration; harness §17 pins the 0001
+2. **Phase 6 — ratings** (`2026-09-08-phase-6-ratings.md`): no migration; harness §18 pins the 0001
    policies; `ratings.ts`; RatingMeter and CourtMeter ports; coach entry, admin dimensions, the
    portal meter with its 30-day pin. Operator: nothing.
-3. **Phase 7 — notifications** (`2026-09-08-phase-7-notifications.md`): 0011 read models, the
+3. **Phase 7 — notifications** (`2026-09-08-phase-7-notifications.md`): 0012 read models, the
    unsubscribe token and RPC, `newsletter_issues`; the job registry; four email ports; preferences,
    unsubscribe, admin newsletter; the cron worker deployed. Operator: Resend domain and key,
    `CRON_SHARED_SECRET` on both sides, `MAILING_ADDRESS`, legal copy for consent and unsubscribe.
