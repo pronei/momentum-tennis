@@ -25,6 +25,7 @@ localized.
 | 7 | Notifications & lifecycle | workers/cron + shared-secret endpoint, class reminders, low-credit nudges, credit expiry rows, re-consent campaigns, newsletter + unsubscribe + preference center | 4 (5 for nudges) | overlapping cron runs cannot double-send; marketing/transactional fully separated |
 | 8 | Public site — **built 2026-09-30** (`phase-8/public-site`) | site group ports (`SiteNav`, `ProgramCard`, `PhotoFrame`, `StrobeArc`, `Wordmark`) plus `SponsorStrip` and `Lightbox`; the `(site)` group with home from the homepage template, `/coaches`, `/photos` (PhotoSwipe 5.4.4, pinned) and the moved `/schedule` and `/store`; content modules in `src/lib/content`; the camp banner reading phase-3 camp rows; no migration | none (5 for the store entry) | met in code: home, coaches and photos render anonymously in the design system; every person on the site passes a `consented` filter, and releases exist for the minors pictured (2026-09-30). 427 unit/contract tests, 20 e2e |
 | 9 | Sign in with Google — planned 2026-10-01, runs before 6 (`2026-10-01-phase-9-google-sign-in.md`) | "Continue with Google" on login and signup through Supabase Auth, started by a server-side form post (PKCE); migration 0011 — a new account takes the name its sign-up knows, Google's or the one typed at email sign-up; the login page explains a failed link or an unfinished Google sign-in; Google's button artwork as a recorded design-system exception | 1 | on dev a family signs up and logs in with Google and the account starts with their name; email sign-up keeps working; the flow needs no JavaScript |
+| 10 | JTT scorecards — **built 2026-10-02** (`phase-10/scorecards`), runs before 9 | the coach's scorecard page for USTA Junior Team Tennis in the 2-court and 3-court shapes: migration 0010 (`scorecards`, eight `scorecard_lines` seeded by trigger, the finalize gate, staff-only RLS), the `scorecards/` domain module, `/coach/scorecards` (list, new, card) and `/scorecard`, the observed-card JSON export the TennisLink automation imports, `NameField` and `ScoreField` composites, the Claude Design handoff | 1, 3 | met in code: a coach records a match line by line, the database refuses to finalize an incomplete card and says which line, and a final card exports the automation's observed-card shape. 479 unit/contract tests, 152 schema checks |
 
 Deferred (from design-system PRODUCT.md, schema-compatible, unscheduled):
 grip-sensor stats ingestion, leaderboard, hero film admin.
@@ -106,6 +107,17 @@ private-lesson conflicts, RLS as a real family login, audit capture, idempotent 
   that would leave an account self-guarding a minor.
 
 ## Decision log
+- 2026-10-02 — Phase 10 built (branch `phase-10/scorecards`): migration 0010. Asked and answered
+  (spec `docs/superpowers/specs/2026-10-02-scorecards-design.md`): the page exports the
+  automation's observed-card JSON and the automation imports it (its JSON import is a follow-up in
+  its own repository); scorecards land before phase 9, so 9, 6 and 7 are renumbered (0011/§17,
+  §18, 0012/§19); any staff finalizes and only an admin reopens; opponents' names are stored as
+  written, staff-only. Decided while building: columns are home/away as the paper card is, with
+  `momentum_side` saying which is ours; the round of a line is derived from the format, never
+  stored; a line's result is derived from the score unless chosen, and `FROM SCORE` shows whenever
+  the stored value is the derived one; Finalize is a second submit of the card's form, so it saves
+  and then meets the gate; a line without games exports nulls, never invented zeros; `FieldShell`
+  joins the barrel for app composites and `Button` takes `formaction`.
 - 2026-10-01 — Phase 9 planned (`docs/superpowers/plans/2026-10-01-phase-9-google-sign-in.md`): sign
   up and log in with Google, run before phases 6 and 7, whose plans now name harness sections 17 and
   18. Answered with the user: Google only — Apple adds a $99 yearly fee, a client secret to renew

@@ -14,7 +14,7 @@ learned building it. Phase 6 is next.
 
 ```
 You are taking over implementation of the Momentum Tennis academy platform in this repository.
-Phases 0–5 and 8 are built and on main. Phase 6 (ratings) is next; phase 7 follows, one phase per
+Phases 0–5, 8 and 10 are built and on main. Phase 6 (ratings) is next; phase 7 follows, one phase per
 explicit approval.
 
 Read in this order before doing anything: AGENTS.md (binding operating manual); docs/HANDOFF-opus5.md
@@ -67,11 +67,11 @@ start at its task 1.
 
 ## 1. State on 2026-09-30
 
-- **Code.** `main` holds phases 0–5 and 8 (`phase-0/foundations` → `phase-5/payments`, then
+- **Code.** `main` holds phases 0–5, 8 and 10 (`phase-0/foundations` → `phase-5/payments`, then
   `phase-8/public-site`, merged) plus the
   operations and planning commits. `deploy/dev` tracks `main` and deploys itself through `.github/workflows/deploy-dev.yml` (Cloudflare
   Workers Builds is deliberately disconnected). Remote `git@github.com:pronei/momentum-tennis.git`.
-- **Database.** Migrations 0001–0009 on the dev project `rjiagjfvsaaxezsxfuzq` (0009 applied when
+- **Database.** Migrations 0001–0010 on the dev project `rjiagjfvsaaxezsxfuzq` (0009 applied when
   `deploy/dev` was pushed on 2026-09-08; the Supabase GitHub integration applies migrations on push,
   with `migrate.yml` / `pnpm db:push dev` as the fallbacks). 0011 is next.
 - **Gates on `main`.** `pnpm check` 0/0 · `pnpm lint` · 427 vitest · 139 harness checks ·

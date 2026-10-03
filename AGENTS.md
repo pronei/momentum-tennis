@@ -5,10 +5,10 @@ with RLS, Stripe, Resend. **Most players are minors** — that fact shapes every
 and every policy here.
 
 ## Status
-Phases 0–5 and 8 are built (foundations, identity & profiles, waivers, schedule & availability,
-booking & credits & attendance, payments, public site); `deploy/dev` tracks `main` and deploys itself through
-`.github/workflows/deploy-dev.yml`. Migrations 0001–0009 are applied to the dev Supabase project
-(0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking, 0009 payments); the Supabase
+Phases 0–5, 8 and 10 are built (foundations, identity & profiles, waivers, schedule & availability,
+booking & credits & attendance, payments, public site, JTT scorecards); `deploy/dev` tracks `main` and deploys itself through
+`.github/workflows/deploy-dev.yml`. Migrations 0001–0010 are applied to the dev Supabase project
+(0005 reference data, 0006 RLS safety net, 0007 schedule, 0008 booking, 0009 payments, 0010 scorecards); the Supabase
 GitHub integration applies them on push to `deploy/dev`. The restricted minor login is deliberately NOT built —
 see open question O in `docs/PLAN.md`. **Booking on any environment requires a published waiver
 version**: since 0008 the consent gate fails closed. **Payments run the simulated gateway on dev**
@@ -21,9 +21,13 @@ tax stance (decision E), the bank-pay discount and ACH-first ordering (both wait
 retiring the interim Payment Links — `docs/OPERATIONS.md` §3a is the go-live path. **The public site**
 (phase 8) is the `(site)` group: home from the homepage template, `/coaches`, `/photos`, `/schedule`,
 `/store`. PhotoSwipe 5.4.4, pinned exactly, is the one UI dependency the design system admits
-(`docs/decisions/2026-09-05-lightbox-library.md`). Phases 9, 6 and 7 are planned, in that order
+(`docs/decisions/2026-09-05-lightbox-library.md`). **JTT scorecards** (phase 10) live at
+`/coach/scorecards` (`/scorecard` redirects there): staff-only, eight lines by construction, the finalize
+gate in the database, and a JSON export in the TennisLink automation's observed-card shape — the
+automation's import is a follow-up in its own repository. Phases 9, 6 and 7 are planned, in that order
 (`2026-10-01-phase-9-google-sign-in.md`, `2026-09-08-phase-6-ratings.md`,
-`2026-09-08-phase-7-notifications.md`); 9 — Sign in with Google — is next. Each plan opens
+`2026-09-08-phase-7-notifications.md`); 9 — Sign in with Google — is next and takes 0011 and
+harness §17. Each plan opens
 with its questions and recommended defaults; the defaults stand until the user says otherwise.
 `docs/HANDOFF-opus5.md` scopes the remaining phases and the per-phase ritual. Phase plan and decisions: `docs/PLAN.md`. Phase checklists:
 `docs/superpowers/plans/`. Operator state and runbook: `docs/OPERATIONS.md`.
@@ -109,6 +113,11 @@ with its questions and recommended defaults; the defaults stand until the user s
   unconsented entry never reaches a page's payload. Releases exist for the minors pictured (the user,
   2026-09-30). Every published image is re-encoded as WebP with no metadata — the archive's sources
   carry GPS coordinates.
+- **A scorecard is staff-only, and draft or final.** `scorecards` has exactly eight `scorecard_lines`,
+  seeded by trigger — there is no insert or delete policy for lines. Draft → final runs the finalize
+  trigger, which refuses an incomplete card by position (`scorecard_incomplete`); a coach's write to a
+  final card matches no row, and only an admin reopens. Opponents' names are minors' names from
+  another club: never on a public page.
 - **Guardians pay, players consume.** Purchases attach to accounts; credits,
   bookings, waiver coverage, and ratings attach to named players. An adult player
   is a `self` guardianship — same shape, not a special case. Minority is derived
@@ -210,9 +219,12 @@ render; the schema is tested behaviorally in PGlite.
   `gateway.ts` port with the Stripe and simulated adapters + `gateway.runtime.ts` `selectGateway()`,
   `products.ts` catalogue, `orders.ts` + `checkout.ts`, `handlers.ts` event → RPC,
   `simulate.ts` synthetic events, `receipt.ts` which never throws), `notify/` (transactional vs
-  marketing send, insert-first idempotency).
+  marketing send, insert-first idempotency), `scorecards/` (`format.ts` the card's rules — rounds,
+  derived results, readiness; `form.ts` the form contract; `cards.ts` data; `export.ts` the observed
+  card).
 - `src/lib/components/` — app composites built from `$lib/ds` and the design system's
-  `ui_kits` references (`PlayerSwitcher`, `Card`), tested as SSR contracts.
+  `ui_kits` references (`PlayerSwitcher`, `Card`; `NameField` and `ScoreField` on `FieldShell`,
+  stand-ins until Claude Design delivers `docs/design-handoffs/`), tested as SSR contracts.
 - `src/lib/ds/` — ported design system (`index.ts` barrel; `brand/ core/ forms/ feedback/
   admin/ media/ schedule/ site/`); `FieldShell.svelte` is the shared form anatomy. `media/Lightbox`
   loads PhotoSwipe and its stylesheet on mount, never statically — it is in the barrel.
@@ -236,6 +248,8 @@ render; the schema is tested behaviorally in PGlite.
   `admin/credits` (grants). Phase 5 adds `(site)/store/`, `(portal)/portal/purchases` + `[id]`
   (the receipt) and `(portal)/portal/checkout/[orderId]` (the simulated gateway's page — a 404
   wherever `PAYMENTS_GATEWAY` is not `fake`), `admin/products` + `[id]`, `admin/orders` + `[id]`.
+  Phase 10 adds `coach/scorecards` (list, `new`, `[id]`, `[id]/export`) and `scorecard` (the
+  redirect).
 - `supabase/` — `migrations/` (append-only), `seed.sql`, `tests/validate.mjs`, `config.toml`.
 - `config/` — one profile per environment (`dev.yaml`, `prod.yaml`); `docs/OPERATIONS.md` is
   the operator runbook (accounts, secrets, one-time links).
