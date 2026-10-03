@@ -23,7 +23,12 @@ vi.mock('$app/state', () => ({
 	updated: { current: false }
 }));
 
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
+import { headerSchema } from '$lib/server/domain/scorecards/form';
+
 const { default: List } = await import('./+page.svelte');
+const { default: New } = await import('./new/+page.svelte');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const html = (Component: any, data: any, form: any = null) =>
@@ -51,5 +56,51 @@ describe('/coach/scorecards — the list', () => {
 	});
 	it('says when there are none', () => {
 		expect(html(List, { rows: [], loadError: null })).toContain('NO SCORECARDS YET');
+	});
+});
+
+describe('/coach/scorecards/new — two steps', () => {
+	const teams = [{ value: 't1', label: 'Momentum Test 12U Green · Fall 2026' }];
+	it('asks for the team first', async () => {
+		const out = html(New, {
+			teams,
+			team: null,
+			matches: [],
+			sessionId: '',
+			form: await superValidate(zod4(headerSchema)),
+			loadError: null
+		});
+		expect(out).toContain('Momentum Test 12U Green · Fall 2026');
+		expect(out).toContain('Choose team');
+		expect(out).not.toContain('Create card');
+	});
+	it('then offers the scheduled matches and the header, prefilled', async () => {
+		const form = await superValidate(
+			{
+				teamId: 't1',
+				sessionId: 's1',
+				playedOn: '2026-10-04',
+				startTime: '14:00',
+				momentumSide: 'away',
+				homeTeam: 'Chippers',
+				awayTeam: 'Momentum Test 12U Green',
+				location: 'Chippers home courts'
+			},
+			zod4(headerSchema),
+			{ errors: false }
+		);
+		const out = html(New, {
+			teams,
+			team: { id: 't1', name: 'Momentum Test 12U Green' },
+			matches: [{ value: 's1', label: '2026-10-04 · 14:00 · VS CHIPPERS · AWAY' }],
+			sessionId: 's1',
+			form,
+			loadError: null
+		});
+		expect(out).toContain('VS CHIPPERS');
+		expect(out).toContain('value="Chippers"');
+		expect(out).toContain('value="2026-10-04"');
+		expect(out).toContain('Create card');
+		expect(out).toMatch(/name="teamId"[^>]*value="t1"|value="t1"[^>]*name="teamId"/);
 	});
 });
