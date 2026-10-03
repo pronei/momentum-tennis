@@ -1441,5 +1441,183 @@ else {
 	failures++;
 }
 
+console.log('16. scorecards — eight lines by construction, the finalize gate, staff-only (0010)');
+// A fictional team with four of the harness's players; the admin builds the roster (phase 3).
+await db.exec('set role authenticated');
+await asUser(ADMIN);
+const p10team = (
+	await q(`insert into teams (name, season) values ('Harness 12U', 'Fall 2026') returning id`)
+).rows[0].id;
+await q(`insert into team_members (team_id, player_id) values ($1,$2),($1,$3),($1,$4),($1,$5)`, [
+	p10team,
+	maya,
+	zoe,
+	leo,
+	kai
+]);
+
+// (a) a coach creates a card and the trigger seeds exactly the eight lines
+await asUser(COACH);
+const p10card = (
+	await q(
+		`insert into scorecards (team_id, played_on, home_team, away_team, momentum_side, format, set_games, created_by)
+		 values ($1, '2026-10-04', 'Harness 12U', 'Visitors 12U', 'home', 'three_court', 6, $2) returning id`,
+		[p10team, COACH]
+	)
+).rows[0].id;
+const p10lines = (
+	await q(`select position from scorecard_lines where scorecard_id = $1 order by position`, [p10card])
+).rows.map((r) => r.position);
+if (p10lines.join(' ') === '1D 1S 2D 2S 3D 3S 4D 4S') ok('a new card has exactly the eight JTT lines');
+else {
+	console.log('  ✗ seeded lines', p10lines);
+	failures++;
+}
+await expectErr(
+	'a coach cannot sign a card as someone else',
+	() =>
+		q(
+			`insert into scorecards (team_id, played_on, home_team, away_team, momentum_side, format, set_games, created_by)
+			 values ($1, '2026-10-04', 'a', 'b', 'home', 'two_court', 4, $2)`,
+			[p10team, ADMIN]
+		),
+	'row-level security'
+);
+await expectErr(
+	'a ninth line cannot be added',
+	() => q(`insert into scorecard_lines (scorecard_id, position) values ($1, '1S')`, [p10card]),
+	'row-level security'
+);
+await q(`delete from scorecard_lines where scorecard_id = $1`, [p10card]);
+const p10still = (
+	await q(`select count(*)::int as n from scorecard_lines where scorecard_id = $1`, [p10card])
+).rows[0].n;
+if (p10still === 8) ok('lines cannot be deleted — there is no policy for it');
+else {
+	console.log('  ✗ lines after delete', p10still);
+	failures++;
+}
+
+// (b) a family sees nothing
+await asUser(PARENT);
+const p10family = (await q(`select count(*)::int as n from scorecards`)).rows[0].n;
+if (p10family === 0) ok('a family sees no scorecards');
+else {
+	console.log('  ✗ family read', p10family);
+	failures++;
+}
+
+// (c) the column checks: a singles line has one player a side; a played result needs a winner
+await asUser(COACH);
+await expectErr(
+	'a singles line refuses a second player',
+	() =>
+		q(`update scorecard_lines set home_player2_name = 'Extra' where scorecard_id = $1 and position = '1S'`, [
+			p10card
+		]),
+	'check constraint'
+);
+await expectErr(
+	'a played result without a winner is refused',
+	() =>
+		q(
+			`update scorecard_lines set home_games = 3, away_games = 3, result = 'timed' where scorecard_id = $1 and position = '1S'`,
+			[p10card]
+		),
+	'check constraint'
+);
+
+// (d) finalize refuses an incomplete card with the token
+await expectErr(
+	'an incomplete card cannot be finalized',
+	() => q(`update scorecards set status = 'final' where id = $1`, [p10card]),
+	'scorecard_incomplete'
+);
+
+// (e) a complete card finalizes and records who and when
+await q(`update scorecards set match_id = '2743999' where id = $1`, [p10card]);
+for (const p of ['1S', '2S', '3S', '4S'])
+	await q(
+		`update scorecard_lines set home_player1_name = 'Maya R.', away_player1_name = 'Vera V.',
+		        home_games = 6, away_games = 2, result = 'completed', winner = 'home'
+		  where scorecard_id = $1 and position = $2`,
+		[p10card, p]
+	);
+for (const p of ['1D', '2D', '3D'])
+	await q(
+		`update scorecard_lines set home_player1_name = 'Maya R.', home_player2_name = 'Zoe R.',
+		        away_player1_name = 'Vera V.', away_player2_name = 'Wren W.',
+		        home_games = 4, away_games = 6, result = 'completed', winner = 'away'
+		  where scorecard_id = $1 and position = $2`,
+		[p10card, p]
+	);
+await q(
+	`update scorecard_lines set result = 'double_default' where scorecard_id = $1 and position = '4D'`,
+	[p10card]
+);
+const p10final = (
+	await q(`update scorecards set status = 'final' where id = $1 returning finalized_at, finalized_by`, [
+		p10card
+	])
+).rows[0];
+if (p10final.finalized_at && p10final.finalized_by === COACH)
+	ok('a complete card finalizes, signed by the coach who did it');
+else {
+	console.log('  ✗ finalize', p10final);
+	failures++;
+}
+
+// (f) a coach cannot touch a final card — the update matches no row
+const p10touch = (
+	await q(`update scorecard_lines set home_games = 5 where scorecard_id = $1 and position = '1S' returning id`, [
+		p10card
+	])
+).rows.length;
+const p10touchCard = (await q(`update scorecards set notes = 'x' where id = $1 returning id`, [p10card])).rows
+	.length;
+if (p10touch === 0 && p10touchCard === 0) ok('a coach cannot change a final card');
+else {
+	console.log('  ✗ final card changed', p10touch, p10touchCard);
+	failures++;
+}
+
+// (g) an admin reopens it, and the finalize stamp clears
+await asUser(ADMIN);
+const p10reopen = (
+	await q(`update scorecards set status = 'draft' where id = $1 returning finalized_at, finalized_by`, [p10card])
+).rows[0];
+if (p10reopen.finalized_at === null && p10reopen.finalized_by === null) ok('an admin reopens a final card');
+else {
+	console.log('  ✗ reopen', p10reopen);
+	failures++;
+}
+
+// (h) one card per USTA match
+await asUser(COACH);
+await expectErr(
+	'a second card for the same match id is refused',
+	() =>
+		q(
+			`insert into scorecards (team_id, match_id, played_on, home_team, away_team, momentum_side, format, set_games, created_by)
+			 values ($1, '2743999', '2026-10-04', 'a', 'b', 'home', 'two_court', 4, $2)`,
+			[p10team, COACH]
+		),
+	'duplicate key'
+);
+
+// (i) audited — read as the harness itself: audit_log is an admin's to read, not a coach's
+await db.exec('reset role');
+const p10audit = (
+	await q(
+		`select count(*)::int as n from audit_log where entity_type in ('scorecards', 'scorecard_lines') and (entity_id = $1 or entity_id in (select id from scorecard_lines where scorecard_id = $1))`,
+		[p10card]
+	)
+).rows[0].n;
+if (p10audit >= 18) ok('every card and line change is audited');
+else {
+	console.log('  ✗ audit rows', p10audit);
+	failures++;
+}
+
 console.log(failures ? `\n${failures} FAILURE(S)` : '\nALL CHECKS PASSED');
 process.exit(failures ? 1 : 0);

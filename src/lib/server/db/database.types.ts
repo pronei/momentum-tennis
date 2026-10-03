@@ -1133,6 +1133,203 @@ export type Database = {
 					}
 				]
 			}
+			scorecard_lines: {
+				Row: {
+					id: string
+					scorecard_id: string
+					position: string
+					home_player1_id: string | null
+					home_player1_name: string
+					home_player2_id: string | null
+					home_player2_name: string
+					away_player1_id: string | null
+					away_player1_name: string
+					away_player2_id: string | null
+					away_player2_name: string
+					home_games: number | null
+					away_games: number | null
+					result: Database["public"]["Enums"]["line_result"] | null
+					winner: string | null
+					updated_at: string
+				}
+				Insert: {
+					id?: string
+					scorecard_id: string
+					position: string
+					home_player1_id?: string | null
+					home_player1_name?: string
+					home_player2_id?: string | null
+					home_player2_name?: string
+					away_player1_id?: string | null
+					away_player1_name?: string
+					away_player2_id?: string | null
+					away_player2_name?: string
+					home_games?: number | null
+					away_games?: number | null
+					result?: Database["public"]["Enums"]["line_result"] | null
+					winner?: string | null
+					updated_at?: string
+				}
+				Update: {
+					id?: string
+					scorecard_id?: string
+					position?: string
+					home_player1_id?: string | null
+					home_player1_name?: string
+					home_player2_id?: string | null
+					home_player2_name?: string
+					away_player1_id?: string | null
+					away_player1_name?: string
+					away_player2_id?: string | null
+					away_player2_name?: string
+					home_games?: number | null
+					away_games?: number | null
+					result?: Database["public"]["Enums"]["line_result"] | null
+					winner?: string | null
+					updated_at?: string
+				}
+				Relationships: [
+					{
+						foreignKeyName: "scorecard_lines_away_player1_id_fkey"
+						columns: ["away_player1_id"]
+						isOneToOne: false
+						referencedRelation: "players"
+						referencedColumns: ["id"]
+					},
+					{
+						foreignKeyName: "scorecard_lines_away_player2_id_fkey"
+						columns: ["away_player2_id"]
+						isOneToOne: false
+						referencedRelation: "players"
+						referencedColumns: ["id"]
+					},
+					{
+						foreignKeyName: "scorecard_lines_home_player1_id_fkey"
+						columns: ["home_player1_id"]
+						isOneToOne: false
+						referencedRelation: "players"
+						referencedColumns: ["id"]
+					},
+					{
+						foreignKeyName: "scorecard_lines_home_player2_id_fkey"
+						columns: ["home_player2_id"]
+						isOneToOne: false
+						referencedRelation: "players"
+						referencedColumns: ["id"]
+					},
+					{
+						foreignKeyName: "scorecard_lines_scorecard_id_fkey"
+						columns: ["scorecard_id"]
+						isOneToOne: false
+						referencedRelation: "scorecards"
+						referencedColumns: ["id"]
+					}
+				]
+			}
+			scorecards: {
+				Row: {
+					id: string
+					team_id: string
+					session_id: string | null
+					match_id: string | null
+					played_on: string
+					start_time: string | null
+					division: string
+					home_team: string
+					away_team: string
+					location: string
+					momentum_side: string
+					format: Database["public"]["Enums"]["scorecard_format"]
+					set_games: number
+					status: Database["public"]["Enums"]["scorecard_status"]
+					home_sportsmanship: string | null
+					away_sportsmanship: string | null
+					notes: string | null
+					created_by: string
+					finalized_at: string | null
+					finalized_by: string | null
+					created_at: string
+					updated_at: string
+				}
+				Insert: {
+					id?: string
+					team_id: string
+					session_id?: string | null
+					match_id?: string | null
+					played_on: string
+					start_time?: string | null
+					division?: string
+					home_team: string
+					away_team: string
+					location?: string
+					momentum_side: string
+					format: Database["public"]["Enums"]["scorecard_format"]
+					set_games: number
+					status?: Database["public"]["Enums"]["scorecard_status"]
+					home_sportsmanship?: string | null
+					away_sportsmanship?: string | null
+					notes?: string | null
+					created_by: string
+					finalized_at?: string | null
+					finalized_by?: string | null
+					created_at?: string
+					updated_at?: string
+				}
+				Update: {
+					id?: string
+					team_id?: string
+					session_id?: string | null
+					match_id?: string | null
+					played_on?: string
+					start_time?: string | null
+					division?: string
+					home_team?: string
+					away_team?: string
+					location?: string
+					momentum_side?: string
+					format?: Database["public"]["Enums"]["scorecard_format"]
+					set_games?: number
+					status?: Database["public"]["Enums"]["scorecard_status"]
+					home_sportsmanship?: string | null
+					away_sportsmanship?: string | null
+					notes?: string | null
+					created_by?: string
+					finalized_at?: string | null
+					finalized_by?: string | null
+					created_at?: string
+					updated_at?: string
+				}
+				Relationships: [
+					{
+						foreignKeyName: "scorecards_created_by_fkey"
+						columns: ["created_by"]
+						isOneToOne: false
+						referencedRelation: "accounts"
+						referencedColumns: ["id"]
+					},
+					{
+						foreignKeyName: "scorecards_finalized_by_fkey"
+						columns: ["finalized_by"]
+						isOneToOne: false
+						referencedRelation: "accounts"
+						referencedColumns: ["id"]
+					},
+					{
+						foreignKeyName: "scorecards_session_id_fkey"
+						columns: ["session_id"]
+						isOneToOne: false
+						referencedRelation: "sessions"
+						referencedColumns: ["id"]
+					},
+					{
+						foreignKeyName: "scorecards_team_id_fkey"
+						columns: ["team_id"]
+						isOneToOne: false
+						referencedRelation: "teams"
+						referencedColumns: ["id"]
+					}
+				]
+			}
 			session_attendance: {
 				Row: {
 					session_id: string
@@ -1974,11 +2171,14 @@ export type Database = {
 			credit_scope: "weekday" | "weekend"
 			guardianship_role: "self" | "parent" | "legal_guardian" | "other"
 			ledger_entry_type: "purchase" | "consume" | "consume_reversal" | "refund" | "expire" | "adjust" | "forgive"
+			line_result: "completed" | "timed" | "retired" | "default" | "double_default"
 			notify_category: "transactional" | "marketing"
 			order_status: "pending" | "paid" | "partially_refunded" | "refunded" | "cancelled"
 			product_kind: "class_pack" | "lesson_pack" | "camp" | "team_fee"
 			rating_visibility: "internal" | "guardian"
 			registration_status: "registered" | "waitlisted" | "cancelled"
+			scorecard_format: "two_court" | "three_court"
+			scorecard_status: "draft" | "final"
 			send_status: "pending" | "sent" | "failed"
 			session_status: "scheduled" | "cancelled"
 			session_type: "camp" | "class" | "team" | "private"
