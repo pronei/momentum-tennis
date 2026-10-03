@@ -38,7 +38,8 @@ export const RESULT_LABELS: Record<LineResult, string> = {
 	double_default: 'Double default'
 };
 
-export const isPosition = (s: string): s is Position => (POSITIONS as readonly string[]).includes(s);
+export const isPosition = (s: string): s is Position =>
+	(POSITIONS as readonly string[]).includes(s);
 export const isDoubles = (p: Position): boolean => p.endsWith('D');
 /** `1S` → `#1 Singles`: the form the automation's observed card uses. */
 export const positionLabel = (p: Position): string =>

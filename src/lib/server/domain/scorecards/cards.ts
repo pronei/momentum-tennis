@@ -195,12 +195,7 @@ export async function createScorecard(
 
 export type RosterName = { playerId: string; fullName: string };
 const fold = (s: string) =>
-	s
-		.normalize('NFD')
-		.replace(/\p{M}/gu, '')
-		.toLowerCase()
-		.replace(/\s+/g, ' ')
-		.trim();
+	s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 /** A typed name links to a roster player only when exactly one full name matches, ignoring case and accents. */
 export function linkRoster(name: string, roster: RosterName[]): string | null {

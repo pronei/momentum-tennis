@@ -27,7 +27,16 @@ const line = (over: Partial<Line> = {}): Line => ({
 describe('the two formats share eight lines and differ in rounds', () => {
 	it('plays the 2-court card in four rounds and the 3-court card in three', () => {
 		expect(orderedPositions('two_court')).toEqual(['1S', '4D', '2S', '3D', '3S', '2D', '4S', '1D']);
-		expect(orderedPositions('three_court')).toEqual(['1S', '2S', '4D', '3S', '4S', '1D', '2D', '3D']);
+		expect(orderedPositions('three_court')).toEqual([
+			'1S',
+			'2S',
+			'4D',
+			'3S',
+			'4S',
+			'1D',
+			'2D',
+			'3D'
+		]);
 		expect(roundOf('two_court', '1D')).toBe(4);
 		expect(roundOf('three_court', '1D')).toBe(2);
 	});
@@ -125,7 +134,11 @@ describe('fromScore — what the selects show', () => {
 describe('totals and completeness', () => {
 	it('sums games, treating no score as nothing', () => {
 		expect(
-			totals([line(), line({ homeGames: null, awayGames: null }), line({ homeGames: 2, awayGames: 6 })])
+			totals([
+				line(),
+				line({ homeGames: null, awayGames: null }),
+				line({ homeGames: 2, awayGames: 6 })
+			])
 		).toEqual({ home: 8, away: 8 });
 	});
 	it('lists what finalize would refuse, in play order', () => {

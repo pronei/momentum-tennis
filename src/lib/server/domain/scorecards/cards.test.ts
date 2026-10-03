@@ -238,7 +238,9 @@ describe('finalize / reopen / deleteDraft', () => {
 		const gate = await finalize(
 			fakeDb({
 				tables: {
-					scorecards: { error: { message: 'scorecard_incomplete: 2D has no result', code: '23514' } }
+					scorecards: {
+						error: { message: 'scorecard_incomplete: 2D has no result', code: '23514' }
+					}
 				}
 			}),
 			'c1'

@@ -1466,9 +1466,12 @@ const p10card = (
 	)
 ).rows[0].id;
 const p10lines = (
-	await q(`select position from scorecard_lines where scorecard_id = $1 order by position`, [p10card])
+	await q(`select position from scorecard_lines where scorecard_id = $1 order by position`, [
+		p10card
+	])
 ).rows.map((r) => r.position);
-if (p10lines.join(' ') === '1D 1S 2D 2S 3D 3S 4D 4S') ok('a new card has exactly the eight JTT lines');
+if (p10lines.join(' ') === '1D 1S 2D 2S 3D 3S 4D 4S')
+	ok('a new card has exactly the eight JTT lines');
 else {
 	console.log('  ✗ seeded lines', p10lines);
 	failures++;
@@ -1512,9 +1515,10 @@ await asUser(COACH);
 await expectErr(
 	'a singles line refuses a second player',
 	() =>
-		q(`update scorecard_lines set home_player2_name = 'Extra' where scorecard_id = $1 and position = '1S'`, [
-			p10card
-		]),
+		q(
+			`update scorecard_lines set home_player2_name = 'Extra' where scorecard_id = $1 and position = '1S'`,
+			[p10card]
+		),
 	'check constraint'
 );
 await expectErr(
@@ -1556,9 +1560,10 @@ await q(
 	[p10card]
 );
 const p10final = (
-	await q(`update scorecards set status = 'final' where id = $1 returning finalized_at, finalized_by`, [
-		p10card
-	])
+	await q(
+		`update scorecards set status = 'final' where id = $1 returning finalized_at, finalized_by`,
+		[p10card]
+	)
 ).rows[0];
 if (p10final.finalized_at && p10final.finalized_by === COACH)
 	ok('a complete card finalizes, signed by the coach who did it');
@@ -1569,12 +1574,14 @@ else {
 
 // (f) a coach cannot touch a final card — the update matches no row
 const p10touch = (
-	await q(`update scorecard_lines set home_games = 5 where scorecard_id = $1 and position = '1S' returning id`, [
-		p10card
-	])
+	await q(
+		`update scorecard_lines set home_games = 5 where scorecard_id = $1 and position = '1S' returning id`,
+		[p10card]
+	)
 ).rows.length;
-const p10touchCard = (await q(`update scorecards set notes = 'x' where id = $1 returning id`, [p10card])).rows
-	.length;
+const p10touchCard = (
+	await q(`update scorecards set notes = 'x' where id = $1 returning id`, [p10card])
+).rows.length;
 if (p10touch === 0 && p10touchCard === 0) ok('a coach cannot change a final card');
 else {
 	console.log('  ✗ final card changed', p10touch, p10touchCard);
@@ -1584,9 +1591,13 @@ else {
 // (g) an admin reopens it, and the finalize stamp clears
 await asUser(ADMIN);
 const p10reopen = (
-	await q(`update scorecards set status = 'draft' where id = $1 returning finalized_at, finalized_by`, [p10card])
+	await q(
+		`update scorecards set status = 'draft' where id = $1 returning finalized_at, finalized_by`,
+		[p10card]
+	)
 ).rows[0];
-if (p10reopen.finalized_at === null && p10reopen.finalized_by === null) ok('an admin reopens a final card');
+if (p10reopen.finalized_at === null && p10reopen.finalized_by === null)
+	ok('an admin reopens a final card');
 else {
 	console.log('  ✗ reopen', p10reopen);
 	failures++;

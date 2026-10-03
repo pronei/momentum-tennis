@@ -20,7 +20,11 @@ const text = (max: number) => z.string().trim().max(max, 'Too long');
 export const headerSchema = z.object({
 	teamId: uuid,
 	sessionId: z.union([uuid, z.literal('')]).default(''),
-	matchId: z.string().trim().regex(/^\d{0,12}$/, 'Digits only').default(''),
+	matchId: z
+		.string()
+		.trim()
+		.regex(/^\d{0,12}$/, 'Digits only')
+		.default(''),
 	playedOn: localDate,
 	startTime: z.union([localTime, z.literal('')]).default(''),
 	division: text(64).default(''),
