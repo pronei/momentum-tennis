@@ -1,6 +1,6 @@
 # Phase 10 — JTT scorecards — Checklist
 
-**Branch:** `phase-10/scorecards`. **Spec:** `docs/superpowers/specs/2026-10-02-scorecards-design.md` (the four answers and the eight defaults). **Plan:** `2026-10-02-phase-10-scorecards.md`. **State on 2026-10-02:** fifteen tasks built and green locally; the merge, the push that applies 0010 to dev, and the e2e run against dev wait on the user's go.
+**Branch:** `phase-10/scorecards`. **Spec:** `docs/superpowers/specs/2026-10-02-scorecards-design.md` (the four answers and the eight defaults). **Plan:** `2026-10-02-phase-10-scorecards.md`. **State on 2026-10-02:** fifteen tasks built and green; merged to `main`, `deploy/dev` pushed, 0010 confirmed on the dev project, the coach's e2e walk passed against dev (1 passed, 13.6s).
 
 ## Done
 
@@ -20,15 +20,15 @@
 | 10 | `/coach/scorecards/[id]`: save, finalize through the gate, reopen, delete, export | feat(scorecards): the card — save, finalize through the gate, reopen, delete, export · fix(scorecards): the totals line as one string |
 | 11 | the Scorecards tab in both shells | feat(scorecards): a Scorecards tab in the coach and admin shells |
 | 12 | the dev coach `E2E_COACH_EMAIL` and the fictional team "Momentum Test 12U Green" (script in the plan, run 2026-10-02); `.env.example` names | docs(env): the e2e admin and coach names |
-| 13 | `e2e/coach-scorecard.test.ts` | test(e2e): a coach records, finalizes and exports a match |
+| 13 | `e2e/coach-scorecard.test.ts` | test(e2e): a coach records, finalizes and exports a match · fix(e2e): select the team by its exact label |
 | 14 | `docs/design-handoffs/2026-10-02-scorecard-components.md` | docs(design): handoff for the scorecard components |
 | 15 | records: PLAN.md row and decision log, AGENTS.md, HANDOFF, OPERATIONS §7, this checklist | docs(phase-10): records and the checklist |
 
-Gates at the tip: `pnpm env:check` · `pnpm check` 0/0 · `pnpm lint` · `pnpm test` 479 · `pnpm db:test` 152 checks · `pnpm db:types` no diff · `pnpm build:dev`. `pnpm test:e2e` for the coach walk runs once 0010 is on dev (the push of `deploy/dev` applies it).
+Gates at the tip: `pnpm env:check` · `pnpm check` 0/0 · `pnpm lint` · `pnpm test` 479 · `pnpm db:test` 152 checks · `pnpm db:types` no diff · `pnpm build:dev`. `pnpm test:e2e e2e/coach-scorecard.test.ts` 1 passed against dev.
 
 ## Waits on
 
-- **The go to merge and push** (user, standing preference: ask each time). The push applies 0010 to the dev project through the Supabase GitHub integration and deploys the worker; the auto-mode classifier declined a direct `pnpm db:push dev` from this session, so the integration is the path.
+- Nothing from the user for the build itself. (The auto-mode classifier declined a direct `pnpm db:push dev` from the agent's session; the push of `deploy/dev` applied 0010 through the Supabase GitHub integration within two minutes.)
 - **The automation's JSON import** (`tennislink-automation/outputs/momentum-tennis`, its own repository): an upload route that accepts the export document (`card` is `ObservedCard` without `page`, `rendered_path`, `rendered_sha256`, plus `result` and `winner` per line; games may be `null` and names empty for a default or double default) and creates the job at `MATCH_DISCOVERED`, seeding the draft's status from `result`.
 - **The Claude Design components** — `docs/design-handoffs/2026-10-02-scorecard-components.md`; when they arrive, port them into `src/lib/ds/scorecard/` and retire the two composites.
 - **Artur:** whether a coach may delete their own draft (today admin only), and whether the paper card is still exchanged and signed on the day (the page keeps no signatures).
