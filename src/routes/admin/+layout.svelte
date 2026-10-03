@@ -11,6 +11,7 @@
 		{ id: '/admin/classes', label: 'Classes', href: '/admin/classes' },
 		{ id: '/admin/camps', label: 'Camps', href: '/admin/camps' },
 		{ id: '/admin/teams', label: 'Teams', href: '/admin/teams' },
+		{ id: '/coach/scorecards', label: 'Scorecards', href: '/coach/scorecards' },
 		{ id: '/admin/products', label: 'Products', href: '/admin/products' },
 		{ id: '/admin/credits', label: 'Credits', href: '/admin/credits' },
 		{ id: '/admin/orders', label: 'Orders', href: '/admin/orders' },

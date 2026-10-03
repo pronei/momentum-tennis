@@ -3,7 +3,10 @@
 	import { Button, Eyebrow, Tabs } from '$lib/ds';
 
 	let { children } = $props();
-	const tabs = [{ id: '/coach/sessions', label: 'Sessions', href: '/coach/sessions' }];
+	const tabs = [
+		{ id: '/coach/sessions', label: 'Sessions', href: '/coach/sessions' },
+		{ id: '/coach/scorecards', label: 'Scorecards', href: '/coach/scorecards' }
+	];
 	const active = $derived(
 		tabs.map((t) => t.id).find((id) => page.url.pathname.startsWith(id)) ?? '/coach/sessions'
 	);
