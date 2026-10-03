@@ -44,6 +44,9 @@ const CODES = [
 	'order_not_pending',
 	'order_not_paid',
 	'credits_already_used',
+	'scorecard_incomplete',
+	'scorecard_final',
+	'unknown_scorecard',
 	'conflict',
 	'unexpected'
 ] as const;
@@ -132,6 +135,9 @@ const COPY: Record<ErrorCode, string> = {
 	order_not_paid: 'Only a paid order can be refunded.',
 	credits_already_used:
 		'Credits from this order have been used or have expired, so it cannot be refunded here. Adjust the ledger and refund in Stripe by hand.',
+	scorecard_incomplete: 'The card cannot be finalized yet.',
+	scorecard_final: 'This card is final. An administrator can reopen it.',
+	unknown_scorecard: 'That scorecard does not exist.',
 	conflict: 'Something changed while you were working. Reload and try again.',
 	unexpected: 'Something went wrong on our side. Nothing was charged or booked.'
 };

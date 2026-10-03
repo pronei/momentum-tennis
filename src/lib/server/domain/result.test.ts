@@ -128,3 +128,15 @@ describe('payment refusals map to codes, not to unexpected', () => {
 		expect(describeError('credits_already_used')).toMatch(/by hand/);
 	});
 });
+
+describe('phase 10 — scorecard refusals', () => {
+	it('maps the finalize gate token with its detail', () => {
+		const e = fromPostgres({ message: 'scorecard_incomplete: 2D has no result', code: '23514' });
+		expect(e.code).toBe('scorecard_incomplete');
+		expect(e.detail).toBe('2D has no result');
+	});
+	it('has copy for every scorecard code', () => {
+		expect(describeError('scorecard_final')).toMatch(/administrator/);
+		expect(describeError('unknown_scorecard')).toMatch(/does not exist/);
+	});
+});
