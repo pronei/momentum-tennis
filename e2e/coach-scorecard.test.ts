@@ -28,7 +28,7 @@ test.describe('a coach records a match', () => {
 		await expect(page).toHaveURL(/\/coach\/scorecards$/);
 
 		await page.getByRole('link', { name: 'New scorecard' }).click();
-		await page.getByLabel('Team').selectOption({ label: /Momentum Test 12U Green/ });
+		await page.getByLabel('Team').selectOption({ label: 'Momentum Test 12U Green · Fall 2026' });
 		await page.getByRole('button', { name: 'Choose team' }).click();
 		await expect(page.getByRole('button', { name: 'Create card' })).toBeVisible();
 		const matchId = String(9_000_000 + (stamp % 1_000_000));
