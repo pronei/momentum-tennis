@@ -35,6 +35,10 @@
 		{ value: 'home', label: teamName('home') },
 		{ value: 'away', label: teamName('away') }
 	]);
+	// One string, so the mono line never carries the template's line breaks.
+	const totalsLine = $derived(
+		`GAMES WON · ${teamName('home').toUpperCase()} ${data.totals.home} · ${teamName('away').toUpperCase()} ${data.totals.away}`
+	);
 </script>
 
 <svelte:head><title>{data.card.title} · Scorecards · Momentum Tennis</title></svelte:head>
@@ -231,11 +235,7 @@
 			<TextArea label="Notes" name="notes" rows={2} value={v('notes')} disabled={final} />
 		</FormSection>
 
-		<p class="sc__totals">
-			GAMES WON · {teamName('home').toUpperCase()}
-			{data.totals.home} · {teamName('away').toUpperCase()}
-			{data.totals.away}
-		</p>
+		<p class="sc__totals">{totalsLine}</p>
 
 		{#if !final}
 			<ul class="sc__ready" aria-label="Before finalizing">
